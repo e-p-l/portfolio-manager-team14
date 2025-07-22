@@ -1,0 +1,10 @@
+flask
+flask-cors
+flask-sqlalchemy
+flask-migrate
+flask-restful
+python-dotenv
+mysql-connector-python
+sqlite3
+requests
+argparse

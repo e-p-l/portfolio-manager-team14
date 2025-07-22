@@ -22,9 +22,10 @@ instance/
 *.db
 *.sqlite3
 
-# MySQL
+# MySQL & sqlite3
 *.sql
 *.dump
+*.db
 
 # MacOS
 .DS_Store
