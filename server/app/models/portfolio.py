@@ -7,13 +7,23 @@
 from app import db
 
 class Portfolio(db.Model):
-    __tablename__ = "portfolios"
+    __tablename__   = "portfolios"
 
     # primary key
-    id = db.Column(db.Integer, primary_key=True)
+    id              = db.Column(db.Integer, primary_key=True)
 
-    # attributes
-    name = db.Column(db.String(100), nullable=False)
+    # portfolio data
+    name            = db.Column(db.String(100), nullable=False)
 
     # relationships
-    transactions = db.relationship("Transaction", back_populates="portfolio")
+    transactions    = db.relationship("Transaction", back_populates="portfolio")
+    
+    def __init__(self, name):
+        self.name = name
+
+    def serialize(self):
+        return { "id": self.id, "name": self.name }
+
+    @classmethod
+    def create(cls, name):
+        return cls(name)
