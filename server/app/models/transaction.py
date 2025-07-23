@@ -7,8 +7,6 @@
 from app import db
 
 class Transaction(db.Model):
-    _VALID_TYPES = { 'buy', 'sell' }
-
     __tablename__       = "transactions"
 
     # foreign keys
@@ -41,22 +39,4 @@ class Transaction(db.Model):
                 "price": self.price,
                 "date": self.date,
                 }
-
-    @classmethod
-    def create(cls, portfolio, asset, quantity, price, date=None, transaction_type="buy"):
-        cls._validate_type(transaction_type)
-        return cls(
-                portfolio_id =portfolio.id,
-                asset_id=asset.id,
-                quantity=quantity,
-                price=price,
-                date=date,
-                transaction_type=transaction_type,
-                )
-
-    @classmethod
-    def _validate_type(cls, transaction_type):
-        if transaction_type not in cls._VALID_TYPES:
-            raise ValueError(f"Invalid transaction type: {transaction_type}")
-
 

@@ -7,8 +7,6 @@
 from app import db
 
 class Asset(db.Model):
-    _VALID_TYPES = { 'stock', 'bonds' }
-
     __tablename__   = "assets"
 
     id              = db.Column(db.Integer, primary_key=True)
@@ -32,17 +30,3 @@ class Asset(db.Model):
                 "name": self.name,
                 "asset_type": self.asset_type
                 }
-
-    @classmethod
-    def create(cls, symbol, name, asset_type):
-        cls._validate_type(asset_type)
-        return cls(
-                symbol=symbol,
-                name=name,
-                asset_type=asset_type,
-                )
-
-    @classmethod
-    def _validate_type(cls, asset_type):
-        if asset_type not in cls._VALID_TYPES:
-            raise ValueError(f"Invalid asset type: {asset_type}")

@@ -4,7 +4,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 import yfinance as yf
-from datetime import datetime
 from app import create_app, db
 from app.models.asset import Asset
 from app.models.portfolio import Portfolio

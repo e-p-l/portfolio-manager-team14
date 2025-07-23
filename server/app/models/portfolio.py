@@ -23,7 +23,3 @@ class Portfolio(db.Model):
 
     def serialize(self):
         return { "id": self.id, "name": self.name }
-
-    @classmethod
-    def create(cls, name):
-        return cls(name)
