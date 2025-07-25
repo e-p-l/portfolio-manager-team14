@@ -37,7 +37,7 @@ def get_asset(asset_id):
 def create_asset():
     """
     Creates a new asset in the database.
-    Expects JSON data with 'symbol', 'name', 'asset_type', 'exchange', and 'sector'.
+    Expects JSON data with 'symbol', 'name', 'asset_type', 'exchange', 'sector' and 'current_price'
     """
     data = request.get_json()
     if not data:
@@ -47,9 +47,10 @@ def create_asset():
         new_asset = Asset(
             symbol=data['symbol'],
             name=data['name'],
-            asset_type=data.get('asset_type'),
-            exchange=data.get('exchange'),
-            sector=data.get('sector')
+            asset_type=data.get('asset_type', None),
+            exchange=data.get('exchange', None),
+            sector=data.get('sector', None),
+            current_price=data.get('current_price', None)
         )
         db.session.add(new_asset)
         db.session.commit()
@@ -72,11 +73,18 @@ def update_asset(asset_id):
     try:
         asset = Asset.query.get(asset_id)
         if asset:
-            asset.symbol = data.get('symbol', asset.symbol)
-            asset.name = data.get('name', asset.name)
-            asset.asset_type = data.get('asset_type', asset.asset_type)
-            asset.exchange = data.get('exchange', asset.exchange)
-            asset.sector = data.get('sector', asset.sector)
+            if 'symbol' in data:
+                asset.symbol = data['symbol']
+            if 'name' in data:
+                asset.name = data['name']
+            if 'asset_type' in data:
+                asset.asset_type = data['asset_type']
+            if 'exchange' in data:
+                asset.exchange = data['exchange']
+            if 'sector' in data:
+                asset.sector = data['sector']
+            if 'current_price' in data:
+                asset.current_price = data['current_price']
 
             db.session.commit()
             return jsonify(asset.serialize())
