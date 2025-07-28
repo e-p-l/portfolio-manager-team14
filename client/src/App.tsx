@@ -10,6 +10,7 @@ import {
   Chip
 } from '@mui/material';
 import { TrendingUp, AccountBalance, ShowChart, Notifications } from '@mui/icons-material';
+import PortfolioList from './components/PortfolioList';
 import './App.css';
 
 function App() {
@@ -48,8 +49,73 @@ function App() {
               </CardContent>
             </Card>
           </Box>
+
+          {/* Quick Stats */}
+          <Box flex={{ xs: 1, md: 1 }}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <TrendingUp sx={{ mr: 1, color: '#4caf50' }} />
+                  <Typography variant="h6">
+                    Quick Stats
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  • Active Holdings: 0
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Watchlist Items: 0
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Recent Transactions: 0
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
         </Box>
 
+        {/* Portfolio Management Section */}
+        <Box mt={3}>
+          <PortfolioList />
+        </Box>
+
+        {/* Features Coming Soon */}
+        <Box mt={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Features Coming Soon
+              </Typography>
+              <Box 
+                display="flex" 
+                flexDirection={{ xs: 'column', sm: 'row' }} 
+                flexWrap="wrap" 
+                gap={2}
+              >
+                <Box flex={1} minWidth="200px">
+                  <Typography variant="body2" color="text.secondary">
+                    📊 Real-time Portfolio Tracking
+                  </Typography>
+                </Box>
+                <Box flex={1} minWidth="200px">
+                  <Typography variant="body2" color="text.secondary">
+                    📈 Performance Analytics
+                  </Typography>
+                </Box>
+                <Box flex={1} minWidth="200px">
+                  <Typography variant="body2" color="text.secondary">
+                    👁️ Watchlist Management
+                  </Typography>
+                </Box>
+                <Box flex={1} minWidth="200px">
+                  <Typography variant="body2" color="text.secondary">
+                    💼 Transaction History
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
 
       </Container>
     </div>
