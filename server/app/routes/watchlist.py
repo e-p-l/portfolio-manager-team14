@@ -1,5 +1,5 @@
 from . import api_bp
-from server.app.services.watchlist_service import fetch_historical_prices, fetch_latest_prices
+from ..services.watchlist_service import fetch_historical_prices, fetch_latest_prices
 
 from flask import jsonify
 
