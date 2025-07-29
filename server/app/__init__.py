@@ -1,7 +1,6 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_cors import CORS
 
 db = SQLAlchemy()
@@ -17,9 +16,19 @@ def create_app():
 
     db.init_app(app)
 
-    migrate = Migrate(app, db)
+    from flask_restx import Api
+    api = Api(app, doc='/swagger')
 
-    from .routes import api_bp
-    app.register_blueprint(api_bp, url_prefix="/api")
+    from .routes.assets import api_ns as assets_api_ns
+    api.add_namespace(assets_api_ns, path='/assets')
+
+    from .routes.portfolios import api_ns as portfolios_api_ns
+    api.add_namespace(portfolios_api_ns, path='/portfolios')
+
+    from .routes.holdings import api_ns as holdings_api_ns
+    api.add_namespace(holdings_api_ns, path='/holdings')
+
+    from .routes.transactions import api_ns as transactions_api_ns
+    api.add_namespace(transactions_api_ns, path='/transactions')
 
     return app

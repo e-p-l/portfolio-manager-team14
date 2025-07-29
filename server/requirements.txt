@@ -1,8 +1,9 @@
 flask
 flask-cors
 flask-sqlalchemy
-flask-migrate
 flask-restful
+flask_restx
+flask-swagger-ui
 python-dotenv
 mysql-connector-python
 requests
