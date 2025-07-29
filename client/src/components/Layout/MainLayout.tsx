@@ -98,7 +98,6 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {navItems.find(item => item.path === location.pathname)?.text || 'Portfolio Manager'}
           </Typography>
           <IconButton color="inherit">
             <Notifications />
