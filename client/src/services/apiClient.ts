@@ -3,7 +3,7 @@ import { ApiError } from '../types';
 class ApiClient {
   private baseURL: string;
 
-  constructor(baseURL: string = 'http://localhost:5000/api') {
+  constructor(baseURL: string = 'http://localhost:1313/api') {
     this.baseURL = baseURL;
   }
 
