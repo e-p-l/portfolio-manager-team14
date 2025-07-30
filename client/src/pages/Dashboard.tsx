@@ -5,9 +5,23 @@ import {
   Card, 
   CardContent, 
   Typography, 
-  Chip 
+  Chip,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider
 } from '@mui/material';
-import { TrendingUp, ShowChart } from '@mui/icons-material';
+import { 
+  TrendingUp, 
+  ShowChart, 
+  Lightbulb, 
+  ArrowUpward, 
+  ArrowDownward,
+  TimerOutlined,
+  PriceChange,
+  Analytics
+} from '@mui/icons-material';
 
 const Dashboard: React.FC = () => {
   return (
@@ -46,9 +60,9 @@ const Dashboard: React.FC = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
-                <TrendingUp sx={{ mr: 1, color: '#4caf50' }} />
-                <Typography variant="h6">
-                  Market Movers
+                <Analytics sx={{ mr: 1, color: '#0277bd' }} />
+                <Typography variant="h6" gutterBottom>
+                  Top Holding
                 </Typography>
               </Box>
             </CardContent>
@@ -64,9 +78,12 @@ const Dashboard: React.FC = () => {
           <Box flex={1}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Cash Flow
-                </Typography>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <PriceChange sx={{ mr: 1, color: '#6200ea' }} />
+                  <Typography variant="h6" gutterBottom>
+                    Cash Flow
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
           </Box>
@@ -75,9 +92,12 @@ const Dashboard: React.FC = () => {
           <Box flex={1}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Top Holding
+                <Box display="flex" alignItems="center" mb={2}>
+                <TrendingUp sx={{ mr: 1, color: '#4caf50' }} />
+                <Typography variant="h6">
+                  Market Movers
                 </Typography>
+                </Box>
               </CardContent>
             </Card>
           </Box>
@@ -85,11 +105,55 @@ const Dashboard: React.FC = () => {
         
         {/* Right section - Takes 1/3 of space to match "Market Movers" */}
         <Box flex={{ xs: 1, md: 1 }}>
-          <Card>
+          <Card sx={{ background: 'linear-gradient(to bottom, #f5f7fa, #ffffff)' }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Insight
-              </Typography>
+              <Box display="flex" alignItems="center" mb={2}>
+                <Lightbulb sx={{ mr: 1, color: '#f57c00' }} />
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Market Insights
+                </Typography>
+              </Box>
+              
+              <Divider sx={{ my: 1.5 }} />
+              
+              <List dense disablePadding>
+                <ListItem>
+                  <ListItemIcon>
+                    <ArrowUpward fontSize="small" sx={{ color: '#4caf50' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Technology sector showing strong growth" 
+                    sx={{ color: '#424242' }}
+                  />
+                </ListItem>
+                
+                <ListItem>
+                  <ListItemIcon>
+                    <ArrowDownward fontSize="small" sx={{ color: '#f44336' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Energy stocks down by 2.3% this week"
+                    sx={{ color: '#424242' }}
+                  />
+                </ListItem>
+                
+                <ListItem>
+                  <ListItemIcon>
+                    <TimerOutlined fontSize="small" sx={{ color: '#ff9800' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Earnings reports expected next week"
+                    sx={{ color: '#424242' }}
+                  />
+                </ListItem>
+              </List>
+              
+              <Chip 
+                label="View All Insights" 
+                size="small" 
+                color="primary" 
+                sx={{ mt: 1, cursor: 'pointer' }} 
+              />
             </CardContent>
           </Card>
         </Box>
