@@ -28,7 +28,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const navItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/' },
-    { text: 'Portfolios', icon: <AccountBalance />, path: '/portfolios' },
+    { text: 'Portfolio', icon: <AccountBalance />, path: '/portfolio' },
     { text: 'Transactions', icon: <SwapHoriz />, path: '/transactions' },
     { text: 'Watchlist', icon: <Visibility />, path: '/watchlist' },
   ];

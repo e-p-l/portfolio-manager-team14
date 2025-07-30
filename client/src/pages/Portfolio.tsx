@@ -2,7 +2,7 @@ import React from 'react';
 import { Typography, Box } from '@mui/material';
 import PortfolioList from '../components/PortfolioList';
 
-const Portfolios: React.FC = () => {
+const Portfolio: React.FC = () => {
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom sx={{ 
@@ -19,4 +19,4 @@ const Portfolios: React.FC = () => {
   );
 };
 
-export default Portfolios;
+export default Portfolio;
