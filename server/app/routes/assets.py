@@ -3,9 +3,15 @@ from .. import db
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
-from flask_restx import Namespace, Resource
+from flask_restx import Namespace, Resource, fields
 
 api_ns = Namespace('assets', description='Asset operations')
+asset_model = api_ns.model('Asset', {
+    'symbol': fields.String(required=True),
+    'name': fields.String(required=True),
+    'asset_type': fields.String(required=True),
+    'sector': fields.String(required=True),
+})
 
 @api_ns.route('/')
 class AssetListResource(Resource):
@@ -17,6 +23,7 @@ class AssetListResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
+    @api_ns.expect(asset_model)
     def post(self):
         """
         Creates a new asset in the database.
@@ -53,6 +60,7 @@ class AssetResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
+    @api_ns.expect(asset_model)
     def put(self, asset_id):
         """
         Updates an existing asset in the database.

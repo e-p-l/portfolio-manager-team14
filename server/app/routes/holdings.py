@@ -3,9 +3,15 @@ from ..models.holding import Holding
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
-from flask_restx import Namespace, Resource
+from flask_restx import Namespace, Resource, fields
 
 api_ns = Namespace('holdings', description='Holding operations')
+holding_model = api_ns.model('Holding', {
+    'portfolio_id': fields.Integer(required=True),
+    'asset_id': fields.Integer(required=True),
+    'quantity': fields.Float(required=True),
+    'purchase_price': fields.Float(required=True)
+})
 
 @api_ns.route('/')
 class HoldingListResource(Resource):
@@ -17,6 +23,7 @@ class HoldingListResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
+    @api_ns.expect(holding_model)
     def post(self):
         """
         Creates a new holding.
@@ -53,6 +60,7 @@ class HoldingResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
+    @api_ns.expect(holding_model)
     def put(self, holding_id):
         """
         Updates an existing holding.

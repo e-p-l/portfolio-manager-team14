@@ -3,10 +3,13 @@ from ..models.portfolio import Portfolio
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
-from flask_restx import Namespace, Resource
+from flask_restx import Namespace, Resource, fields
 from datetime import datetime
 
 api_ns = Namespace('portfolios', description='Portfolio operations')
+portfolio_model = api_ns.model('Portfolio', {
+    'name': fields.String(required=True),
+})
 
 @api_ns.route('/')
 class PortfolioListResource(Resource):
@@ -18,6 +21,7 @@ class PortfolioListResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
+    @api_ns.expect(portfolio_model)
     def post(self):
         """
         Creates a new portfolio.
@@ -49,6 +53,7 @@ class PortfolioResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
+    @api_ns.expect(portfolio_model)
     def put(self, portfolio_id):
         """
         Updates an existing portfolio.

@@ -3,10 +3,18 @@ from ..models.transaction import Transaction
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
-from flask_restx import Namespace, Resource
+from flask_restx import Namespace, Resource, fields
 from datetime import datetime
 
 api_ns = Namespace('transactions', description='Transaction operations')
+transaction_model = api_ns.model('Transaction', {
+    'portfolio_id': fields.Integer(required=True),
+    'holding_id': fields.Integer(required=True),
+    'quantity': fields.Float(required=True),
+    'price': fields.Float(required=True),
+    'created_at': fields.DateTime(required=True),
+    'transaction_type': fields.String(required=True)
+})
 
 @api_ns.route('/')
 class TransactionListResource(Resource):
@@ -18,6 +26,7 @@ class TransactionListResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
+    @api_ns.expect(transaction_model)
     def post(self):
         """
         Creates a new transaction.
@@ -66,6 +75,7 @@ class TransactionResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
+    @api_ns.expect(transaction_model)
     def put(self, transaction_id):
         """
         Updates an existing transaction.
