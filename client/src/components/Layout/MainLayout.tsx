@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   AppBar, 
   Box, 
@@ -11,12 +11,9 @@ import {
   ListItemIcon, 
   ListItemText, 
   Toolbar, 
-  Typography,
-  useMediaQuery,
-  useTheme
+  Typography
 } from '@mui/material';
 import { 
-  Menu as MenuIcon, 
   Dashboard, 
   AccountBalance, 
   Notifications,
@@ -24,18 +21,10 @@ import {
   Visibility
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
-
-const drawerWidth = 240;
+import './MainLayout.css';
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
 
   const navItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/' },
@@ -46,103 +35,70 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const drawer = (
     <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
+      <div className="drawer-header">
+        <Typography variant="h6" className="drawer-title">
           Portfolio Manager
         </Typography>
-      </Toolbar>
-      <List>
-        {navItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton 
-              component={Link} 
-              to={item.path}
-              selected={location.pathname === item.path}
-              sx={{
-                '&.Mui-selected': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                  borderLeft: '4px solid #1976d2',
-                },
-              }}
-            >
-              <ListItemIcon sx={{ color: location.pathname === item.path ? '#1976d2' : 'inherit' }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+      </div>
+      <div className="drawer-separator"></div>
+      <List className="nav-list">
+        {navItems.map((item) => {
+          const isSelected = location.pathname === item.path;
+          return (
+            <ListItem key={item.text} disablePadding className="nav-item">
+              <ListItemButton 
+                component={Link} 
+                to={item.path}
+                className={isSelected ? "nav-item-selected" : ""}
+              >
+                <ListItemIcon 
+                  className={isSelected ? "nav-item-icon nav-item-icon-selected" : "nav-item-icon"}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={item.text} 
+                  className="nav-item-text" 
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
       </List>
     </div>
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box className="main-layout">
       <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          backgroundColor: '#1976d2'
-        }}
-      >
+      <AppBar position="fixed" className="app-header" elevation={0}>
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-          </Typography>
-          <IconButton color="inherit">
+          <div className="app-title">
+            <span className="page-title-icon">
+              {navItems.find(item => item.path === location.pathname)?.icon}
+            </span>
+            <Typography variant="h6" noWrap component="div">
+              {navItems.find(item => item.path === location.pathname)?.text || 'Portfolio Manager'}
+            </Typography>
+          </div>
+          <IconButton className="header-icon">
             <Notifications />
           </IconButton>
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
-        aria-label="navigation links"
-      >
-        {/* Mobile drawer */}
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        {/* Desktop drawer */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-      <Box
-        component="main"
-        sx={{ 
-          flexGrow: 1, 
-          p: 3, 
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: '64px' // height of AppBar
+      
+      <Drawer
+        variant="permanent"
+        className="drawer"
+        classes={{
+          paper: "drawer-paper"
         }}
+        open
       >
+        {drawer}
+      </Drawer>
+      
+      <Box component="main" className="main-content">
         {children}
       </Box>
     </Box>

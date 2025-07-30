@@ -1,0 +1,103 @@
+/* MainLayout.css - Styling for the main layout component (Desktop-only) */
+
+/* Main Layout Container */
+.main-layout {
+  display: flex;
+  background-color: #f5f7fa;
+}
+
+/* App Header Styles */
+.app-header {
+  background-color: white;
+  position: fixed;
+  z-index: 1100;
+  width: calc(100% - 240px);
+  margin-left: 240px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.app-title {
+  flex-grow: 1;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  color: #333;
+}
+
+.page-title-icon {
+  margin-right: 10px;
+  color: #1976d2;
+}
+
+.header-icon {
+  color: #757575;
+}
+
+/* Drawer Styles */
+.drawer {
+  width: 240px;
+  flex-shrink: 0;
+}
+
+.drawer-paper {
+  width: 240px;
+  box-sizing: border-box;
+  background-color: white;
+  border-right: 1px solid #e0e0e0;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  min-height: 64px;
+  background-color: #1976d2;
+  color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.drawer-title {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Drawer separator */
+.drawer-separator {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 0;
+}
+
+/* Navigation Item Styles */
+
+
+.nav-item {
+  padding: 10px 0px;
+}
+
+.nav-item-icon {
+  margin-right: 16px;
+  color: #757575;
+}
+
+.nav-item-icon-selected {
+  color: #1976d2;
+}
+
+.nav-item-text {
+  font-size: 14px;
+  font-weight: 400;
+  color: #424242;
+}
+
+/* Main Content Area */
+.main-content {
+  flex-grow: 1;
+  padding: 24px 32px;
+  margin-top: 64px;
+  width: calc(100% - 240px);
+  background-color: #fafafa;
+  min-height: calc(100vh - 64px);
+}
