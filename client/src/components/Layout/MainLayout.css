@@ -63,6 +63,17 @@
   letter-spacing: 0.5px;
 }
 
+/* Navigation Item Styles */
+.nav-item {
+  padding: 0;
+}
+
+/* This styles the ListItemButton when selected */
+.nav-item-selected {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+  border-left: 4px solid #1976d2 !important;
+}
+
 /* Drawer separator */
 .drawer-separator {
   height: 1px;
@@ -72,9 +83,8 @@
 
 /* Navigation Item Styles */
 
-
 .nav-item {
-  padding: 10px 0px;
+  padding: 0;
 }
 
 .nav-item-icon {
