@@ -22,8 +22,9 @@ const Dashboard: React.FC = () => {
         Dashboard
       </Typography>
       
+      {/* First row - 2:1 ratio */}
       <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
-        {/* Portfolio Overview */}
+        {/* Portfolio Overview - Takes 2/3 of the space */}
         <Box flex={{ xs: 1, md: 2 }}>
           <Card>
             <CardContent>
@@ -36,36 +37,62 @@ const Dashboard: React.FC = () => {
               <Typography variant="body1" color="text.secondary" paragraph>
 
               </Typography>
-
             </CardContent>
           </Card>
         </Box>
 
-        {/* Quick Stats */}
+        {/* Market Movers - Takes 1/3 of the space */}
         <Box flex={{ xs: 1, md: 1 }}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <TrendingUp sx={{ mr: 1, color: '#4caf50' }} />
                 <Typography variant="h6">
-                  Quick Stats
+                  Market Movers
                 </Typography>
               </Box>
-
             </CardContent>
           </Card>
         </Box>
       </Box>
 
-      {/* Features Coming Soon */}
-      <Box mt={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Features Coming Soon
-            </Typography>
-          </CardContent>
-        </Card>
+      {/* Second row - Split to match first row's alignment */}
+      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} mt={3}>
+        {/* Left section - Takes 2/3 of space to match "Networth Over Time" */}
+        <Box flex={{ xs: 1, md: 2 }} display="flex" gap={3}>
+          {/* Cash Flow - Takes 1/2 of the left section (1/3 of total) */}
+          <Box flex={1}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Cash Flow
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
+          
+          {/* Top Holding - Takes 1/2 of the left section (1/3 of total) */}
+          <Box flex={1}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Top Holding
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
+        </Box>
+        
+        {/* Right section - Takes 1/3 of space to match "Market Movers" */}
+        <Box flex={{ xs: 1, md: 1 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Insight
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
       </Box>
     </>
   );
