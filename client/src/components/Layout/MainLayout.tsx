@@ -16,9 +16,9 @@ import {
 import { 
   Dashboard, 
   AccountBalance, 
-  Notifications,
   SwapHoriz, 
-  Visibility
+  Visibility,
+  Person
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 import './MainLayout.css';
@@ -35,11 +35,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const drawer = (
     <div>
-      <div className="drawer-header">
-        <Typography variant="h6" className="drawer-title">
-          Portfolio Manager
-        </Typography>
-      </div>
+
       <div className="drawer-separator"></div>
       <List className="nav-list">
         {navItems.map((item) => {
@@ -74,15 +70,12 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <AppBar position="fixed" className="app-header" elevation={0}>
         <Toolbar>
           <div className="app-title">
-            <span className="page-title-icon">
-              {navItems.find(item => item.path === location.pathname)?.icon}
-            </span>
             <Typography variant="h6" noWrap component="div">
-              {navItems.find(item => item.path === location.pathname)?.text || 'Portfolio Manager'}
+              Portfolio Manager
             </Typography>
           </div>
           <IconButton className="header-icon">
-            <Notifications />
+            <Person />
           </IconButton>
         </Toolbar>
       </AppBar>
