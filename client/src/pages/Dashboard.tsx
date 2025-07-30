@@ -44,7 +44,7 @@ const Dashboard: React.FC = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <ShowChart sx={{ mr: 1, color: '#1976d2' }} />
-                <Typography variant="h5" component="h2">
+                <Typography variant="h6" gutterBottom>
                   Networth Over Time
                 </Typography>
               </Box>
@@ -141,19 +141,9 @@ const Dashboard: React.FC = () => {
                   <ListItemIcon>
                     <TimerOutlined fontSize="small" sx={{ color: '#ff9800' }} />
                   </ListItemIcon>
-                  <ListItemText 
-                    primary="Earnings reports expected next week"
-                    sx={{ color: '#424242' }}
-                  />
+                  <ListItemText primary="AAPL reached your target price" sx={{ color: '#424242' }} />
                 </ListItem>
               </List>
-              
-              <Chip 
-                label="View All Insights" 
-                size="small" 
-                color="primary" 
-                sx={{ mt: 1, cursor: 'pointer' }} 
-              />
             </CardContent>
           </Card>
         </Box>
