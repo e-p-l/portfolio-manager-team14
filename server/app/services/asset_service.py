@@ -1,4 +1,7 @@
 import yfinance as yf
+from cachetools import TTLCache
+
+cache = TTLCache(maxsize=100, ttl=300)
 
 def fetch_latest_prices(symbols):
     """
