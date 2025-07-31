@@ -176,7 +176,7 @@ const Dashboard: React.FC = () => {
                       '&:hover': {
                         backgroundColor: '#f8f9fa',
                         borderRadius: 1,
-                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
                       }
                     }}
                   >
@@ -189,11 +189,11 @@ const Dashboard: React.FC = () => {
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: 'right', minWidth: 80 }}>
-                      <Typography variant="body2" fontWeight="500" sx={{ color: '#424242', fontSize: '0.85rem' }}>
-                        {row.price}
-                      </Typography>
-                      <Typography variant="body2" fontWeight="500" sx={{ color: row.change.includes('+') ? '#34a853' : '#ea4335', fontSize: '0.85rem' }}>
+                      <Typography variant="body2" fontWeight="600" sx={{ color: row.change.includes('+') ? '#34a853' : '#ea4335', fontSize: '0.9rem' }}>
                         {row.change}
+                      </Typography>
+                      <Typography variant="body2" fontWeight="500" sx={{ color: '#424242', fontSize: '0.85rem', mt: 0.5 }}>
+                        {row.price}
                       </Typography>
                     </Box>
                   </Box>
