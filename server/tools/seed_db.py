@@ -40,11 +40,11 @@ def seed_database():
         db.session.commit()
 
         # create sample holdings
-        holding1 = Holding(portfolio_id=portfolio1.id, asset_id=asset1.id, quantity=10, purchase_price=400)
-        holding2 = Holding(portfolio_id=portfolio1.id, asset_id=asset2.id, quantity=5, purchase_price=700)
-        holding6 = Holding(portfolio_id=portfolio4.id, asset_id=asset1.id, quantity=7, purchase_price=410)
-        holding7 = Holding(portfolio_id=portfolio4.id, asset_id=asset3.id, quantity=12, purchase_price=155)
-        holding8 = Holding(portfolio_id=portfolio4.id, asset_id=asset5.id, quantity=4, purchase_price=2800)
+        holding1 = Holding(portfolio_id=portfolio1.id, asset_id=asset1.id, quantity=10, purchase_price=400, purchase_date=datetime(2024, 7, 1))
+        holding2 = Holding(portfolio_id=portfolio1.id, asset_id=asset2.id, quantity=5, purchase_price=700, purchase_date=datetime(2024, 7, 1))
+        holding6 = Holding(portfolio_id=portfolio4.id, asset_id=asset1.id, quantity=7, purchase_price=410, purchase_date=datetime(2024, 7, 10))
+        holding7 = Holding(portfolio_id=portfolio4.id, asset_id=asset3.id, quantity=12, purchase_price=155, purchase_date=datetime(2024, 7, 15))
+        holding8 = Holding(portfolio_id=portfolio4.id, asset_id=asset5.id, quantity=4, purchase_price=2800, purchase_date=datetime(2024, 7, 20))
         db.session.add_all([holding1, holding2, holding6, holding7, holding8])
         db.session.commit()
 

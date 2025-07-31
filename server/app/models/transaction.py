@@ -15,8 +15,8 @@ class Transaction(db.Model):
 
     # foreign keys
     id                  = db.Column(db.Integer, primary_key=True)
-    portfolio_id        = db.Column(db.Integer, db.ForeignKey("portfolios.id", name="fk_portfolios_id"), nullable=False)
-    holding_id            = db.Column(db.Integer, db.ForeignKey("holdings.id", name="fk_holdings_id"), nullable=False)
+    portfolio_id        = db.Column(db.Integer, db.ForeignKey("portfolios.id", name="fk_transactions_portfolios_id"), nullable=False)
+    holding_id            = db.Column(db.Integer, db.ForeignKey("holdings.id", name="fk_transactions_holdings_id"), nullable=False)
 
     # transaction data
     quantity            = db.Column(db.Float, nullable=False)

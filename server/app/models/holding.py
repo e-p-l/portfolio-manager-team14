@@ -15,8 +15,8 @@ class Holding(db.Model):
     id              = db.Column(db.Integer, primary_key=True)
 
     # holding data
-    portfolio_id    = db.Column(db.Integer, db.ForeignKey('portfolios.id', name="fk_portfolios_id"), nullable=False)
-    asset_id        = db.Column(db.Integer, db.ForeignKey('assets.id', name="fk_assets_id"), nullable=False)
+    portfolio_id    = db.Column(db.Integer, db.ForeignKey('portfolios.id', name="fk_holdings_portfolio_id"), nullable=False)
+    asset_id        = db.Column(db.Integer, db.ForeignKey('assets.id', name="fk_holdings_asset_id"), nullable=False)
     quantity        = db.Column(db.Float, nullable=False)
     purchase_price  = db.Column(db.Float, nullable=False)
     purchase_date   = db.Column(db.DateTime, nullable=False)

@@ -10,7 +10,8 @@ def create_app():
 
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(app.root_path, 'investment_tracker.db')}"
+    # app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(app.root_path, 'investment_tracker.db')}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+mysqlconnector://root:password@localhost:3306/portfolio_manager_db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = "dev"
 
