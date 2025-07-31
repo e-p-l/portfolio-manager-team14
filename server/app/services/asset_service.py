@@ -1,19 +1,12 @@
 import yfinance as yf
 from cachetools import TTLCache
 from datetime import datetime
-import mysql.connector
+
+from app import db
+from app.models.asset import Asset
+from app.models.asset_history import AssetHistory
 
 cache = TTLCache(maxsize=100, ttl=300)
-
-db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'password',
-    'database': 'portfolio_manager_db'
-}
-
-def get_mysql_connection():
-    return mysql.connector.connect(**db_config)
 
 def fetch_latest_prices(symbols):
     # Fetches the latest stock prices for the given symbols. with caching
@@ -58,47 +51,12 @@ def fetch_asset_metadata(symbol):
         "asset_type": asset_type
     }
 
-# def fetch_latest_prices(symbols):
-#     """
-#     Fetches the latest stock prices for the given symbols.
-    
-#     Args:
-#         symbols (list): List of stock symbols to fetch prices for.
-    
-#     Returns:
-#         dict: A dictionary with stock symbols as keys and their latest prices and update times as values.
-#     """
-#     data = fetch_historical_prices(symbols, period="1d", interval="1m")
-
-#     latest_date = sorted(data.keys())[-1]
-#     latest_data = data[latest_date]
-
-#     result = {}
-#     result['update_time'] = latest_date
-#     for symbol in symbols:
-#         if symbol in latest_data:
-#             result[symbol] = latest_data[symbol]['Close']
-    
-#     return result
-
-
 def fetch_historical_prices(symbols, period="1y", interval="1d"):
     """
     Fetches historical stock data for the given symbols.
-    
-    Args:
-        symbols (list[str]): Stock symbol to fetch historical data for.
-        period (str): Period for which to fetch data (default is "1y").
-        interval (str): Interval of the data (default is "1d").
-    
-    Returns:
-        dict: A dictionary with stock symbols as keys and their historical data as values.
     """
     data = yf.download(tickers=symbols, period=period, interval=interval, progress=False, auto_adjust=True)
-
-    # flatten the multi-index columns
     data.columns = ['_'.join(col) for col in data.columns.values]
-
     result = dataframe_to_nested_dict(data)
     
     return result
@@ -106,7 +64,6 @@ def fetch_historical_prices(symbols, period="1y", interval="1d"):
 def dataframe_to_nested_dict(df):
     """
     Converts a DataFrame with columns like 'Close_NVDA' to a nested dict:
-    {date: {symbol: {field: value, ...}, ...}, ...}
     """
     result = {}
     for idx, row in df.iterrows():
@@ -125,16 +82,17 @@ def save_price_to_db(symbol, price, timestamp):
     Save the fetched price into a MySQL table called `stock_prices`.
     """
     try:
-        conn = get_mysql_connection()
-        cursor = conn.cursor()
-        query = """
-        INSERT INTO stock_prices (symbol, price, timestamp)
-        VALUES (%s, %s, %s)
-        ON DUPLICATE KEY UPDATE price = VALUES(price), timestamp = VALUES(timestamp);
-        """
-        cursor.execute(query, (symbol, price, timestamp))
-        conn.commit()
-        cursor.close()
-        conn.close()
-    except mysql.connector.Error as e:
+        asset = Asset.query.filter_by(symbol=symbol).first()
+        if not asset:
+            print(f"Asset {symbol} not found in database.")
+            return None
+        
+        asset_history = AssetHistory(
+            asset_id=asset.id,
+            price=price,
+            timestamp=timestamp
+        )
+        db.session.add(asset_history)
+        db.session.commit()
+    except Exception as e:
         print("Database error:", e)

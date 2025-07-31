@@ -7,12 +7,19 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask_restx import Namespace, Resource, fields
 
 api_ns = Namespace('assets', description='Asset operations')
-asset_model = api_ns.model('Asset', {
-    'symbol': fields.String(required=True),
-    'name': fields.String(required=True),
-    'asset_type': fields.String(required=True),
-    'sector': fields.String(required=True),
-})
+
+asset_input_models = {
+    'create': api_ns.model('Asset', {
+        'symbol': fields.String(required=True),
+        'name': fields.String(required=True),
+    }),
+    'update' : api_ns.model('Asset', {
+        'symbol': fields.String(required=False),
+        'name': fields.String(required=False),
+        'asset_type': fields.String(required=False),
+        'sector': fields.String(required=False),
+    })
+}
 
 @api_ns.route('/')
 class AssetListResource(Resource):
@@ -24,25 +31,22 @@ class AssetListResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
-    @api_ns.expect(asset_model)
+    @api_ns.expect(asset_input_models['create'])
     def post(self):
         """
         Creates a new asset in the database.
-        Expects JSON data with 'symbol', 'name', 'asset_type' and 'sector'
+        Expects JSON data with 'symbol', 'name'
         """
         data = request.get_json()
         if not data or 'symbol' not in data or 'name' not in data:
             return {"error": "Missing required fields"}, 400
 
-        symbol = data['symbol']
-        name = data['name']
-
         try:
-            metadata = fetch_asset_metadata(symbol)
+            metadata = fetch_asset_metadata(data['symbol'])
 
             new_asset = Asset(
-                symbol=symbol,
-                name=name,
+                symbol=data['symbol'],
+                name=data['name'],
                 asset_type=metadata['asset_type'],
                 sector=metadata['sector']
             )
@@ -67,7 +71,7 @@ class AssetResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
-    @api_ns.expect(asset_model)
+    @api_ns.expect(asset_input_models['update'])
     def put(self, asset_id):
         """
         Updates an existing asset in the database.
@@ -111,9 +115,11 @@ class AssetResource(Resource):
             db.session.rollback()
             return {"error": str(e)},
 
+@api_ns.route('/<string: symbol>/price')
+class AssetPriceResource(Resource):
     def get(self, symbol):
         try:
-            result = fetch_latest_prices([symbol])
+            result = fetch_latest_prices([symbol.upper()])
             if symbol not in result:
                 return {"error": "No data"}, 404
             return result[symbol], 200

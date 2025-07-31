@@ -22,6 +22,7 @@ class Asset(db.Model):
 
     # relationships
     holdings       = db.relationship("Holding", back_populates="asset")
+    history        = db.relationship("AssetHistory", back_populates="asset", cascade="all, delete-orphan")
 
     def __init__(self, symbol, name, asset_type, sector):
         self.symbol = symbol
