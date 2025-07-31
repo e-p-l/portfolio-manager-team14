@@ -87,3 +87,16 @@ class HoldingResource(Resource):
         except SQLAlchemyError as e:
             db.session.rollback()
             return {"error": str(e)}, 500
+        
+@api_ns.route('/portfolio/<int:portfolio_id>')
+class HoldingsByPortfolioResource(Resource):
+    def get(self, portfolio_id):
+        """Returns all holdings for a specific portfolio."""
+        try:
+            holdings = Holding.query.filter_by(portfolio_id=portfolio_id).all()
+            if holdings:
+                return [h.serialize() for h in holdings], 200
+            else:
+                return [], 200
+        except SQLAlchemyError as e:
+            return {"error": str(e)}, 500
