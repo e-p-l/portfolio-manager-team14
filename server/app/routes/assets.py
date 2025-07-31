@@ -1,4 +1,5 @@
 from ..models.asset import Asset
+from ..services.asset_service import fetch_asset_metadata, fetch_latest_prices
 from .. import db
 
 from flask import request
@@ -30,20 +31,26 @@ class AssetListResource(Resource):
         Expects JSON data with 'symbol', 'name', 'asset_type' and 'sector'
         """
         data = request.get_json()
-        if not data:
-            return {"error": "No input data provided"}, 400
+        if not data or 'symbol' not in data or 'name' not in data:
+            return {"error": "Missing required fields"}, 400
+
+        symbol = data['symbol']
+        name = data['name']
 
         try:
+            metadata = fetch_asset_metadata(symbol)
+
             new_asset = Asset(
-                symbol=data['symbol'],
-                name=data['name'],
-                asset_type=data.get('asset_type', None),
-                sector=data.get('sector', None),
+                symbol=symbol,
+                name=name,
+                asset_type=metadata['asset_type'],
+                sector=metadata['sector']
             )
             db.session.add(new_asset)
             db.session.commit()
+
             return new_asset.serialize(), 201
-        except SQLAlchemyError as e:
+        except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
 
@@ -103,3 +110,12 @@ class AssetResource(Resource):
         except SQLAlchemyError as e:
             db.session.rollback()
             return {"error": str(e)},
+
+    def get(self, symbol):
+        try:
+            result = fetch_latest_prices([symbol])
+            if symbol not in result:
+                return {"error": "No data"}, 404
+            return result[symbol], 200
+        except Exception as e:
+            return {"error": str(e)}, 500

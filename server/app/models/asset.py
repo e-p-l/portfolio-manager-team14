@@ -18,7 +18,7 @@ class Asset(db.Model):
     symbol          = db.Column(db.String(10), unique=True, nullable=False)
     name            = db.Column(db.String(100), nullable=False)
     asset_type      = db.Column(db.String(50), nullable=False)
-    sector          = db.Column(db.String(50), nullable=False)
+    sector          = db.Column(db.String(100), nullable=False)
 
     # relationships
     holdings       = db.relationship("Holding", back_populates="asset")
