@@ -26,13 +26,15 @@ interface HoldingsTableProps {
   portfolioId: number;
   loading: boolean;
   onHoldingsChange?: () => void;
+  hideActions?: boolean;
 }
 
 const HoldingsTable: React.FC<HoldingsTableProps> = ({ 
   holdings, 
   portfolioId, 
   loading, 
-  onHoldingsChange 
+  onHoldingsChange,
+  hideActions = false
 }) => {
   const [openBuyDialog, setOpenBuyDialog] = useState(false);
   const [openSellDialog, setOpenSellDialog] = useState(false);
@@ -114,17 +116,19 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">Your Assets</Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<Add />}
-          onClick={handleBuyOpen}
-        >
-          Buy Asset
-        </Button>
-      </Box>
+      {!hideActions && (
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6">Your Assets</Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<Add />}
+            onClick={handleBuyOpen}
+          >
+            Buy Asset
+          </Button>
+        </Box>
+      )}
       
       {holdings.length === 0 ? (
         <Box textAlign="center" p={3}>
@@ -144,13 +148,17 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
                 <TableCell align="right">Current Price</TableCell>
                 <TableCell align="right">Total Value</TableCell>
                 <TableCell align="right">Gain/Loss</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                {!hideActions && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {holdings.map((holding) => (
                 <TableRow key={holding.id}>
-                  <TableCell>{holding.asset_symbol}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight="600" sx={{ color: '#1a73e8' }}>
+                      {holding.asset_symbol}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{holding.asset_name}</TableCell>
                   <TableCell align="right">{holding.quantity}</TableCell>
                   <TableCell align="right">${holding.purchase_price.toFixed(2)}</TableCell>
@@ -161,15 +169,17 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
                   }}>
                     {calculateGainLoss(holding).toFixed(2)}%
                   </TableCell>
-                  <TableCell align="right">
-                    <IconButton 
-                      size="small" 
-                      color="primary"
-                      onClick={() => handleSellOpen(holding)}
-                    >
-                      <Remove fontSize="small" />
-                    </IconButton>
-                  </TableCell>
+                  {!hideActions && (
+                    <TableCell align="right">
+                      <IconButton 
+                        size="small" 
+                        color="primary"
+                        onClick={() => handleSellOpen(holding)}
+                      >
+                        <Remove fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -177,8 +187,10 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
         </TableContainer>
       )}
 
-      {/* Buy Dialog */}
-      <Dialog open={openBuyDialog} onClose={handleClose}>
+      {/* Buy Dialog - only render when actions are not hidden */}
+      {!hideActions && (
+        <>
+          <Dialog open={openBuyDialog} onClose={handleClose}>
         <DialogTitle>Buy Asset</DialogTitle>
         <DialogContent>
           <TextField
@@ -261,6 +273,8 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+        </>
+      )}
     </>
   );
 };

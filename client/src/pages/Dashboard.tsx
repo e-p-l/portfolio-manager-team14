@@ -26,6 +26,8 @@ import {
   Analytics
 } from '@mui/icons-material';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import HoldingsTable from '../components/HoldingsTable';
+import { useHoldings } from '../hooks/useHoldings';
 
 const mockCashFlowData = [
   { name: 'Inflow', value: 34000, color: '#4a90e2' },
@@ -40,9 +42,30 @@ const mockMarketMovers = [
 ];
 
 const months = ['January', 'February', 'March', 'April', 'May'];
+const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now
 
 const Dashboard: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(months[0]);
+  const { holdings, loading: loadingHoldings } = useHoldings(DEFAULT_PORTFOLIO_ID);
+
+  // Get top 5 best performing holdings
+  const getTopPerformingHoldings = () => {
+    if (!holdings || holdings.length === 0) return [];
+    
+    const sortedHoldings = holdings
+      .map(holding => ({
+        ...holding,
+        gainLossPercent: holding.current_price 
+          ? ((holding.current_price - holding.purchase_price) / holding.purchase_price) * 100
+          : 0
+      }))
+      .sort((a, b) => b.gainLossPercent - a.gainLossPercent)
+      .slice(0, 5);
+      
+    return sortedHoldings;
+  };
+
+  const topHoldings = getTopPerformingHoldings();
 
   const handleMonthChange = (event: any) => {
     setSelectedMonth(event.target.value);
@@ -86,9 +109,15 @@ const Dashboard: React.FC = () => {
               <Box display="flex" alignItems="center" mb={2}>
                 <Analytics sx={{ mr: 1, color: '#0277bd' }} />
                 <Typography variant="h6" gutterBottom>
-                  Top Holding
+                  Top Holdings
                 </Typography>
               </Box>
+              <HoldingsTable 
+                holdings={topHoldings} 
+                portfolioId={DEFAULT_PORTFOLIO_ID}
+                loading={loadingHoldings}
+                hideActions={true}
+              />
             </CardContent>
           </Card>
         </Box>
