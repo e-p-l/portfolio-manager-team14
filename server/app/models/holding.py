@@ -45,4 +45,5 @@ class Holding(db.Model):
             "asset_name": self.asset.name if self.asset else None,
             "asset_type": self.asset.asset_type if self.asset else None,
             "asset_sector": self.asset.sector if self.asset else None,
+            "day_changeP": self.asset.day_changeP if self.asset and hasattr(self.asset, "day_changeP") else None
         }

@@ -8,6 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from app import create_app, db
 from app.models.portfolio import Portfolio
 from app.models.asset import Asset
+from app.routes.assets import get_asset_info
 from app.models.holding import Holding
 from app.models.transaction import Transaction
 
@@ -31,7 +32,8 @@ def seed_database():
         print(f"✅ Live price for {symbol} is ${price}")
 
         # === Insert live-data-backed objects ===
-        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="ETF", day_changeP=0)
+        info = get_asset_info(symbol)
+        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="ETF", day_changeP=info['day_changeP'])
         db.session.add(asset)
         db.session.commit()
 

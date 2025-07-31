@@ -23,6 +23,36 @@ asset_input_models = {
     })
 }
 
+def get_asset_info(symbol):
+    """
+    Helper function to fetch asset details from yfinance.
+    Returns a dict with name, asset_type, sector, and day_changeP.
+    """
+    ticker = yf.Ticker(symbol)
+    info = ticker.info
+
+    name = info.get("longName", "Unknown")
+    asset_type = info.get("quoteType", "N/A")
+    sector = info.get("sector", "N/A") or info.get("industry", "N/A")
+    current_price = info.get("regularMarketPrice")
+    previous_close = info.get("regularMarketPreviousClose")
+
+    if current_price is not None and previous_close:
+        try:
+            day_changeP = round(((current_price - previous_close) / previous_close) * 100, 2)
+        except ZeroDivisionError:
+            day_changeP = 0.0
+    else:
+        day_changeP = 0.0
+
+    return {
+        "name": name,
+        "asset_type": asset_type,
+        "sector": sector,
+        "day_changeP": day_changeP
+    }
+
+
 @api_ns.route('/')
 class AssetListResource(Resource):
     def get(self):
@@ -37,42 +67,34 @@ class AssetListResource(Resource):
     def post(self):
         """
         Creates a new asset in the database.
-        Expects JSON data with 'symbol'
+        Expects JSON data with 'symbol' and 'name'.
         Automatically uppercases the symbol 
-        and fetches name, sector, price, and day change info.
+        and fetches full info from yfinance.
         """
         data = request.get_json()
         if not data or 'symbol' not in data or 'name' not in data:
             return {"error": "Missing required fields"}, 400
 
         symbol = data['symbol'].upper()
+
         try:
             existing = Asset.query.filter_by(symbol=symbol).first()
             if existing:
                 return {"message": "Asset already exists"}, 400
 
-            ticker = yf.Ticker(symbol)
-            info = ticker.info
-            current_price = info.get("regularMarketPrice")
-            previous_close = info.get("regularMarketPreviousClose")
-            name = info.get("longName", "string")
-            sector = info.get("sector", "N/A")
-            asset_type = info.get("quoteType", "N/A")
-
-            if current_price is not None and previous_close:
-                day_changeP = ((current_price - previous_close) / previous_close) * 100
-                day_changeP = round(day_changeP, 2)
+            info = get_asset_info(symbol)
 
             new_asset = Asset(
                 symbol=symbol,
-                name=name,
-                asset_type=asset_type,
-                sector=sector,
-                day_changeP=day_changeP
+                name=info['name'],
+                asset_type=info['asset_type'],
+                sector=info['sector'],
+                day_changeP=info['day_changeP']
             )
             db.session.add(new_asset)
             db.session.commit()
             return new_asset.serialize(), 201
+
         except SQLAlchemyError as e:
             db.session.rollback()
             return {"error": str(e)}, 500
