@@ -115,7 +115,7 @@ class AssetResource(Resource):
             db.session.rollback()
             return {"error": str(e)},
 
-@api_ns.route('/<string: symbol>/price')
+@api_ns.route('/<string:symbol>/price')
 class AssetPriceResource(Resource):
     def get(self, symbol):
         try:
