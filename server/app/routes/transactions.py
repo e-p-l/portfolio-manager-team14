@@ -7,7 +7,7 @@ from ..services.asset_service import fetch_latest_prices
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
 from flask_restx import Namespace, Resource, fields
-from datetime import datetime
+from datetime import datetime, timezone
 
 api_ns = Namespace('transactions', description='Transaction operations')
 transaction_input_models = {
@@ -67,7 +67,7 @@ class TransactionListResource(Resource):
                     asset_id=data['asset_id'],
                     quantity=data['quantity'],
                     purchase_price=latest_prices[asset.symbol]['price'],
-                    purchase_date= datetime.utcnow()
+                    purchase_date= datetime.now(timezone.utc)
                 )
                 db.session.add(holding)
                 db.session.commit()
@@ -88,7 +88,7 @@ class TransactionListResource(Resource):
                 holding_id=holding.id,
                 quantity=data['quantity'],
                 price=latest_prices[asset.symbol]['price'],
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 transaction_type=data['transaction_type'].lower()
             )
             db.session.add(transaction)

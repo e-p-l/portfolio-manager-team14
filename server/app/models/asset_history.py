@@ -1,5 +1,7 @@
 from app import db
 
+from datetime import datetime, timezone
+
 class AssetHistory(db.Model):
     __tablename__ = "asset_history"
 
@@ -10,10 +12,10 @@ class AssetHistory(db.Model):
 
     asset = db.relationship("Asset", back_populates="history")
 
-    def __init__(self, asset_id, price, timestamp):
+    def __init__(self, asset_id, price, timestamp=None):
         self.asset_id = asset_id
         self.price = price
-        self.timestamp = timestamp
+        self.timestamp = timestamp or datetime.now(timezone.utc)
 
     def serialize(self):
         return {

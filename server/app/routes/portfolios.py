@@ -4,7 +4,7 @@ from ..models.portfolio import Portfolio
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
 from flask_restx import Namespace, Resource, fields
-from datetime import datetime
+from datetime import datetime, timezone
 
 api_ns = Namespace('portfolios', description='Portfolio operations')
 portfolio_model = api_ns.model('Portfolio', {
@@ -67,7 +67,7 @@ class PortfolioResource(Resource):
         try:
             if 'name' in data:
                 portfolio.name = data['name']
-            portfolio.updated_at = datetime.utcnow()
+            portfolio.updated_at = datetime.now(timezone.utc)
             db.session.commit()
             return portfolio.serialize(), 200
         except SQLAlchemyError as e:
