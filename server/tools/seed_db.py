@@ -1,7 +1,7 @@
 import sys
 import os
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime, timezone
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
@@ -44,7 +44,7 @@ def seed_database():
             asset_id=asset.id,
             quantity=5,
             purchase_price=price,
-            purchase_date=datetime.now()
+            purchase_date=datetime.now(timezone.utc)
         )
         db.session.add(holding)
         db.session.commit()
@@ -54,7 +54,7 @@ def seed_database():
             holding_id=holding.id,
             quantity=5,
             price=price,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
             transaction_type="buy"
         )
         db.session.add(txn)

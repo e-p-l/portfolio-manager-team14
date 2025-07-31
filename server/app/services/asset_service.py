@@ -1,6 +1,6 @@
 import yfinance as yf
 from cachetools import TTLCache
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app import db
 from app.models.asset import Asset
@@ -20,7 +20,7 @@ def fetch_latest_prices(symbols):
                 'day_change_percent': metadata['day_change_percent'],
                 'sector': metadata['sector'],
                 'asset_type': metadata['asset_type'],
-                'update_time': datetime.utcnow()
+                'update_time': datetime.now(timezone.utc).isoformat()
             }
         except Exception as e:
             print(f"Error fetching data for {symbol}:", e)
@@ -79,7 +79,7 @@ def dataframe_to_nested_dict(df):
 
 def save_price_to_db(symbol, price, timestamp):
     """
-    Save the fetched price into a MySQL table called `stock_prices`.
+    Save the fetched price into a MySQL table called `asset_history`.
     """
     try:
         asset = Asset.query.filter_by(symbol=symbol).first()

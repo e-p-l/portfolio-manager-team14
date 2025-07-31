@@ -6,7 +6,7 @@
 
 from app import db
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Holding(db.Model):
     __tablename__   = "holdings"
@@ -31,7 +31,7 @@ class Holding(db.Model):
         self.asset_id = asset_id
         self.quantity = quantity
         self.purchase_price = purchase_price
-        self.purchase_date = datetime.strptime(purchase_date, '%Y-%m-%d') if isinstance(purchase_date, str) else purchase_date
+        self.purchase_date = purchase_date or datetime.now(timezone.utc)
 
     def serialize(self):
         return {

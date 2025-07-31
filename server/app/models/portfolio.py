@@ -5,7 +5,6 @@
 ##################################################
 
 from app import db
-from datetime import datetime
 
 class Portfolio(db.Model):
     __tablename__   = "portfolios"

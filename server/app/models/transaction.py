@@ -4,7 +4,7 @@
 #
 ##################################################
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app import db
 
@@ -28,12 +28,12 @@ class Transaction(db.Model):
     portfolio           = db.relationship("Portfolio", back_populates="transactions")
     holding             = db.relationship("Holding", back_populates="transactions")   
 
-    def __init__(self, portfolio_id, holding_id, quantity, price, created_at, transaction_type):
+    def __init__(self, portfolio_id, holding_id, quantity, price, transaction_type, created_at=None):
         self.portfolio_id = portfolio_id
         self.holding_id = holding_id
         self.quantity = quantity
         self.price = price
-        self.created_at = datetime.strptime(created_at, '%Y-%m-%d') if isinstance(created_at, str) else created_at
+        self.created_at = created_at or datetime.now(timezone.utc).isoformat()
         self.transaction_type = transaction_type
 
     def serialize(self):
