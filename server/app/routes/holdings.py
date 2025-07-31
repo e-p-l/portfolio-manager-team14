@@ -10,7 +10,8 @@ holding_model = api_ns.model('Holding', {
     'portfolio_id': fields.Integer(required=True),
     'asset_id': fields.Integer(required=True),
     'quantity': fields.Float(required=True),
-    'purchase_price': fields.Float(required=True)
+    'purchase_price': fields.Float(required=True),
+    'purchase_date': fields.DateTime(required=True)
 })
 
 @api_ns.route('/')
@@ -27,10 +28,10 @@ class HoldingListResource(Resource):
     def post(self):
         """
         Creates a new holding.
-        Expects JSON with portfolio_id, asset_id, quantity, and purchase_price.
+        Expects JSON with portfolio_id, asset_id, quantity, purchase_price, and purchase_date.
         """
         data = request.get_json()
-        if not data or 'portfolio_id' not in data or 'asset_id' not in data or 'quantity' not in data or 'purchase_price' not in data:
+        if not data or 'portfolio_id' not in data or 'asset_id' not in data or 'quantity' not in data or 'purchase_price' not in data or 'purchase_date' not in data:
             return {"error": "Invalid input"}, 400
 
         try:
@@ -38,7 +39,8 @@ class HoldingListResource(Resource):
                 portfolio_id=data['portfolio_id'],
                 asset_id=data['asset_id'],
                 quantity=data['quantity'],
-                purchase_price=data['purchase_price']
+                purchase_price=data['purchase_price'],
+                purchase_date=data['purchase_date']
             )
             db.session.add(new_holding)
             db.session.commit()
