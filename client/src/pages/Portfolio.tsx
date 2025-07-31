@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Typography, Box, CircularProgress, CardContent, Card } from '@mui/material';
-import { ViewList, DonutSmall, ShowChart, PieChart } from '@mui/icons-material';
+import { Typography, Box, CircularProgress, Card, CardContent } from '@mui/material';
+import { ViewList } from '@mui/icons-material';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useHoldings } from '../hooks/useHoldings';
 import HoldingsTable from '../components/HoldingsTable';
 import PortfolioValueChart from '../components/PortfolioValueChart';
+import SectorAllocationChart from '../components/SectorAllocationChart';
+import AssetClassChart from '../components/AssetClassChart';
 
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now as requested
 
@@ -47,36 +49,12 @@ const Portfolio: React.FC = () => {
               <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
                 {/* Sector Allocation (row 2, col 1) */}
                 <Box flex={1}>
-                  <Card>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" mb={2}>
-                        <PieChart sx={{ mr: 1, color: '#6200ea' }} />
-                        <Typography variant="h6" gutterBottom>
-                          Sector Allocation
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Pie chart showing sector breakdown would go here
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <SectorAllocationChart />
                 </Box>
 
                 {/* Asset Classes (row 2, col 2) */}
                 <Box flex={1}>
-                  <Card>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" mb={2}>
-                        <DonutSmall sx={{ mr: 1, color: '#e65100' }} />
-                        <Typography variant="h6" gutterBottom>
-                          Asset Classes
-                        </Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Chart showing stocks vs. bonds vs. ETFs vs. cash breakdown
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <AssetClassChart />
                 </Box>
               </Box>
             </Box>
