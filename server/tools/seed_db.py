@@ -31,7 +31,7 @@ def seed_database():
         print(f"✅ Live price for {symbol} is ${price}")
 
         # === Insert live-data-backed objects ===
-        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="ETF")
+        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="ETF", day_changeP=0)
         db.session.add(asset)
         db.session.commit()
 
