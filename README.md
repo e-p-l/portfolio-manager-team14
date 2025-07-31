@@ -84,7 +84,20 @@ The API will be available at `http://localhost:1313/`. Swagger docs are at `http
 
 ## 📊 Frontend
 
-TBD
+### 1. Install Dependencies
+
+```sh
+cd client
+npm install
+```
+
+### 2. Start the Development Server
+
+```sh
+npm start
+```
+
+The frontend will be available at `http://localhost:3000/`.
 
 ---
 
