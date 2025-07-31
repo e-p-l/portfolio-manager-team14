@@ -8,13 +8,14 @@
 
 /* App Header Styles */
 .app-header {
-  background-color: white;
+  background-color: #1976d2; /* Match the drawer header color */
   position: fixed;
-  z-index: 1100;
-  width: calc(100% - 240px);
-  margin-left: 240px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  z-index: 1200 !important;  /* Higher z-index to appear above drawer */
+  left: 0; /* Start from the left edge */
+  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.18) !important;
   border-bottom: 1px solid #e0e0e0;
+  height: 64px; /* Explicit height to match padding in drawer */
+  width: 100%; /* Ensure it spans the full width */
 }
 
 .app-title {
@@ -23,22 +24,25 @@
   letter-spacing: 0.3px;
   display: flex;
   align-items: center;
-  color: #333;
+  color: white;
 }
 
 .page-title-icon {
   margin-right: 10px;
-  color: #1976d2;
+  color: white; /* White icon for better contrast on blue background */
 }
 
 .header-icon {
-  color: white;
+  color: white; /* White icon for better contrast on blue background */
+  background-color: rgba(255, 255, 255, 0.1); /* Light background */
+  margin-left: 8px;
 }
 
 /* Drawer Styles */
 .drawer {
   width: 240px;
   flex-shrink: 0;
+  z-index: 1100; /* Lower than app-header but higher than content */
 }
 
 .drawer-paper {
@@ -46,6 +50,8 @@
   box-sizing: border-box;
   background-color: white;
   border-right: 1px solid #e0e0e0;
+  margin-top: 63px; /* Add padding to account for app bar height */
+  height: 100vh; /* Full viewport height */
 }
 
 .drawer-header {
@@ -55,12 +61,24 @@
   min-height: 64px;
   background-color: #1976d2;
   color: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 1101; /* Higher than drawer but lower than app-header */
 }
 
 .drawer-title {
   font-weight: 600;
   letter-spacing: 0.5px;
+}
+
+/* Navigation Item Styles */
+.nav-item {
+  padding: 0;
+  margin: 10px 0px
+}
+
+/* This styles the ListItemButton when selected */
+.nav-item-selected {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+  border-left: 4px solid #1976d2 !important;
 }
 
 /* Drawer separator */
@@ -72,9 +90,8 @@
 
 /* Navigation Item Styles */
 
-
 .nav-item {
-  padding: 10px 0px;
+  padding: 0;
 }
 
 .nav-item-icon {
@@ -96,8 +113,10 @@
 .main-content {
   flex-grow: 1;
   padding: 24px 32px;
-  margin-top: 64px;
+  margin-top: 64px; /* Match app bar height */
   width: calc(100% - 240px);
   background-color: #fafafa;
   min-height: calc(100vh - 64px);
+  z-index: 1000; /* Lower than drawer */
+  position: relative;
 }
