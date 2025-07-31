@@ -288,7 +288,7 @@ const PortfolioValueChart: React.FC = () => {
                 type="monotone" 
                 dataKey="value" 
                 stroke={areaColor} 
-                fillOpacity={1}
+                fillOpacity={0.6}
                 fill="url(#colorValue)"
                 animationDuration={750}
                 isAnimationActive={true}
