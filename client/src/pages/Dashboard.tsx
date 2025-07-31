@@ -32,6 +32,13 @@ const mockCashFlowData = [
   { name: 'Outflow', value: 20000, color: '#50e3c2' },
 ];
 
+const mockMarketMovers = [
+  { symbol: 'AAPL', name: 'Apple Inc.', price: '$150.00', change: '+1.5%', volume: '75M' },
+  { symbol: 'TSLA', name: 'Tesla Inc.', price: '$720.00', change: '-0.5%', volume: '30M' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.', price: '$3,000.00', change: '+2.0%', volume: '5M' },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.', price: '$2,800.00', change: '+0.8%', volume: '10M' },
+];
+
 const months = ['January', 'February', 'March', 'April', 'May'];
 
 const Dashboard: React.FC = () => {
@@ -151,10 +158,47 @@ const Dashboard: React.FC = () => {
               <CardContent>
                 <Box display="flex" alignItems="center" mb={2}>
                 <TrendingUp sx={{ mr: 1, color: '#4caf50' }} />
-                <Typography variant="h6">
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
                   Market Movers
                 </Typography>
-                </Box>
+              </Box>
+              <Box>
+                {mockMarketMovers.map((row, index) => (
+                  <Box 
+                    key={row.symbol} 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between',
+                      py: 1.5,
+                      px: 1,
+                      borderBottom: index < mockMarketMovers.length - 1 ? '1px solid #f0f0f0' : 'none',
+                      '&:hover': {
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: 1,
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
+                      }
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" fontWeight="600" sx={{ color: '#1a73e8', fontSize: '0.9rem' }}>
+                        {row.symbol}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#5f6368', fontSize: '0.75rem' }}>
+                        {row.name}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'right', minWidth: 80 }}>
+                      <Typography variant="body2" fontWeight="500" sx={{ color: '#424242', fontSize: '0.85rem' }}>
+                        {row.price}
+                      </Typography>
+                      <Typography variant="body2" fontWeight="500" sx={{ color: row.change.includes('+') ? '#34a853' : '#ea4335', fontSize: '0.85rem' }}>
+                        {row.change}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
               </CardContent>
             </Card>
           </Box>
