@@ -9,3 +9,6 @@ mysql-connector-python
 requests
 argparse
 yfinance
+cachetools==6.1.0
+pandas
+numpy

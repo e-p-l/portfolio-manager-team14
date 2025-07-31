@@ -4,10 +4,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 import yfinance as yf
+from cachetools import TTLCache
 from app import create_app, db
 from app.models.asset import Asset
 from app.models.portfolio import Portfolio
 from app.models.transaction import Transaction
+
+cache = TTLCache(maxsize=100, ttl=300)
 
 app = create_app()
 
