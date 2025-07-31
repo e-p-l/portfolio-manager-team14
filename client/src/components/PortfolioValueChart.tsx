@@ -159,7 +159,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const PortfolioValueChart: React.FC = () => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<string>('3M');
-  const [chartType, setChartType] = useState<'value' | 'change'>('value');
   
   // Generate mock data once on component mount
   const [allData] = useState<PortfolioValue[]>(generateMockData);
@@ -196,12 +195,7 @@ const PortfolioValueChart: React.FC = () => {
     }
   }, []);
   
-  // Change chart type handler
-  const handleChartTypeChange = useCallback((_: React.MouseEvent<HTMLElement>, newType: 'value' | 'change') => {
-    if (newType !== null) {
-      setChartType(newType);
-    }
-  }, []);
+  // No chart type handler needed
   
   // Format date for X-axis ticks
   const formatXAxis = (tickItem: string) => {
@@ -221,24 +215,11 @@ const PortfolioValueChart: React.FC = () => {
   return (
     <Card>
       <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Box display="flex" alignItems="center">
-            <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
-            <Typography variant="h6">
-              Portfolio Value
-            </Typography>
-          </Box>
-          
-          <ToggleButtonGroup
-            size="small"
-            value={chartType}
-            exclusive
-            onChange={handleChartTypeChange}
-            aria-label="chart type"
-          >
-            <ToggleButton value="value">Value</ToggleButton>
-            <ToggleButton value="change">Change</ToggleButton>
-          </ToggleButtonGroup>
+        <Box display="flex" alignItems="center" mb={2}>
+          <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
+          <Typography variant="h6">
+            Portfolio Value
+          </Typography>
         </Box>
         
         <Box display="flex" flexDirection="column" mb={2}>
