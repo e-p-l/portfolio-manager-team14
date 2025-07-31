@@ -17,7 +17,7 @@ def fetch_latest_prices(symbols):
             cache[symbol] = {
                 'price': metadata['price'],
                 'day_change': metadata['day_change'],
-                'day_change_percent': metadata['day_change_percent'],
+                'day_changeP': metadata['day_changeP'],
                 'sector': metadata['sector'],
                 'asset_type': metadata['asset_type'],
                 'update_time': datetime.now(timezone.utc).isoformat()
@@ -41,12 +41,12 @@ def fetch_asset_metadata(symbol):
     current_price = info.get("regularMarketPrice", 0)
     previous_close = info.get("previousClose", 0)
     day_change = current_price - previous_close
-    day_change_percent = ((day_change / previous_close) * 100) if previous_close else 0
+    day_changeP = ((day_change / previous_close) * 100) if previous_close else 0
 
     return {
         "price": current_price,
         "day_change": round(day_change, 2),
-        "day_change_percent": round(day_change_percent, 2),
+        "day_changeP": round(day_changeP, 2),
         "sector": sector,
         "asset_type": asset_type
     }

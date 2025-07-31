@@ -19,16 +19,18 @@ class Asset(db.Model):
     name            = db.Column(db.String(100), nullable=False)
     asset_type      = db.Column(db.String(50), nullable=False)
     sector          = db.Column(db.String(100), nullable=False)
+    day_changeP     = db.Column(db.Float, default=0)
 
     # relationships
     holdings       = db.relationship("Holding", back_populates="asset")
     history        = db.relationship("AssetHistory", back_populates="asset", cascade="all, delete-orphan")
 
-    def __init__(self, symbol, name, asset_type, sector):
+    def __init__(self, symbol, name, asset_type, sector, day_changeP):
         self.symbol = symbol
         self.name = name
         self.asset_type = asset_type
         self.sector = sector
+        self.day_changeP = day_changeP
 
     def serialize(self):
         return {
@@ -37,4 +39,5 @@ class Asset(db.Model):
             "name": self.name,
             "asset_type": self.asset_type,
             "sector": self.sector,
+            "day_changeP": self.day_changeP,
         }
