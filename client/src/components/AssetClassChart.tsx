@@ -1,6 +1,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Card, CardContent, Typography, Box } from '@mui/material';
+import { BarChartOutlined } from '@mui/icons-material';
 
 // Mock data for asset classes - replace this with real data later
 const mockAssetClassData = [
@@ -15,6 +16,7 @@ const AssetClassChart: React.FC = () => {
     <Card>
       <CardContent>
         <Box display="flex" alignItems="center" mb={2}>
+          <BarChartOutlined style={{ marginRight: 8, color: '#4a90e2' }} />
           <Typography variant="h6" color="primary">
             Asset Classes
           </Typography>
