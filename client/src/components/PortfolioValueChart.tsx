@@ -24,7 +24,7 @@ interface PortfolioPerformanceData {
   percentChange: number;
   highValue: number;
   lowValue: number;
-  absoluteChange: number;
+  valueChange: number;
 }
 
 // Create mock data for portfolio value over time
@@ -110,8 +110,8 @@ const filterData = (data: PortfolioValue[], range: string): PortfolioPerformance
   // Calculate performance metrics
   const startValue = filteredData[0]?.value || 0;
   const endValue = filteredData[filteredData.length - 1]?.value || 0;
-  const absoluteChange = endValue - startValue;
-  const percentChange = startValue ? (absoluteChange / startValue) * 100 : 0;
+  const valueChange = endValue - startValue;
+  const percentChange = startValue ? (valueChange / startValue) * 100 : 0;
   
   // Find high and low values
   const values = filteredData.map(item => item.value);
@@ -123,7 +123,7 @@ const filterData = (data: PortfolioValue[], range: string): PortfolioPerformance
     startValue,
     endValue,
     percentChange,
-    absoluteChange,
+    valueChange,
     highValue,
     lowValue
   };
@@ -165,14 +165,14 @@ const PortfolioValueChart: React.FC = () => {
   
   // Filter data based on selected time range
   const performanceData = filterData(allData, timeRange);
-  const { data, percentChange, absoluteChange, endValue } = performanceData;
+  const { data, percentChange, valueChange, endValue } = performanceData;
   
   // Format change value
   const formattedChange = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     signDisplay: 'always'
-  }).format(absoluteChange);
+  }).format(valueChange);
   
   // Format percentage
   const formattedPercentage = new Intl.NumberFormat('en-US', {
