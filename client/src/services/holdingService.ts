@@ -7,6 +7,7 @@ export interface Holding {
   asset_name?: string;
   asset_symbol?: string;
   asset_type?: string;
+  asset_sector?: string;
   quantity: number;
   purchase_price: number;
   current_price?: number;

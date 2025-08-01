@@ -24,6 +24,7 @@ export const useHoldings = (portfolioId: number) => {
             asset_name: 'Apple Inc.', 
             asset_symbol: 'AAPL',
             asset_type: 'equity',
+            asset_sector: 'Technology',
             quantity: 10, 
             purchase_price: 150.00,
             current_price: 175.25
@@ -35,6 +36,7 @@ export const useHoldings = (portfolioId: number) => {
             asset_name: 'Microsoft Corporation', 
             asset_symbol: 'MSFT',
             asset_type: 'equity',
+            asset_sector: 'Technology',
             quantity: 5, 
             purchase_price: 280.50,
             current_price: 310.75
@@ -46,6 +48,7 @@ export const useHoldings = (portfolioId: number) => {
             asset_name: 'Vanguard S&P 500 ETF', 
             asset_symbol: 'VOO',
             asset_type: 'etf',
+            asset_sector: 'ETF',
             quantity: 3, 
             purchase_price: 380.20,
             current_price: 410.30
