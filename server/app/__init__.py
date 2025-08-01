@@ -32,7 +32,4 @@ def create_app():
     from .routes.transactions import api_ns as transactions_api_ns
     api.add_namespace(transactions_api_ns, path='/transactions')
 
-    from .routes.portfolio_value import api_ns as portfolio_value_ns
-    api.add_namespace(portfolio_value_ns, path='/api/portfolio_values')
-
     return app

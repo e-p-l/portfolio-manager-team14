@@ -42,6 +42,14 @@ def buy_holding(portfolio_id, asset_id, quantity, purchase_price):
     """
     Buys a holding by creating a new Holding record.
     """
+    portfolio = Portfolio.query.get(portfolio_id)
+    if not portfolio:
+        raise ValueError("Portfolio not found.")
+
+    cost = quantity * purchase_price
+    if portfolio.balance < cost:
+        raise ValueError("Insufficient balance in portfolio.")
+    
     holding = Holding(
         portfolio_id=portfolio_id,
         asset_id=asset_id,
@@ -50,4 +58,8 @@ def buy_holding(portfolio_id, asset_id, quantity, purchase_price):
     )
     db.session.add(holding)
     db.session.commit()
+
+    portfolio.balance -= cost
+    db.session.commit()
+
     return holding
