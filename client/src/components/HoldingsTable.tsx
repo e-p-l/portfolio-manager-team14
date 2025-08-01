@@ -137,7 +137,7 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
           </Typography>
         </Box>
       ) : (
-        <TableContainer component={Paper} sx={{ maxHeight: 440 }}>
+        <TableContainer component={Paper} sx={{ maxHeight: '750px', overflowY: 'auto' }}>
           <Table stickyHeader aria-label="holdings table" size="small">
             <TableHead>
               <TableRow>
