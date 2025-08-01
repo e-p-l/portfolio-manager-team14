@@ -1,0 +1,18 @@
+Friday August 1th
+
+Frontend:
+- Done:
+  Main pages are created and they display real data
+  Charts to display insights into the portfolio complete but with mocked data
++ Next:
+  Hook charts to database data
+  Polish the pages
+
+Backend:
+- Done:
+  Database is all setup.
+  CRUD endpoints are completed and tested.
++ Next:
+  Correcting some bugs
+  Write business logic to provide insights to the frontend
+

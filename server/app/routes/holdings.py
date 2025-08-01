@@ -3,6 +3,7 @@ from ..models.holding import Holding
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 from flask_restx import Namespace, Resource, fields
 
 api_ns = Namespace('holdings', description='Holding operations')
@@ -103,7 +104,7 @@ class HoldingsByPortfolioResource(Resource):
     def get(self, portfolio_id):
         """Returns all holdings for a specific portfolio."""
         try:
-            holdings = Holding.query.filter_by(portfolio_id=portfolio_id).all()
+            holdings = Holding.query.options(joinedload(Holding.asset)).filter_by(portfolio_id=portfolio_id).all()
             if holdings:
                 return [h.serialize() for h in holdings], 200
             else:
