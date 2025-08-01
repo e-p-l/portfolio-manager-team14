@@ -138,7 +138,17 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
         </Box>
       ) : (
         <TableContainer component={Paper} sx={{ maxHeight: '750px', overflowY: 'auto' }}>
-          <Table stickyHeader aria-label="holdings table" size="small">
+          <Table 
+            stickyHeader 
+            aria-label="holdings table" 
+            size="small"
+            sx={{
+              '& .MuiTableCell-root': {
+                paddingTop: '8px',
+                paddingBottom: '8px',
+              }
+            }}
+          >
             <TableHead>
               <TableRow>
                 <TableCell>Symbol</TableCell>
