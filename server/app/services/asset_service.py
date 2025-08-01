@@ -1,49 +1,62 @@
 import yfinance as yf
 from cachetools import TTLCache
+from datetime import datetime, timezone
+
+from app import db
+from app.models.asset import Asset
+from app.models.asset_history import AssetHistory
 
 cache = TTLCache(maxsize=100, ttl=300)
 
 def fetch_latest_prices(symbols):
+    # Fetches the latest stock prices for the given symbols. with caching
+    uncached_symbols = [s for s in symbols if s not in cache]
+    for symbol in uncached_symbols:
+        try:
+            metadata = fetch_asset_metadata(symbol)
+            cache[symbol] = {
+                'price': metadata['price'],
+                'day_change': metadata['day_change'],
+                'day_changeP': metadata['day_changeP'],
+                'sector': metadata['sector'],
+                'asset_type': metadata['asset_type'],
+                'update_time': datetime.now(timezone.utc).isoformat()
+            }
+        except Exception as e:
+            print(f"Error fetching data for {symbol}:", e)
+
+    return {symbol: cache[symbol] for symbol in symbols if symbol in cache}
+
+def fetch_asset_metadata(symbol):
     """
-    Fetches the latest stock prices for the given symbols.
-    
-    Args:
-        symbols (list): List of stock symbols to fetch prices for.
-    
-    Returns:
-        dict: A dictionary with stock symbols as keys and their latest prices and update times as values.
+    Fetches metadata like sector and type from yfinance.
     """
-    data = fetch_historical_prices(symbols, period="1d", interval="1m")
+    ticker = yf.Ticker(symbol)
+    info = ticker.info
 
-    latest_date = sorted(data.keys())[-1]
-    latest_data = data[latest_date]
+    sector = info.get("sector", "N/A")
+    asset_type = info.get("quoteType", "stock")  # 'ETF', 'equity', 'mutualfund', etc.
 
-    result = {}
-    result['update_time'] = latest_date
-    for symbol in symbols:
-        if symbol in latest_data:
-            result[symbol] = latest_data[symbol]['Close']
-    
-    return result
+    # Day change calculation
+    current_price = info.get("regularMarketPrice", 0)
+    previous_close = info.get("previousClose", 0)
+    day_change = current_price - previous_close
+    day_changeP = ((day_change / previous_close) * 100) if previous_close else 0
 
+    return {
+        "price": current_price,
+        "day_change": round(day_change, 2),
+        "day_changeP": round(day_changeP, 2),
+        "sector": sector,
+        "asset_type": asset_type
+    }
 
 def fetch_historical_prices(symbols, period="1y", interval="1d"):
     """
     Fetches historical stock data for the given symbols.
-    
-    Args:
-        symbols (list[str]): Stock symbol to fetch historical data for.
-        period (str): Period for which to fetch data (default is "1y").
-        interval (str): Interval of the data (default is "1d").
-    
-    Returns:
-        dict: A dictionary with stock symbols as keys and their historical data as values.
     """
     data = yf.download(tickers=symbols, period=period, interval=interval, progress=False, auto_adjust=True)
-
-    # flatten the multi-index columns
     data.columns = ['_'.join(col) for col in data.columns.values]
-
     result = dataframe_to_nested_dict(data)
     
     return result
@@ -51,7 +64,6 @@ def fetch_historical_prices(symbols, period="1y", interval="1d"):
 def dataframe_to_nested_dict(df):
     """
     Converts a DataFrame with columns like 'Close_NVDA' to a nested dict:
-    {date: {symbol: {field: value, ...}, ...}, ...}
     """
     result = {}
     for idx, row in df.iterrows():
@@ -64,3 +76,23 @@ def dataframe_to_nested_dict(df):
                     result[date_str][symbol] = {}
                 result[date_str][symbol][field] = row[col]
     return result
+
+def save_price_to_db(symbol, price, timestamp):
+    """
+    Save the fetched price into a MySQL table called `asset_history`.
+    """
+    try:
+        asset = Asset.query.filter_by(symbol=symbol).first()
+        if not asset:
+            print(f"Asset {symbol} not found in database.")
+            return None
+        
+        asset_history = AssetHistory(
+            asset_id=asset.id,
+            price=price,
+            timestamp=timestamp
+        )
+        db.session.add(asset_history)
+        db.session.commit()
+    except Exception as e:
+        print("Database error:", e)
