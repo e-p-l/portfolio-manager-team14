@@ -27,6 +27,7 @@ def get_asset_info(symbol):
     """
     Helper function to fetch asset details from yfinance.
     Returns a dict with name, asset_type, sector, and day_changeP.
+    Calculates day_changeP
     """
     ticker = yf.Ticker(symbol)
     info = ticker.info
