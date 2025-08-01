@@ -73,15 +73,15 @@ const Dashboard: React.FC = () => {
       <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} mt={3} sx={{ height: '350px' }}>
         {/* Left section - Takes 2/3 of space to match "Portfolio Value" */}
         <Box flex={{ xs: 1, md: 2 }} display="flex" gap={3} sx={{ height: '100%' }}>
-          {/* Cash Flow - Takes 1/2 of the left section (1/3 of total) */}
-          <Box flex={1} sx={{ height: '100%' }}>
+          {/* Cash Flow - Takes 2/5 of the left section */}
+          <Box flex={2} sx={{ height: '100%' }}>
             <Box sx={{ height: '100%' }}>
               <CashFlowChart />
             </Box>
           </Box>
           
-          {/* Top Holdings - Takes 1/2 of the left section (1/3 of total) */}
-          <Box flex={1} sx={{ height: '100%' }}>
+          {/* Top Holdings - Takes 3/5 of the left section (bigger than Cash Flow) */}
+          <Box flex={3} sx={{ height: '100%' }}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <Box display="flex" alignItems="center" mb={2}>
