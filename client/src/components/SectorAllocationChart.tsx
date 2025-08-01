@@ -120,10 +120,10 @@ const SectorAllocationChart: React.FC = () => {
             <PieChart>
               <Pie
                 data={chartData}
-                cx="50%"
+                cx="40%"
                 cy="50%"
-                innerRadius={40}
-                outerRadius={80}
+                innerRadius={50}
+                outerRadius={100}
                 paddingAngle={2}
                 dataKey="value"
               >
@@ -133,10 +133,13 @@ const SectorAllocationChart: React.FC = () => {
               </Pie>
               <Tooltip content={<CustomTooltip />} />
               <Legend 
-                verticalAlign="bottom" 
-                height={36}
+                verticalAlign="middle"
+                align="right"
+                layout="vertical"
+                iconType="circle"
+                wrapperStyle={{ paddingLeft: '20px' }}
                 formatter={(value, entry: any) => (
-                  <span style={{ color: entry.color }}>{value}</span>
+                  <span style={{ color: entry.color, fontSize: '12px' }}>{value}</span>
                 )}
               />
             </PieChart>
