@@ -1,6 +1,6 @@
 from app import db
 
-from datetime import datetime, timezone
+from datetime import date
 
 class AssetHistory(db.Model):
     __tablename__ = "asset_history"
@@ -8,14 +8,14 @@ class AssetHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     asset_id = db.Column(db.Integer, db.ForeignKey("assets.id", name="fk_asset_history_asset_id"), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False)
+    date = db.Column(db.Date, nullable=False)
 
     asset = db.relationship("Asset", back_populates="history")
 
-    def __init__(self, asset_id, price, timestamp=None):
+    def __init__(self, asset_id, price, date=None):
         self.asset_id = asset_id
         self.price = price
-        self.timestamp = timestamp or datetime.now(timezone.utc)
+        self.date = date or date.today()
 
     def serialize(self):
         return {
@@ -23,5 +23,5 @@ class AssetHistory(db.Model):
             "asset_id": self.asset_id,
             "asset_symbol": self.asset.symbol,
             "price": self.price,
-            "timestamp": self.timestamp.isoformat()
+            "date": self.date.isoformat()
         }
