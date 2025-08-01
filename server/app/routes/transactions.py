@@ -13,16 +13,16 @@ api_ns = Namespace('transactions', description='Transaction operations')
 transaction_input_models = {
     'create' : api_ns.model('Transaction', {
         'portfolio_id': fields.Integer(required=True),
-        'holding_id': fields.Integer(required=True),
+        'holding_id': fields.Integer(required=False),
+        'asset_id': fields.Integer(required=False),
         'quantity': fields.Float(required=True),
         'price': fields.Float(required=True),
-        'created_at': fields.DateTime(required=True),
         'transaction_type': fields.String(required=True)
     }),
-    'update' : api_ns.model('Transaction', {
-        'quantity': fields.Float(required=True),
-        'price': fields.Float(required=True),
-        'transaction_type': fields.String(required=True)
+    'update': api_ns.model('TransactionUpdate', {
+        'quantity': fields.Float(required=False),
+        'price': fields.Float(required=False),
+        'transaction_type': fields.String(required=False)
     })
 }
 
