@@ -56,7 +56,7 @@ const AssetClassChart: React.FC = () => {
         <CardContent>
           <Box display="flex" alignItems="center" mb={2}>
             <BarChartOutlined style={{ marginRight: 8, color: '#4a90e2' }} />
-            <Typography variant="h6" color="primary">
+            <Typography variant="h6">
               Asset Classes
             </Typography>
           </Box>
@@ -74,7 +74,7 @@ const AssetClassChart: React.FC = () => {
         <CardContent>
           <Box display="flex" alignItems="center" mb={2}>
             <BarChartOutlined style={{ marginRight: 8, color: '#4a90e2' }} />
-            <Typography variant="h6" color="primary">
+            <Typography variant="h6">
               Asset Classes
             </Typography>
           </Box>
@@ -90,7 +90,7 @@ const AssetClassChart: React.FC = () => {
       <CardContent>
         <Box display="flex" alignItems="center" mb={2}>
           <BarChartOutlined style={{ marginRight: 8, color: '#4a90e2' }} />
-          <Typography variant="h6" color="primary">
+          <Typography variant="h6">
             Asset Classes
           </Typography>
         </Box>
