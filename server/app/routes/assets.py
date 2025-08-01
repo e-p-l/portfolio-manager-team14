@@ -50,6 +50,7 @@ def get_asset_info(symbol):
         "name": name,
         "asset_type": asset_type,
         "sector": sector,
+        "price": current_price,
         "day_changeP": day_changeP
     }
 
@@ -184,4 +185,42 @@ class AssetGainsResource(Resource):
                 for asset in assets
             ], 200
         except SQLAlchemyError as e:
+            return {"error": str(e)}, 500
+        
+
+#market movers list (static)
+watchlist = [
+    "WK", "ATEC", "TILE", "BIO", "IRTC", "APPF", "RDDT", "AUPH", "RKT", "COOP",  # Gainers
+    "FLR", "NSP", "ENVX", "LUMN", "EMN", "SATS", "INOD", "RIOT", "COIN", "NWL",  # Losers
+    "NVDA", "AMZN", "VALE", "LCID", "SOFI", "TSLA", "AAPL", "HOOD", "NIO", "AMD"  # Actives
+]
+@api_ns.route('/market_movers')
+class MarketMoversResource(Resource):
+    def get(self):
+        """
+        Returns top 2 gainers and top 2 losers from the static market movers list.
+        """
+        try:
+            movers = []
+
+            for symbol in watchlist:
+                try:
+                    info = get_asset_info(symbol) # gets info from the get_asset_info function
+                    if info and "day_changeP" in info:
+                        movers.append({
+                            "symbol": symbol,
+                            "name": info.get("name", symbol),
+                            "price": info.get("price"),
+                            "day_changeP": info.get("day_changeP")
+                        })
+                except Exception:
+                    continue  # Skip if info fails
+
+            sorted_movers = sorted(movers, key=lambda x: x["day_changeP"], reverse=True)
+            top_2_gainers = sorted_movers[:2]
+            top_2_losers = sorted_movers[-2:]
+
+            return top_2_gainers + top_2_losers, 200
+
+        except Exception as e:
             return {"error": str(e)}, 500
