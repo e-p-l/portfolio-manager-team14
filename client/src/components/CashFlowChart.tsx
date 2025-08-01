@@ -27,8 +27,8 @@ const CashFlowChart: React.FC = () => {
   };
 
   return (
-    <Card>
-      <CardContent>
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center">
             <PriceChange sx={{ mr: 1, color: '#6200ea' }} />
@@ -54,7 +54,7 @@ const CashFlowChart: React.FC = () => {
         <Typography variant="subtitle1" align="center" gutterBottom>
           {selectedMonth}
         </Typography>
-        <Box height={250}>
+        <Box sx={{ flex: 1, minHeight: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

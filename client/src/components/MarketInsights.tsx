@@ -19,8 +19,8 @@ import {
 
 const MarketInsights: React.FC = () => {
   return (
-    <Card sx={{ background: 'linear-gradient(to bottom, #f5f7fa, #ffffff)' }}>
-      <CardContent>
+    <Card sx={{ background: 'linear-gradient(to bottom, #f5f7fa, #ffffff)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Box display="flex" alignItems="center" mb={2}>
           <Lightbulb sx={{ mr: 1, color: '#f57c00' }} />
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -30,7 +30,8 @@ const MarketInsights: React.FC = () => {
         
         <Divider sx={{ my: 1.5 }} />
         
-        <List dense disablePadding>
+        <Box sx={{ flex: 1 }}>
+          <List dense disablePadding>
           <ListItem>
             <ListItemIcon>
               <ArrowUpward fontSize="small" sx={{ color: '#4caf50' }} />
@@ -58,6 +59,7 @@ const MarketInsights: React.FC = () => {
             <ListItemText primary="AAPL reached your target price" sx={{ color: '#424242' }} />
           </ListItem>
         </List>
+        </Box>
       </CardContent>
     </Card>
   );

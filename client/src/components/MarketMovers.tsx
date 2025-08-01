@@ -13,8 +13,8 @@ const MarketMovers: React.FC = () => {
   const { marketMovers, loading: loadingMarketMovers } = useMarketMovers();
 
   return (
-    <Card>
-      <CardContent>
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Box display="flex" alignItems="center" mb={2}>
           <TrendingUp sx={{ mr: 1, color: '#4caf50' }} />
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
@@ -27,7 +27,7 @@ const MarketMovers: React.FC = () => {
             <CircularProgress size={24} />
           </Box>
         ) : (
-          <Box>
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
             {marketMovers.map((mover, index) => (
               <Box 
                 key={mover.symbol} 

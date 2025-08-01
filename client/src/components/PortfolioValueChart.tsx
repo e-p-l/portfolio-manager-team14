@@ -213,8 +213,8 @@ const PortfolioValueChart: React.FC = () => {
   const areaColor = percentChange >= 0 ? theme.palette.success.light : theme.palette.error.light;
   
   return (
-    <Card>
-      <CardContent>
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Box display="flex" alignItems="center" mb={2}>
           <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
           <Typography variant="h6">
@@ -241,7 +241,7 @@ const PortfolioValueChart: React.FC = () => {
           </Box>
         </Box>
         
-        <Box height={300}>
+        <Box sx={{ flex: 1, minHeight: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={data}

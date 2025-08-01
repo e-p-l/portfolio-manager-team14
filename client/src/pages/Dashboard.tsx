@@ -7,7 +7,6 @@ import {
   Typography
 } from '@mui/material';
 import { 
-  ShowChart, 
   Analytics
 } from '@mui/icons-material';
 import HoldingsTable from '../components/HoldingsTable';
@@ -54,51 +53,61 @@ const Dashboard: React.FC = () => {
       </Typography>
       
       {/* First row - 2:1 ratio */}
-      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
+      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} sx={{ height: '450px' }}>
         {/* Portfolio Overview - Takes 2/3 of the space */}
-        <Box flex={{ xs: 1, md: 2 }}>
-          <PortfolioValueChart />
+        <Box flex={{ xs: 1, md: 2 }} sx={{ height: '100%' }}>
+          <Box sx={{ height: '100%' }}>
+            <PortfolioValueChart />
+          </Box>
         </Box>
 
         {/* Market Movers - Takes 1/3 of the space */}
-        <Box flex={{ xs: 1, md: 1 }}>
-          <MarketMovers />
+        <Box flex={{ xs: 1, md: 1 }} sx={{ height: '100%' }}>
+          <Box sx={{ height: '100%' }}>
+            <MarketMovers />
+          </Box>
         </Box>
       </Box>
 
       {/* Second row - Split to match first row's alignment */}
-      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} mt={3}>
-        {/* Left section - Takes 2/3 of space to match "Networth Over Time" */}
-        <Box flex={{ xs: 1, md: 2 }} display="flex" gap={3}>
+      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} mt={3} sx={{ height: '350px' }}>
+        {/* Left section - Takes 2/3 of space to match "Portfolio Value" */}
+        <Box flex={{ xs: 1, md: 2 }} display="flex" gap={3} sx={{ height: '100%' }}>
           {/* Cash Flow - Takes 1/2 of the left section (1/3 of total) */}
-          <Box flex={1}>
-            <CashFlowChart />
+          <Box flex={1} sx={{ height: '100%' }}>
+            <Box sx={{ height: '100%' }}>
+              <CashFlowChart />
+            </Box>
           </Box>
           
-          {/* Top Holding - Takes 1/2 of the left section (1/3 of total) */}
-          <Box flex={1}>
-            <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <Analytics sx={{ mr: 1, color: '#0277bd' }} />
-                <Typography variant="h6" gutterBottom>
-                  Top Holdings
-                </Typography>
-              </Box>
-              <HoldingsTable 
-                holdings={topHoldings} 
-                portfolioId={DEFAULT_PORTFOLIO_ID}
-                loading={loadingHoldings}
-                hideActions={true}
-              />
-            </CardContent>
+          {/* Top Holdings - Takes 1/2 of the left section (1/3 of total) */}
+          <Box flex={1} sx={{ height: '100%' }}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Analytics sx={{ mr: 1, color: '#0277bd' }} />
+                  <Typography variant="h6" gutterBottom>
+                    Top Holdings
+                  </Typography>
+                </Box>
+                <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                  <HoldingsTable 
+                    holdings={topHoldings} 
+                    portfolioId={DEFAULT_PORTFOLIO_ID}
+                    loading={loadingHoldings}
+                    hideActions={true}
+                  />
+                </Box>
+              </CardContent>
             </Card>
           </Box>
         </Box>
         
         {/* Right section - Takes 1/3 of space to match "Market Movers" */}
-        <Box flex={{ xs: 1, md: 1 }}>
-          <MarketInsights />
+        <Box flex={{ xs: 1, md: 1 }} sx={{ height: '100%' }}>
+          <Box sx={{ height: '100%' }}>
+            <MarketInsights />
+          </Box>
         </Box>
       </Box>
     </>
