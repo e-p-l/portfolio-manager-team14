@@ -144,10 +144,9 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
                 <TableCell>Symbol</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell align="right">Quantity</TableCell>
-                <TableCell align="right">Purchase Price</TableCell>
-                <TableCell align="right">Current Price</TableCell>
+                <TableCell align="right">Price</TableCell>
                 <TableCell align="right">Total Value</TableCell>
-                <TableCell align="right">Gain/Loss</TableCell>
+                {/* <TableCell align="right">Gain/Loss</TableCell> */}
                 {!hideActions && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
@@ -162,13 +161,12 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
                   <TableCell>{holding.asset_name}</TableCell>
                   <TableCell align="right">{holding.quantity}</TableCell>
                   <TableCell align="right">${holding.purchase_price.toFixed(2)}</TableCell>
-                  <TableCell align="right">${holding.current_price?.toFixed(2) || holding.purchase_price.toFixed(2)}</TableCell>
                   <TableCell align="right">${calculateTotalValue(holding).toFixed(2)}</TableCell>
-                  <TableCell align="right" sx={{
+                  {/* <TableCell align="right" sx={{
                     color: calculateGainLoss(holding) >= 0 ? 'success.main' : 'error.main'
                   }}>
                     {calculateGainLoss(holding).toFixed(2)}%
-                  </TableCell>
+                  </TableCell> */}
                   {!hideActions && (
                     <TableCell align="right">
                       <IconButton 
