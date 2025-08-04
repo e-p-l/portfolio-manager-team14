@@ -77,7 +77,6 @@ class HoldingsByPortfolioResource(Resource):
                     }
                 else:
                     merged_holdings[h.asset.symbol]['quantity'] += h.quantity
-                    merged_holdings[h.asset.symbol]['holdings_id'].append(h.id)
                     # TODO: Handle other fields like purchase_price
             
             return merged_holdings, 200
