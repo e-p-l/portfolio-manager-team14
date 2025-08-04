@@ -98,7 +98,7 @@ const SectorAllocationChart: React.FC<SectorAllocationChartProps> = ({
                 iconType="circle"
                 wrapperStyle={{ paddingLeft: '20px' }}
                 formatter={(value, entry: any) => (
-                  <span style={{ color: entry.color, fontSize: '12px' }}>{value}</span>
+                  <span style={{ color: entry.color, fontSize: '14px' }}>{value}</span>
                 )}
               />
             </PieChart>
