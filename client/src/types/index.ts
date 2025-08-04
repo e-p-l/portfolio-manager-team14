@@ -28,13 +28,14 @@ export interface UpdatePortfolioRequest {
 
 // Asset related types
 export interface Asset {
-  id: number;
+  id?: number; // Optional - only needed for database operations
   symbol: string;
   name: string;
   asset_type?: string;
   exchange?: string;
   sector?: string;
   current_price?: number;
+  day_changeP?: number; // Add this for price change percentage
 }
 
 // Holding related types

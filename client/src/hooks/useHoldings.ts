@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { HoldingService, Holding } from '../services/holdingService';
-import { AssetService } from '../services/assetService';
+import { Asset } from '../types';
 
 export const useHoldings = (portfolioId: number) => {
   const [holdings, setHoldings] = useState<Holding[]>([]);
@@ -59,33 +59,41 @@ export const useHoldings = (portfolioId: number) => {
     }
   }, [portfolioId]);
 
-  // Add holding function
-  const addHolding = useCallback(async (assetSymbol: string, quantity: number) => {
+  // Add holding function - uses the selected asset directly
+  const addHolding = useCallback(async (selectedAsset: Asset, quantity: number) => {
     try {
       setLoading(true);
+      setError(null);
       
-      // First, search for the asset by symbol
-      const assets = await AssetService.searchAssets(assetSymbol);
-      if (assets.length === 0) {
-        throw new Error(`Asset with symbol "${assetSymbol}" not found`);
+      // Validate that we have a proper asset object
+      if (!selectedAsset || !selectedAsset.symbol) {
+        throw new Error('Please select a valid asset');
       }
       
-      const asset = assets[0]; // Take the first match
+      if (!selectedAsset.current_price) {
+        throw new Error(`Current price not available for ${selectedAsset.symbol}`);
+      }
       
-      // Create holding with current market price
+      if (quantity <= 0) {
+        throw new Error('Quantity must be greater than 0');
+      }
+      
+      // Create holding with the selected asset - backend will handle asset_id and current price
       const newHolding = await HoldingService.createHolding(
         portfolioId,
-        asset.id,
-        quantity,
-        asset.current_price || 0 // Use current market price
+        selectedAsset, // Send entire asset object
+        quantity
       );
       
-      // Refresh holdings
+      // Refresh holdings to show updated data
       await fetchHoldings();
       return newHolding;
     } catch (err) {
       console.error('Error adding holding:', err);
+      setError(err instanceof Error ? err.message : 'Failed to add holding');
       throw err;
+    } finally {
+      setLoading(false);
     }
   }, [portfolioId, fetchHoldings]);
 
@@ -93,27 +101,39 @@ export const useHoldings = (portfolioId: number) => {
   const removeHolding = useCallback(async (holdingId: number, quantity: number) => {
     try {
       setLoading(true);
+      setError(null);
       
       const holding = holdings.find(h => h.id === holdingId);
       if (!holding) {
         throw new Error('Holding not found');
       }
       
+      if (quantity <= 0) {
+        throw new Error('Quantity must be greater than 0');
+      }
+      
+      if (quantity > holding.quantity) {
+        throw new Error(`Cannot sell ${quantity} shares. You only own ${holding.quantity} shares.`);
+      }
+      
       if (quantity >= holding.quantity) {
-        // Delete entire holding
+        // Delete entire holding if selling all shares
         await HoldingService.deleteHolding(holdingId);
       } else {
-        // Update quantity
+        // Update quantity if selling partial shares
         await HoldingService.updateHolding(holdingId, {
           quantity: holding.quantity - quantity
         });
       }
       
-      // Refresh holdings
+      // Refresh holdings to show updated data
       await fetchHoldings();
     } catch (err) {
       console.error('Error removing holding:', err);
+      setError(err instanceof Error ? err.message : 'Failed to remove holding');
       throw err;
+    } finally {
+      setLoading(false);
     }
   }, [holdings, fetchHoldings]);
 

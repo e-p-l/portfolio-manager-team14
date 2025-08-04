@@ -30,7 +30,7 @@ interface HoldingsTableProps {
   loading: boolean;
   onHoldingsChange?: () => void;
   hideActions?: boolean;
-  addHolding?: (assetSymbol: string, quantity: number) => Promise<any>;
+  addHolding?: (selectedAsset: Asset, quantity: number) => Promise<any>;
   removeHolding?: (holdingId: number, quantity: number) => Promise<any>;
 }
 
@@ -72,14 +72,19 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
     }
   };
 
-  // Debounced search
+  // Debounced search - only search when manually typing, not when selecting
   useEffect(() => {
+    // Don't search if an asset is already selected
+    if (selectedAsset) {
+      return;
+    }
+    
     const timeoutId = setTimeout(() => {
       searchAssets(assetSymbol);
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [assetSymbol]);
+  }, [assetSymbol, selectedAsset]);
 
   const handleBuyOpen = () => {
     setQuantity(0);
@@ -111,12 +116,13 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
     
     try {
       setActionLoading(true);
-      await addHolding(selectedAsset.symbol, quantity);
+      // Pass the entire selected asset object directly to backend - no additional search needed
+      await addHolding(selectedAsset, quantity);
       handleClose();
       if (onHoldingsChange) onHoldingsChange();
     } catch (error) {
       console.error('Error buying asset:', error);
-      alert(error instanceof Error ? error.message : 'Failed to buy asset');
+      alert(error instanceof Error ? error.message : 'Failed to buy asset. Please try again.');
     } finally {
       setActionLoading(false);
     }
@@ -132,7 +138,7 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
       if (onHoldingsChange) onHoldingsChange();
     } catch (error) {
       console.error('Error selling asset:', error);
-      alert('Failed to sell asset');
+      alert(error instanceof Error ? error.message : 'Failed to sell asset. Please try again.');
     } finally {
       setActionLoading(false);
     }
@@ -250,58 +256,94 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
             Search for an asset by symbol or name to buy at current market price
           </Typography>
           
-          <Autocomplete
-            options={assetOptions}
-            getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
-            value={selectedAsset}
-            onChange={(event, newValue) => {
-              setSelectedAsset(newValue);
-            }}
-            inputValue={assetSymbol}
-            onInputChange={(event, newInputValue) => {
-              setAssetSymbol(newInputValue);
-            }}
-            loading={assetLoading}
-            loadingText="Searching assets..."
-            noOptionsText={assetSymbol.length > 0 ? "No assets found." : "Start typing to search for assets..."}
-            open={assetSymbol.length > 0}
-            filterOptions={(x) => x} // Disable built-in filtering since we do server-side search
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                margin="dense"
-                label="Search Asset (e.g., AAPL or Apple)"
-                fullWidth
-                variant="outlined"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {assetLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            renderOption={(props, option) => (
-              <Box component="li" {...props}>
+          {!selectedAsset ? (
+            <Autocomplete
+              options={assetOptions}
+              getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
+              value={selectedAsset}
+              onChange={(event, newValue) => {
+                setSelectedAsset(newValue);
+                // Clear search input when asset is selected to prevent further searches
+                if (newValue) {
+                  setAssetSymbol('');
+                  setAssetOptions([]); // Clear options to close dropdown
+                }
+              }}
+              inputValue={assetSymbol}
+              onInputChange={(event, newInputValue, reason) => {
+                // Only update search when user is typing manually
+                if (reason === 'input') {
+                  setAssetSymbol(newInputValue);
+                }
+                // Don't trigger search when clearing or selecting
+              }}
+              loading={assetLoading}
+              loadingText="Searching assets..."
+              noOptionsText="No assets found"
+              filterOptions={(x) => x} // Disable built-in filtering
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  margin="dense"
+                  label="Search Asset (e.g., AAPL or Apple)"
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {assetLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box component="li" {...props}>
+                  <Box>
+                    <Typography variant="body1" fontWeight="bold">
+                      {option.symbol}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {option.name}
+                    </Typography>
+                    {option.current_price && (
+                      <Typography variant="caption" color="primary">
+                        ${option.current_price.toFixed(2)}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            />
+          ) : (
+            <Box mt={2} mb={2}>
+              <Box display="flex" alignItems="center" justifyContent="space-between" p={2} bgcolor="grey.50" borderRadius={1} border="1px solid" borderColor="grey.300">
                 <Box>
-                  <Typography variant="body1" fontWeight="bold">
-                    {option.symbol}
+                  <Typography variant="h6" color="primary">
+                    {selectedAsset.symbol} - {selectedAsset.name}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {option.name}
-                  </Typography>
-                  {option.current_price && (
-                    <Typography variant="caption" color="primary">
-                      ${option.current_price.toFixed(2)}
+                  {selectedAsset.current_price && (
+                    <Typography variant="body2" color="textSecondary">
+                      Current Price: ${selectedAsset.current_price.toFixed(2)}
                     </Typography>
                   )}
                 </Box>
+                <Button 
+                  variant="outlined"
+                  size="small" 
+                  onClick={() => {
+                    setSelectedAsset(null);
+                    setAssetSymbol('');
+                  }}
+                  color="primary"
+                >
+                  Change Asset
+                </Button>
               </Box>
-            )}
-          />
+            </Box>
+          )}
           
           <TextField
             margin="dense"
