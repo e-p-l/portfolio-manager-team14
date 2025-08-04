@@ -1,79 +1,118 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel
-} from '@mui/material';
-import { PriceChange } from '@mui/icons-material';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import React from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Card, CardContent, Typography, Box } from '@mui/material';
 
-const mockCashFlowData = [
-  { name: 'Inflow', value: 34000, color: '#4a90e2' },
-  { name: 'Outflow', value: 20000, color: '#50e3c2' },
+interface CashFlowChartProps {
+  data?: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  title?: string;
+}
+
+// Mock data (easily replaceable)
+const defaultData = [
+  { name: 'Purchases', value: 15900, color: '#4caf50' },
+  { name: 'Sales', value: 3200, color: '#f44336' },
 ];
 
-const months = ['January', 'February', 'March', 'April', 'May'];
+// Custom tooltip to fix the mixing issue
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <Box
+        sx={{
+          backgroundColor: '#fff',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+          p: 1.5
+        }}
+      >
+        <Typography variant="body2" fontWeight="bold" sx={{ color: data.payload.color }}>
+          {data.payload.name}
+        </Typography>
+        <Typography variant="body2">
+          ${data.value.toLocaleString()}
+        </Typography>
+      </Box>
+    );
+  }
+  return null;
+};
 
-const CashFlowChart: React.FC = () => {
-  const [selectedMonth, setSelectedMonth] = useState(months[0]);
-
-  const handleMonthChange = (event: any) => {
-    setSelectedMonth(event.target.value);
-  };
+const CashFlowChart: React.FC<CashFlowChartProps> = ({ 
+  data = defaultData,
+  title = "Transaction Distribution"
+}) => {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-          <Box display="flex" alignItems="center">
-            <PriceChange sx={{ mr: 1, color: '#6200ea' }} />
-            <Typography variant="h6" gutterBottom>
-              Cash Flow
-            </Typography>
-          </Box>
-          <FormControl size="small" variant="outlined">
-            <InputLabel>Month</InputLabel>
-            <Select
-              value={selectedMonth}
-              onChange={handleMonthChange}
-              label="Month"
-            >
-              {months.map((month) => (
-                <MenuItem key={month} value={month}>
-                  {month}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-        <Typography variant="subtitle1" align="center" gutterBottom>
-          {selectedMonth}
+        <Typography variant="h6" gutterBottom>
+          {title}
         </Typography>
-        <Box sx={{ flex: 1, minHeight: 200 }}>
+
+        <Box sx={{ flex: 1, position: 'relative', minHeight: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={mockCashFlowData}
+                data={data}
                 cx="50%"
                 cy="50%"
-                outerRadius={100}
-                innerRadius={0}
-                cornerRadius={5}
-                paddingAngle={2}
+                innerRadius={50}
+                outerRadius={80}
+                paddingAngle={5}
                 dataKey="value"
               >
-                {mockCashFlowData.map((entry, index) => (
+                {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
+
+          {/* Center value */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center'
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold">
+              ${total.toLocaleString()}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Total Volume
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Legend */}
+        <Box display="flex" justifyContent="center" gap={3} mt={2}>
+          {data.map((item) => (
+            <Box key={item.name} display="flex" alignItems="center">
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  backgroundColor: item.color,
+                  mr: 1
+                }}
+              />
+              <Typography variant="body2">
+                {item.name}: ${item.value.toLocaleString()}
+              </Typography>
+            </Box>
+          ))}
         </Box>
       </CardContent>
     </Card>

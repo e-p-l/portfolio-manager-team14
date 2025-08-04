@@ -1,5 +1,7 @@
 import React from 'react';
 import { Typography, Box, Card, CardContent } from '@mui/material';
+import TransactionTimeline from '../components/TransactionTimeline';
+import TransactionFlow from '../components/TransactionFlow';
 
 const Transactions: React.FC = () => {
   return (
@@ -13,13 +15,19 @@ const Transactions: React.FC = () => {
       }}>
         Transactions
       </Typography>
-    <Card>
-        <CardContent>
-          <Typography variant="body1">
-            Transaction history will be displayed here.
-          </Typography>
-        </CardContent>
-      </Card>
+      
+      {/* Transaction page layout */}
+      <Box display="flex" flexDirection="column" gap={3}>
+        {/* First row - 30% height with summary and filter */}
+        <Box sx={{ height: '30vh' }}>
+          <TransactionFlow />
+        </Box>
+        
+        {/* Second row - 70% height with transaction list */}
+        <Box sx={{ height: '70vh' }}>
+          <TransactionTimeline />
+        </Box>
+      </Box>
     </Box>
   );
 };
