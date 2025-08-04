@@ -24,7 +24,7 @@ class Holding(db.Model):
     # relationships
     portfolio = db.relationship('Portfolio', back_populates='holdings')
     asset = db.relationship('Asset', back_populates='holdings')
-    transactions = db.relationship('Transaction', back_populates='holding')
+    # transactions = db.relationship('Transaction', back_populates='holding')
 
     def __init__(self, portfolio_id, asset_id, quantity, purchase_price, purchase_date=None):
         self.portfolio_id = portfolio_id

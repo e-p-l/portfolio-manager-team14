@@ -16,7 +16,7 @@ class Transaction(db.Model):
     # foreign keys
     id                  = db.Column(db.Integer, primary_key=True)
     portfolio_id        = db.Column(db.Integer, db.ForeignKey("portfolios.id", name="fk_transactions_portfolios_id"), nullable=False)
-    holding_id            = db.Column(db.Integer, db.ForeignKey("holdings.id", name="fk_transactions_holdings_id"), nullable=False)
+    holding_id          = db.Column(db.Integer, db.ForeignKey("holdings.id", name="fk_transactions_holdings_id"), nullable=True)
 
     # transaction data
     quantity            = db.Column(db.Float, nullable=False)
@@ -26,9 +26,12 @@ class Transaction(db.Model):
 
     # relationships
     portfolio           = db.relationship("Portfolio", back_populates="transactions")
-    holding             = db.relationship("Holding", back_populates="transactions")   
+    # holding             = db.relationship("Holding", back_populates="transactions")
 
     def __init__(self, portfolio_id, holding_id, quantity, price, transaction_type, created_at=None):
+        print(f"Creating transaction: portfolio_id={portfolio_id}, holding_id={holding_id}")
+        if holding_id is None:
+            raise ValueError("holding_id cannot be None!")
         self.portfolio_id = portfolio_id
         self.holding_id = holding_id
         self.quantity = quantity

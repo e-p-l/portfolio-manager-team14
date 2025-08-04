@@ -52,9 +52,20 @@ class TransactionListResource(Resource):
         if not all(field in data for field in required_fields[data['transaction_type'].lower()]):
             return {"error": "Missing required fields"}, 400
 
-        asset = Asset.query.get(data['asset_id'])
-        if not asset:
-            return {"error": "Asset not found"}, 404
+        # Get asset_id based on transaction type
+        if data['transaction_type'].lower() == 'buy':
+            asset = Asset.query.get(data['asset_id'])
+            if not asset:
+                return {"error": "Asset not found"}, 404
+            asset_id = data['asset_id']
+        else:  # sell
+            holding = Holding.query.get(data['holding_id'])
+            if not holding:
+                return {"error": "Holding not found"}, 404
+            asset = Asset.query.get(holding.asset_id)
+            if not asset:
+                return {"error": "Asset not found"}, 404
+            asset_id = holding.asset_id
 
         try:
             # fetch latest price for the asset
@@ -66,31 +77,59 @@ class TransactionListResource(Resource):
             update_asset_history(asset.id, latest_price, date.today())
 
             if data['transaction_type'].lower() == 'buy':
-                holding = buy_holding(data['portfolio_id'], asset.id, data['quantity'], latest_price)
+                holding = buy_holding(data['portfolio_id'], asset_id, data['quantity'], latest_price)
+                holding_id = holding.id
+                
+                transaction = Transaction(
+                    portfolio_id=data['portfolio_id'],
+                    holding_id=holding_id,
+                    quantity=data['quantity'],
+                    price=latest_price,
+                    created_at=datetime.now(timezone.utc),
+                    transaction_type=data['transaction_type'].lower()
+                )
+                db.session.add(transaction)
+                db.session.commit()
 
             elif data['transaction_type'].lower() == 'sell':
-                sell_holding(data['holding_id'], data['quantity'], latest_price)
+                pnl, should_delete_holding = sell_holding(data['holding_id'], data['quantity'], latest_price)
+                holding_id = data['holding_id']
+                
+                # Create the transaction first
+                transaction = Transaction(
+                    portfolio_id=data['portfolio_id'],
+                    holding_id=holding_id,
+                    quantity=data['quantity'],
+                    price=latest_price,
+                    created_at=datetime.now(timezone.utc),
+                    transaction_type=data['transaction_type'].lower()
+                )
+                db.session.add(transaction)
+                db.session.commit()
+                
+                print(f"Transaction created with ID: {transaction.id}")
+    
+                # Delete the holding if quantity is exactly 0
+                # if should_delete_holding == 0:
+                #     print(f"Attempting to delete holding {holding_id} as quantity is 0")
+                #     holding_to_delete = Holding.query.get(holding_id)
+                #     if holding_to_delete and holding_to_delete.quantity == 0:
+                #         print(f"Found holding with quantity {holding_to_delete.quantity}, deleting...")
+                #         db.session.delete(holding_to_delete)
+                #         db.session.commit()
+                #         print("Holding deleted successfully")
+                #     else:
+                #         print(f"Holding not found or quantity not 0: {holding_to_delete.quantity if holding_to_delete else 'None'}")
 
             else:
                 return {"error": "Invalid transaction type"}, 400
-
-            transaction = Transaction(
-                portfolio_id=data['portfolio_id'],
-                holding_id=holding.id,
-                quantity=data['quantity'],
-                price=latest_price,
-                created_at=datetime.now(timezone.utc),
-                transaction_type=data['transaction_type'].lower()
-            )
-            db.session.add(transaction)
-            db.session.commit()
 
             return transaction.serialize(), 201
 
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
-
+        
 @api_ns.route('/<int:transaction_id>')
 class TransactionResource(Resource):
     def get(self, transaction_id):

@@ -11,15 +11,17 @@ import AssetClassChart from '../components/AssetClassChart';
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now as requested
 
 const Portfolio: React.FC = () => {
-  const { portfolio, loading: loadingPortfolio } = usePortfolio();
+  const { portfolio, loading: loadingPortfolio, refetchPortfolio } = usePortfolio(); //change
   const { holdings, loading: loadingHoldings, refreshHoldings } = useHoldings(DEFAULT_PORTFOLIO_ID);
   const [refreshKey, setRefreshKey] = useState(0); // Used to trigger refetch
 
-  const handleHoldingsChange = () => {
-    // Trigger refetch by changing the key
-    setRefreshKey(prevKey => prevKey + 1);
-    refreshHoldings();
-  };
+  const handleHoldingsChange = async () => {
+  // Trigger refetch by changing the key
+  setRefreshKey(prevKey => prevKey + 1);
+  await refreshHoldings();
+  // Refetch portfolio to update balance
+  await refetchPortfolio();
+};
 
   const loading = loadingPortfolio || loadingHoldings;
 
@@ -46,7 +48,10 @@ const Portfolio: React.FC = () => {
                 Account Balance
               </Typography>
               <Typography variant="h5" fontWeight="bold" color="primary">
-                $12,340.50
+                ${portfolio?.balance?.toLocaleString('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+                }) || '0.00'}                        {/* $12,340.50 */}
               </Typography>
             </Box>
           </Box>

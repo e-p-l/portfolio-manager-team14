@@ -1,3 +1,4 @@
+//index.ts file in client/src/types folder
 // API Response wrapper
 export interface ApiResponse<T> {
   data: T;
@@ -8,11 +9,12 @@ export interface ApiResponse<T> {
 // Portfolio related types
 export interface Portfolio {
   id: number;
-  user_id: number;
   name: string;
-  description?: string;
+  balance: number;  
+  user_id: number;
   created_at: string;
   updated_at: string;
+  description?: string; 
 }
 
 export interface CreatePortfolioRequest {
