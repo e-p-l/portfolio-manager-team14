@@ -14,7 +14,6 @@ api_ns = Namespace('transactions', description='Transaction operations')
 transaction_input_models = {
     'create' : api_ns.model('Transaction', {
         'portfolio_id': fields.Integer(required=True),
-        'holding_id': fields.Integer(required=False),
         'asset_id': fields.Integer(required=False),
         'quantity': fields.Float(required=True),
         'transaction_type': fields.String(required=True)
