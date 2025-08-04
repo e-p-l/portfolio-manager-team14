@@ -1,4 +1,3 @@
-// filepath: c:\Users\zabiu\Documents\Morgan Stanley\CSF\project\portfolio_manager\client\src\pages\Dashboard.tsx
 import React from 'react';
 import { 
   Box, 

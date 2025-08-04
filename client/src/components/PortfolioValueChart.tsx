@@ -195,13 +195,10 @@ const PortfolioValueChart: React.FC = () => {
     }
   }, []);
   
-  // No chart type handler needed
   
-  // Format date for X-axis ticks
   const formatXAxis = (tickItem: string) => {
     const date = parseISO(tickItem);
     
-    // Format differently based on time range
     if (timeRange === '1W' || timeRange === '1M') {
       return format(date, 'MMM d');
     } else {
@@ -209,7 +206,6 @@ const PortfolioValueChart: React.FC = () => {
     }
   };
   
-  // Calculate point colors based on performance
   const areaColor = percentChange >= 0 ? theme.palette.success.light : theme.palette.error.light;
   
   return (
