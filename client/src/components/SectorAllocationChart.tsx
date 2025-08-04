@@ -2,25 +2,6 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import { PieChart as PieChartIcon } from '@mui/icons-material';
-import { useHoldings } from '../hooks/useHoldings';
-
-const DEFAULT_PORTFOLIO_ID = 1; // Match the same ID used in Dashboard
-
-// Color mapping for different sectors
-const sectorColors: { [key: string]: string } = {
-  Technology: '#8b5cf6',
-  Healthcare: '#06b6d4',
-  Financial: '#10b981',
-  Consumer: '#f59e0b',
-  Energy: '#ef4444',
-  ETF: '#6366f1',
-  Communications: '#ec4899',
-  Industrial: '#84cc16',
-  Materials: '#f97316',
-  Utilities: '#14b8a6',
-  'Real Estate': '#a855f7',
-  Other: '#6b7280'
-};
 
 // Custom tooltip component
 const CustomTooltip = ({ active, payload }: any) => {
@@ -40,42 +21,25 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const SectorAllocationChart: React.FC = () => {
-  const { holdings, loading } = useHoldings(DEFAULT_PORTFOLIO_ID);
+interface SectorAllocationChartProps {
+  sectorData: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  loading?: boolean;
+}
 
-  // Calculate sector allocation from holdings
-  const calculateSectorAllocation = () => {
-    if (!holdings || holdings.length === 0) return [];
-
-    const sectorMap: { [key: string]: number } = {};
-    let totalValue = 0;
-
-    // Calculate total value and value by sector
-    holdings.forEach(holding => {
-      const currentPrice = holding.current_price || holding.purchase_price;
-      const value = holding.quantity * currentPrice;
-      const sector = holding.asset_sector || 'Other';
-      
-      totalValue += value;
-      sectorMap[sector] = (sectorMap[sector] || 0) + value;
-    });
-
-    // Convert to percentage and format for chart
-    return Object.entries(sectorMap).map(([sector, value]) => ({
-      name: sector,
-      value: Math.round((value / totalValue) * 100),
-      color: sectorColors[sector] || sectorColors.Other
-    })).sort((a, b) => b.value - a.value); // Sort by value descending
-  };
-
-  const chartData = calculateSectorAllocation();
-
+const SectorAllocationChart: React.FC<SectorAllocationChartProps> = ({ 
+  sectorData, 
+  loading = false 
+}) => {
   if (loading) {
     return (
       <Card>
         <CardContent>
           <Box display="flex" alignItems="center" mb={2}>
-            <PieChartIcon sx={{ mr: 1, color: '#6200ea' }} />
+            <PieChartIcon style={{ marginRight: 8, color: '#8b5cf6' }} />
             <Typography variant="h6">
               Sector Allocation
             </Typography>
@@ -88,12 +52,12 @@ const SectorAllocationChart: React.FC = () => {
     );
   }
 
-  if (chartData.length === 0) {
+  if (!sectorData || sectorData.length === 0) {
     return (
       <Card>
         <CardContent>
           <Box display="flex" alignItems="center" mb={2}>
-            <PieChartIcon sx={{ mr: 1, color: '#6200ea' }} />
+            <PieChartIcon style={{ marginRight: 8, color: '#8b5cf6' }} />
             <Typography variant="h6">
               Sector Allocation
             </Typography>
@@ -105,45 +69,50 @@ const SectorAllocationChart: React.FC = () => {
       </Card>
     );
   }
+
   return (
     <Card>
       <CardContent>
         <Box display="flex" alignItems="center" mb={2}>
-          <PieChartIcon sx={{ mr: 1, color: '#6200ea' }} />
+          <PieChartIcon style={{ marginRight: 8, color: '#8b5cf6' }} />
           <Typography variant="h6">
             Sector Allocation
           </Typography>
         </Box>
         
-        <Box height={250}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="40%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend 
-                verticalAlign="middle"
-                align="right"
-                layout="vertical"
-                iconType="circle"
-                wrapperStyle={{ paddingLeft: '20px' }}
-                formatter={(value, entry: any) => (
-                  <span style={{ color: entry.color, fontSize: '12px' }}>{value}</span>
-                )}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+        <ResponsiveContainer width="100%" height={250}>
+          <PieChart>
+            <Pie
+              data={sectorData}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {sectorData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend 
+              verticalAlign="bottom" 
+              height={36}
+              formatter={(value, entry) => (
+                <span style={{ color: entry.color, fontSize: '12px' }}>
+                  {value}
+                </span>
+              )}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        
+        {/* Summary stats */}
+        <Box mt={2}>
+          <Typography variant="body2" color="text.secondary" align="center">
+            {sectorData.length} sectors • Top: {sectorData[0]?.name} ({sectorData[0]?.value}%)
+          </Typography>
         </Box>
       </CardContent>
     </Card>

@@ -12,14 +12,14 @@ import HoldingsTable from '../components/HoldingsTable';
 import CashFlowChart from '../components/CashFlowChart';
 import MarketMovers from '../components/MarketMovers';
 import MarketInsights from '../components/MarketInsights';
-import { useHoldingsOptimized } from '../hooks/useHoldingsOptimized';
+import { useHoldings } from '../hooks/useHoldings';
 import PortfolioValueChart from '../components/PortfolioValueChart';
 import NetworthChart from '../components/NetworthChart';
 
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now
 
 const Dashboard: React.FC = () => {
-  const { holdings, loading: loadingHoldings, addHolding, removeHolding, topPerformers } = useHoldingsOptimized(DEFAULT_PORTFOLIO_ID);
+  const { holdings, loading: loadingHoldings, addHolding, removeHolding, topPerformers } = useHoldings(DEFAULT_PORTFOLIO_ID);
 
   // Get top 5 best performing holdings - now using pre-computed data
   const getTopPerformingHoldings = () => {
