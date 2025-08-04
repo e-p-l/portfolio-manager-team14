@@ -55,15 +55,18 @@ def asset_allocation(portfolio_id: int):
 
     return allocation
 
-def backfill_portfolio_history(portfolio_id, start_date):
+def backfill_portfolio_history(portfolio_id):
     portfolio = Portfolio.query.get(portfolio_id)
     if not portfolio:
         return None
 
-    current = start_date
+    current = portfolio.creation_date
     while current <= datetime.now(timezone.utc).date():
         value = 0.0
         for holding in portfolio.holdings:
+            if holding.purchase_date.date() > current:
+                continue
+
             asset = Asset.query.get(holding.asset_id)
             ticker = yf.Ticker(asset.symbol.upper())
             hist = ticker.history(start=current, end=current + timedelta(days=1))

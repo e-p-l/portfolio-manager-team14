@@ -24,6 +24,5 @@ class PortfolioHistory(db.Model):
             "id": self.id,
             "portfolio_id": self.portfolio_id,
             "value": self.value,
-            "balance": self.balance,
             "date": self.date.isoformat()
         }
