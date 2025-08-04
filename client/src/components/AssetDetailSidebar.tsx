@@ -124,22 +124,6 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({ asset }) => {
         <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1.5} mb={2}>
           <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
             <Typography variant="caption" color="text.secondary">
-              Day High
-            </Typography>
-            <Typography variant="body2" fontWeight="bold" fontSize="0.8rem">
-              {formatPrice(details.dayHigh)}
-            </Typography>
-          </Paper>
-          <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-            <Typography variant="caption" color="text.secondary">
-              Day Low
-            </Typography>
-            <Typography variant="body2" fontWeight="bold" fontSize="0.8rem">
-              {formatPrice(details.dayLow)}
-            </Typography>
-          </Paper>
-          <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-            <Typography variant="caption" color="text.secondary">
               52W High
             </Typography>
             <Typography variant="body2" fontWeight="bold" fontSize="0.8rem">
