@@ -15,6 +15,7 @@ class Portfolio(db.Model):
     # portfolio data
     name            = db.Column(db.String(100), nullable=False)
     balance        = db.Column(db.Float, default=0.0)
+    # description     = db.Column(db.Text, nullable=True)
 
     # relationships
     holdings        = db.relationship("Holding", back_populates="portfolio")
