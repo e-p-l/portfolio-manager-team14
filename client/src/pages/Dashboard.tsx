@@ -43,15 +43,27 @@ const Dashboard: React.FC = () => {
 
   return (
     <>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ 
-        fontWeight: 500, 
-        color: '#1976d2',
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{
         borderBottom: '2px solid #e0e0e0',
         paddingBottom: '8px',
         marginBottom: '24px'
       }}>
-        Dashboard
-      </Typography>
+        <Typography variant="h4" component="h1" sx={{ 
+          fontWeight: 500, 
+          color: '#1976d2',
+        }}>
+          Dashboard
+        </Typography>
+        
+        <Box textAlign="right">
+          <Typography variant="body2" color="textSecondary">
+            Account Balance
+          </Typography>
+          <Typography variant="h5" fontWeight="bold" color="primary">
+            $12,340.50
+          </Typography>
+        </Box>
+      </Box>
       
       {/* First row - 2:1 ratio */}
       <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} sx={{ height: '450px' }}>

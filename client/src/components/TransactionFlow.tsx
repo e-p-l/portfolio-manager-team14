@@ -133,31 +133,6 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ data }) => {
               {((totalOutflow / totalVolume) * 100).toFixed(1)}%
             </Typography>
           </Box>
-
-          {/* Net Result */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              p: 2,
-              borderRadius: '12px',
-              background: 'linear-gradient(90deg, rgba(25, 118, 210, 0.2) 0%, rgba(25, 118, 210, 0.05) 100%)',
-              border: '1px solid rgba(25, 118, 210, 0.3)'
-            }}
-          >
-            <AccountBalance sx={{ mr: 2, color: '#1976d2' }} />
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body1" fontWeight="bold">
-                Net Position
-              </Typography>
-              <Typography variant="h6" color="#1976d2">
-                ${netFlow.toLocaleString()}
-              </Typography>
-            </Box>
-            <Typography variant="body2" color="#1976d2">
-              Total: ${totalVolume.toLocaleString()}
-            </Typography>
-          </Box>
         </Box>
       </CardContent>
     </Card>
