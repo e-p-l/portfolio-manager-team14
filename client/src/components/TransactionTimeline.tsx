@@ -1,6 +1,21 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Chip } from '@mui/material';
-import { TrendingUp, TrendingDown, SwapHoriz } from '@mui/icons-material';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Box, 
+  Chip, 
+  List,
+  ListItem,
+  Avatar,
+  Divider
+} from '@mui/material';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  SwapHoriz,
+  AccessTime 
+} from '@mui/icons-material';
 
 interface Transaction {
   id: number;
@@ -60,105 +75,100 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
   };
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <Card sx={{ height: '100%' }}>
+      <CardContent>
         <Typography variant="h6" gutterBottom>
           {title}
         </Typography>
 
-        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        {/* Timeline List */}
+        <List sx={{ p: 0 }}>
           {transactions.map((transaction, index) => (
-            <Box
-              key={transaction.id}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                mb: 2,
-                p: 2,
-                borderRadius: '12px',
-                background: transaction.type === 'BUY' 
-                  ? 'linear-gradient(90deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%)'
-                  : transaction.type === 'SELL'
-                  ? 'linear-gradient(90deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%)'
-                  : 'linear-gradient(90deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%)',
-                border: `1px solid ${
-                  transaction.type === 'BUY' 
-                    ? 'rgba(76, 175, 80, 0.2)' 
-                    : transaction.type === 'SELL'
-                    ? 'rgba(244, 67, 54, 0.2)'
-                    : 'rgba(255, 152, 0, 0.2)'
-                }`,
-                position: 'relative'
-              }}
-            >
-              {/* Timeline connector */}
-              {index !== transactions.length - 1 && (
-                <Box
+            <React.Fragment key={transaction.id}>
+              <ListItem sx={{ py: 2, px: 0 }}>
+                {/* Timeline Avatar */}
+                <Avatar
                   sx={{
-                    position: 'absolute',
-                    left: '24px',
-                    bottom: '-16px',
-                    width: '2px',
-                    height: '16px',
-                    backgroundColor: '#e0e0e0'
+                    backgroundColor: getTypeColor(transaction.type),
+                    mr: 2,
+                    width: 40,
+                    height: 40
                   }}
-                />
+                >
+                  {getIcon(transaction.type)}
+                </Avatar>
+
+                {/* Transaction Content */}
+                <Box sx={{ flex: 1 }}>
+                  <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                    <Chip 
+                      label={transaction.type}
+                      size="small"
+                      color={
+                        transaction.type === 'BUY' 
+                          ? 'success' 
+                          : transaction.type === 'SELL'
+                          ? 'error'
+                          : 'warning'
+                      }
+                      variant="filled"
+                    />
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {transaction.symbol}
+                    </Typography>
+                    {transaction.shares && (
+                      <Typography variant="body2" color="textSecondary">
+                        {transaction.shares} shares
+                      </Typography>
+                    )}
+                    {transaction.price && (
+                      <Typography variant="body2" color="textSecondary">
+                        @ ${transaction.price}
+                      </Typography>
+                    )}
+                  </Box>
+                  
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <AccessTime fontSize="small" color="action" />
+                      <Typography variant="body2" color="textSecondary">
+                        {formatDate(transaction.date)}
+                      </Typography>
+                    </Box>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="bold"
+                      color={transaction.type === 'SELL' ? 'error.main' : 'success.main'}
+                    >
+                      {transaction.type === 'SELL' ? '-' : '+'}${transaction.amount.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Box>
+              </ListItem>
+              
+              {/* Divider between items (except for last item) */}
+              {index < transactions.length - 1 && (
+                <Divider variant="inset" component="li" sx={{ ml: 7 }} />
               )}
-
-              {/* Icon */}
-              <Box
-                sx={{
-                  mr: 2,
-                  p: 1,
-                  borderRadius: '50%',
-                  backgroundColor: getTypeColor(transaction.type),
-                  color: 'white'
-                }}
-              >
-                {getIcon(transaction.type)}
-              </Box>
-
-              {/* Content */}
-              <Box sx={{ flex: 1 }}>
-                <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                  <Chip 
-                    label={transaction.type}
-                    size="small"
-                    color={
-                      transaction.type === 'BUY' 
-                        ? 'success' 
-                        : transaction.type === 'SELL'
-                        ? 'error'
-                        : 'warning'
-                    }
-                    variant="outlined"
-                  />
-                  <Typography variant="body2" fontWeight="bold">
-                    {transaction.symbol}
-                  </Typography>
-                  {transaction.shares && (
-                    <Typography variant="body2" color="textSecondary">
-                      {transaction.shares} shares
-                    </Typography>
-                  )}
-                  {transaction.price && (
-                    <Typography variant="body2" color="textSecondary">
-                      @ ${transaction.price}
-                    </Typography>
-                  )}
-                </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2" color="textSecondary">
-                    {formatDate(transaction.date)}
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {transaction.type === 'SELL' ? '-' : '+'}${transaction.amount.toLocaleString()}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
+            </React.Fragment>
           ))}
-        </Box>
+        </List>
+
+        {/* Empty state */}
+        {transactions.length === 0 && (
+          <Box 
+            display="flex" 
+            flexDirection="column" 
+            alignItems="center" 
+            justifyContent="center" 
+            py={4}
+          >
+            <AccessTime sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="body1" color="textSecondary">
+              No transactions yet
+            </Typography>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );
