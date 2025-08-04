@@ -26,7 +26,7 @@ const AssetClassChart: React.FC<AssetClassChartProps> = ({
               Asset Classes
             </Typography>
           </Box>
-          <Box height={250} display="flex" alignItems="center" justifyContent="center">
+          <Box height={300} display="flex" alignItems="center" justifyContent="center">
             <Typography color="textSecondary">Loading...</Typography>
           </Box>
         </CardContent>
@@ -44,7 +44,7 @@ const AssetClassChart: React.FC<AssetClassChartProps> = ({
               Asset Classes
             </Typography>
           </Box>
-          <Box height={250} display="flex" alignItems="center" justifyContent="center">
+          <Box height={300} display="flex" alignItems="center" justifyContent="center">
             <Typography color="textSecondary">No holdings data available</Typography>
           </Box>
         </CardContent>
@@ -62,7 +62,7 @@ const AssetClassChart: React.FC<AssetClassChartProps> = ({
           </Typography>
         </Box>
         
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart data={assetClassData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <XAxis 
               dataKey="name" 
@@ -88,12 +88,6 @@ const AssetClassChart: React.FC<AssetClassChartProps> = ({
           </BarChart>
         </ResponsiveContainer>
         
-        {/* Summary stats */}
-        <Box mt={2}>
-          <Typography variant="body2" color="text.secondary" align="center">
-            {assetClassData.length} asset classes • Largest: {assetClassData[0]?.name} ({assetClassData[0]?.value}%)
-          </Typography>
-        </Box>
       </CardContent>
     </Card>
   );

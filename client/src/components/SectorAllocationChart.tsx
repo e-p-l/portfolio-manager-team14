@@ -30,21 +30,19 @@ interface SectorAllocationChartProps {
   loading?: boolean;
 }
 
-const SectorAllocationChart: React.FC<SectorAllocationChartProps> = ({ 
-  sectorData, 
-  loading = false 
+const SectorAllocationChart: React.FC<SectorAllocationChartProps> = ({
+  sectorData,
+  loading = false
 }) => {
   if (loading) {
     return (
       <Card>
         <CardContent>
           <Box display="flex" alignItems="center" mb={2}>
-            <PieChartIcon style={{ marginRight: 8, color: '#8b5cf6' }} />
-            <Typography variant="h6">
-              Sector Allocation
-            </Typography>
+            <PieChartIcon sx={{ mr: 1, color: '#6200ea' }} />
+            <Typography variant="h6">Sector Allocation</Typography>
           </Box>
-          <Box height={250} display="flex" alignItems="center" justifyContent="center">
+          <Box height={300} display="flex" alignItems="center" justifyContent="center">
             <Typography color="textSecondary">Loading...</Typography>
           </Box>
         </CardContent>
@@ -57,12 +55,10 @@ const SectorAllocationChart: React.FC<SectorAllocationChartProps> = ({
       <Card>
         <CardContent>
           <Box display="flex" alignItems="center" mb={2}>
-            <PieChartIcon style={{ marginRight: 8, color: '#8b5cf6' }} />
-            <Typography variant="h6">
-              Sector Allocation
-            </Typography>
+            <PieChartIcon sx={{ mr: 1, color: '#6200ea' }} />
+            <Typography variant="h6">Sector Allocation</Typography>
           </Box>
-          <Box height={250} display="flex" alignItems="center" justifyContent="center">
+          <Box height={300} display="flex" alignItems="center" justifyContent="center">
             <Typography color="textSecondary">No holdings data available</Typography>
           </Box>
         </CardContent>
@@ -74,45 +70,39 @@ const SectorAllocationChart: React.FC<SectorAllocationChartProps> = ({
     <Card>
       <CardContent>
         <Box display="flex" alignItems="center" mb={2}>
-          <PieChartIcon style={{ marginRight: 8, color: '#8b5cf6' }} />
-          <Typography variant="h6">
-            Sector Allocation
-          </Typography>
+          <PieChartIcon sx={{ mr: 1, color: '#6200ea' }} />
+          <Typography variant="h6">Sector Allocation</Typography>
         </Box>
-        
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie
-              data={sectorData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {sectorData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              formatter={(value, entry) => (
-                <span style={{ color: entry.color, fontSize: '12px' }}>
-                  {value}
-                </span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-        
-        {/* Summary stats */}
-        <Box mt={2}>
-          <Typography variant="body2" color="text.secondary" align="center">
-            {sectorData.length} sectors • Top: {sectorData[0]?.name} ({sectorData[0]?.value}%)
-          </Typography>
+
+        <Box height={300}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={sectorData}
+                cx="40%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={100}
+                paddingAngle={2}
+                dataKey="value"
+              >
+                {sectorData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                verticalAlign="middle"
+                align="right"
+                layout="vertical"
+                iconType="circle"
+                wrapperStyle={{ paddingLeft: '20px' }}
+                formatter={(value, entry: any) => (
+                  <span style={{ color: entry.color, fontSize: '12px' }}>{value}</span>
+                )}
+              />
+            </PieChart>
+          </ResponsiveContainer>
         </Box>
       </CardContent>
     </Card>
