@@ -19,12 +19,12 @@ const Transactions: React.FC = () => {
       {/* Transaction page layout */}
       <Box display="flex" flexDirection="column" gap={3}>
         {/* First row - 30% height with summary and filter */}
-        <Box sx={{ height: '30vh' }}>
+        <Box sx={{ height: '40vh' }}>
           <TransactionFlow />
         </Box>
         
         {/* Second row - 70% height with transaction list */}
-        <Box sx={{ height: '70vh' }}>
+        <Box>
           <TransactionTimeline />
         </Box>
       </Box>

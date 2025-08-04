@@ -13,8 +13,8 @@ interface CashFlowChartProps {
 
 // Mock data (easily replaceable)
 const defaultData = [
-  { name: 'Purchases', value: 15900, color: '#4caf50' },
-  { name: 'Sales', value: 3200, color: '#f44336' },
+  { name: 'Inflow', value: 15900, color: '#4caf50' },
+  { name: 'Outflow', value: 3200, color: '#f44336' },
 ];
 
 // Custom tooltip to fix the mixing issue
@@ -28,7 +28,9 @@ const CustomTooltip = ({ active, payload }: any) => {
           border: '1px solid #ddd',
           borderRadius: '8px',
           boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-          p: 1.5
+          p: 1.5,
+          zIndex: 9999,
+          position: 'relative',
         }}
       >
         <Typography variant="body2" fontWeight="bold" sx={{ color: data.payload.color }}>
@@ -45,7 +47,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const CashFlowChart: React.FC<CashFlowChartProps> = ({ 
   data = defaultData,
-  title = "Transaction Distribution"
+  title = "Cash Flow Overview"
 }) => {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
@@ -56,9 +58,9 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
           {title}
         </Typography>
 
-        <Box sx={{ flex: 1, position: 'relative', minHeight: 200 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+        <Box sx={{ flex: 1, position: 'relative', minHeight: 200, zIndex: 1 }}>
+          <ResponsiveContainer width="100%" height="100%" style={{ zIndex: 10 }}>
+            <PieChart style={{ zIndex: 10 }}>
               <Pie
                 data={data}
                 cx="50%"
@@ -72,7 +74,7 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 9999 }} />
             </PieChart>
           </ResponsiveContainer>
 
@@ -83,7 +85,9 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              textAlign: 'center'
+              textAlign: 'center',
+              zIndex: 5,
+              pointerEvents: 'none', // This prevents the center text from interfering with tooltip
             }}
           >
             <Typography variant="h6" fontWeight="bold">
