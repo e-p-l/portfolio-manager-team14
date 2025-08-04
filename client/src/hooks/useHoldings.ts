@@ -11,7 +11,22 @@ export const useHoldings = (portfolioId: number) => {
     try {
       setLoading(true);
       const data = await HoldingService.getHoldingsByPortfolio(portfolioId);
-      setHoldings(data);
+      
+      // Convert object to array if needed (backend returns object with symbols as keys)
+      const holdingsArray = Array.isArray(data) ? data : Object.entries(data).map(([symbol, holding]: [string, any]) => ({
+        id: holding.asset_id,
+        portfolio_id: portfolioId,
+        asset_id: holding.asset_id,
+        asset_name: holding.asset_name,
+        asset_symbol: holding.asset_symbol,
+        asset_type: holding.asset_type,
+        asset_sector: holding.asset_sector,
+        quantity: holding.quantity,
+        purchase_price: holding.current_price, // Using current price as fallback
+        current_price: holding.current_price
+      }));
+      
+      setHoldings(holdingsArray);
     } catch (err) {
       console.error('Error fetching holdings:', err);
       setError('Failed to load holdings');

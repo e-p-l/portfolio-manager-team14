@@ -2,17 +2,23 @@ import React, { useState } from 'react';
 import { Typography, Box, CircularProgress, Card, CardContent } from '@mui/material';
 import { ViewList } from '@mui/icons-material';
 import { usePortfolio } from '../hooks/usePortfolio';
-import { useHoldings } from '../hooks/useHoldings';
+import { useHoldingsOptimized } from '../hooks/useHoldingsOptimized';
 import HoldingsTable from '../components/HoldingsTable';
 import PortfolioValueChart from '../components/PortfolioValueChart';
-import SectorAllocationChart from '../components/SectorAllocationChart';
-import AssetClassChart from '../components/AssetClassChart';
+import SectorAllocationChartOptimized from '../components/SectorAllocationChartOptimized';
+import AssetClassChartOptimized from '../components/AssetClassChartOptimized';
 
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now as requested
 
 const Portfolio: React.FC = () => {
   const { portfolio, loading: loadingPortfolio } = usePortfolio();
-  const { holdings, loading: loadingHoldings, refreshHoldings } = useHoldings(DEFAULT_PORTFOLIO_ID);
+  const { 
+    holdings, 
+    loading: loadingHoldings, 
+    refreshHoldings,
+    sectorAllocation,
+    assetClassAllocation
+  } = useHoldingsOptimized(DEFAULT_PORTFOLIO_ID);
   const [refreshKey, setRefreshKey] = useState(0); // Used to trigger refetch
 
   const handleHoldingsChange = () => {
@@ -62,12 +68,18 @@ const Portfolio: React.FC = () => {
               <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
                 {/* Sector Allocation (row 2, col 1) */}
                 <Box flex={1}>
-                  <SectorAllocationChart />
+                  <SectorAllocationChartOptimized 
+                    sectorData={sectorAllocation} 
+                    loading={loadingHoldings} 
+                  />
                 </Box>
 
                 {/* Asset Classes (row 2, col 2) */}
                 <Box flex={1}>
-                  <AssetClassChart />
+                  <AssetClassChartOptimized 
+                    assetClassData={assetClassAllocation} 
+                    loading={loadingHoldings} 
+                  />
                 </Box>
               </Box>
             </Box>

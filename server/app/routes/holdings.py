@@ -58,26 +58,53 @@ class HoldingResource(Resource):
 @api_ns.route('/portfolio/<int:portfolio_id>')
 class HoldingsByPortfolioResource(Resource):
     def get(self, portfolio_id):
-        """Returns all holdings for a specific portfolio. Merged by asset."""
+        """Returns all holdings for a specific portfolio. Merged by asset with batch price fetching."""
         try:
             holdings = Holding.query.options(joinedload(Holding.asset)).filter_by(portfolio_id=portfolio_id).all()
+            
+            if not holdings:
+                return {}, 200
+            
+            # Get unique symbols for batch price fetching
+            symbols = list(set(h.asset.symbol for h in holdings))
+            
+            # Batch fetch latest prices for all symbols at once
+            from ..services.asset_service import fetch_latest_prices
+            price_data = fetch_latest_prices(symbols)
+            
             merged_holdings = {}
             for h in holdings:
-                if h.asset.symbol not in merged_holdings:
-                    merged_holdings[h.asset.symbol] = {
+                symbol = h.asset.symbol
+                if symbol not in merged_holdings:
+                    # Get price from batch data or fallback to stored price
+                    current_price = None
+                    if symbol in price_data:
+                        current_price = price_data[symbol].get('price')
+                    
+                    # Fallback to stored asset price if batch fetch failed
+                    if current_price is None:
+                        current_price = h.asset.current_price if hasattr(h.asset, 'current_price') else 100.0
+                    
+                    merged_holdings[symbol] = {
                         'quantity': h.quantity,
-                        'current_price': fetch_latest_price(h.asset.id),
+                        'current_price': current_price,
                         'asset_name': h.asset.name,
                         'asset_symbol': h.asset.symbol,
                         'asset_id': h.asset.id,
                         'asset_type': h.asset.asset_type,
                         'asset_sector': h.asset.sector,
-                        'asset_dayChangeP': h.asset.day_changeP if hasattr(h.asset, 'day_changeP') else None,
+                        'asset_dayChangeP': price_data.get(symbol, {}).get('day_changeP') if symbol in price_data else None,
+                        'purchase_price': h.purchase_price,
                         'return': 'TODO'
                     }
                 else:
-                    merged_holdings[h.asset.symbol]['quantity'] += h.quantity
-                    # TODO: Handle other fields like purchase_price
+                    merged_holdings[symbol]['quantity'] += h.quantity
+                    # Weight average purchase price when merging
+                    total_qty = merged_holdings[symbol]['quantity']
+                    merged_holdings[symbol]['purchase_price'] = (
+                        (merged_holdings[symbol]['purchase_price'] * (total_qty - h.quantity) + 
+                         h.purchase_price * h.quantity) / total_qty
+                    )
             
             return merged_holdings, 200
 
