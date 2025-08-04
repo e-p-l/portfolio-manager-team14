@@ -189,7 +189,7 @@ watchlist = [
 class MarketMoversResource(Resource):
     def get(self):
         """
-        Returns top 2 gainers and top 2 losers from the static market movers list.
+        Returns top 3 gainers and top 2 losers from the static market movers list.
         """
         try:
             movers = []
@@ -208,10 +208,10 @@ class MarketMoversResource(Resource):
                     continue  # Skip if info fails
 
             sorted_movers = sorted(movers, key=lambda x: x["day_changeP"], reverse=True)
-            top_2_gainers = sorted_movers[:2]
+            top_3_gainers = sorted_movers[:3]
             top_2_losers = sorted_movers[-2:]
 
-            return top_2_gainers + top_2_losers, 200
+            return top_3_gainers + top_2_losers, 200
 
         except Exception as e:
             return {"error": str(e)}, 500
