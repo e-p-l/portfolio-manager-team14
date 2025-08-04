@@ -27,6 +27,34 @@ def fetch_latest_prices(symbols):
 
     return {symbol: cache[symbol] for symbol in symbols if symbol in cache}
 
+def fetch_latest_price(asset_id):
+    """
+    Fetches the latest price for a given asset_id 
+    """
+    asset = Asset.query.get(asset_id)
+    if not asset:
+        print(f"Asset with id {asset_id} not found.")
+        return None
+
+    symbol = asset.symbol.upper()
+    ticker = yf.Ticker(symbol)
+    info = ticker.info
+    price = info.get("regularMarketPrice", None)
+
+    return price
+
+def update_asset_history(asset_id, price, date):
+    """
+    Updates the asset_history table for the given asset,date and price.
+    """
+    history = AssetHistory.query.filter_by(asset_id=asset_id, date=date).first()
+    if history:
+        history.price = price
+    else:
+        history = AssetHistory(asset_id=asset_id, price=price, date=date)
+        db.session.add(history)
+    db.session.commit()
+
 def fetch_asset_metadata(symbol):
     """
     Fetches metadata like sector and type from yfinance.
@@ -77,7 +105,7 @@ def dataframe_to_nested_dict(df):
                 result[date_str][symbol][field] = row[col]
     return result
 
-def save_price_to_db(symbol, price, timestamp):
+def save_price_to_db(symbol, price, date):
     """
     Save the fetched price into a MySQL table called `asset_history`.
     """
@@ -90,7 +118,7 @@ def save_price_to_db(symbol, price, timestamp):
         asset_history = AssetHistory(
             asset_id=asset.id,
             price=price,
-            timestamp=timestamp
+            date=date
         )
         db.session.add(asset_history)
         db.session.commit()
