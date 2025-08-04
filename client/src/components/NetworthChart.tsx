@@ -98,6 +98,10 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
                 stroke="#e0e0e0"
               />
               <YAxis
+                domain={[
+                  (dataMin: number) => Math.floor(dataMin * 0.95),
+                  (dataMax: number) => Math.ceil(dataMax * 1.05)
+                ]}
                 axisLine={true}
                 tickLine={true}
                 tick={{ fontSize: 12, fill: '#666' }}
