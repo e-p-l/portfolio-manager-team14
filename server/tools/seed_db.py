@@ -180,61 +180,97 @@ def seed_database():
                 print(f"❌ Error adding {sym}: {e}")
 
 def generate_portfolio_history(portfolio_id, years=3):
-    """
-    Generate portfolio history for the specified number of years with realistic market movements.
-    Similar to the frontend mock data but stored in the database.
-    """
+    from datetime import datetime, timedelta
+    import random
+
     print(f"🔄 Generating {years} years of portfolio history...")
-    
-    base_value = 100000  # $100,000 starting value
+
+    base_value = 100000
     today = datetime.now().date()
     start_date = today - timedelta(days=years * 365)
-    
+
     current_date = start_date
     current_value = base_value
-    volatility = 0.005  # Daily volatility
-    annual_growth = 0.12  # 12% annual growth
-    daily_growth = (1 + annual_growth) ** (1/365) - 1
-    
+
     history_records = []
-    
+
     while current_date <= today:
-        # Add randomness for realistic market movements
+        days_since_start = (current_date - start_date).days
+
+        # Phase-based settings
+        if days_since_start <= 180:  # Flat start
+            daily_growth = 0.0001
+            volatility = 0.002
+        elif days_since_start <= 365:  # Growth phase
+            daily_growth = 0.0005
+            volatility = 0.006
+        elif days_since_start <= 400:  # CRASH!
+            daily_growth = -0.002
+            volatility = 0.04
+        elif days_since_start <= 600:  # Recovery
+            daily_growth = 0.0015
+            volatility = 0.01
+        else:  # Rally & Calm
+            daily_growth = 0.001
+            volatility = 0.005
+
+        # Base movement
         random_factor = 1 + (random.random() * 2 - 1) * volatility
         growth_factor = 1 + daily_growth
-        
-        current_value = current_value * random_factor * growth_factor
-        
-        # Add market corrections and rallies based on time ago
-        days_ago = (today - current_date).days
-        
-        # Major correction around 6 months ago (180 days)
-        if 170 <= days_ago <= 190:
-            current_value = current_value * 0.92  # 8% drop
-        
-        # Rally 3 months ago (90 days)
-        if 80 <= days_ago <= 100:
-            current_value = current_value * 1.07  # 7% rally
-        
-        # COVID-like crash simulation (if we go back far enough)
-        if days_ago >= 1000 and days_ago <= 1020:  # Around 3 years ago
-            current_value = current_value * 0.75  # 25% crash
-        
-        # Post-crash recovery
-        if 980 <= days_ago <= 1000:
-            current_value = current_value * 1.15  # 15% recovery
-        
-        # Round to 2 decimal places
+        current_value *= random_factor * growth_factor
+
+        # Controlled spikiness
+        spike_roll = random.random()
+        if spike_roll > 0.995:
+            current_value *= 1.04 + random.random() * 0.04  # Big up spike
+        elif spike_roll < 0.003:
+            current_value *= 0.92 - random.random() * 0.05  # Big down
+        elif spike_roll > 0.985:
+            current_value *= 1.01 + random.random() * 0.015  # Mini rally
+        elif spike_roll < 0.015:
+            current_value *= 0.985 - random.random() * 0.01  # Mini dip
+
+        # Forced crash during CRASH phase
+        if 366 <= days_since_start <= 400 and random.random() < 0.25:
+            crash_drop = 0.85 - random.random() * 0.1  # 10–25% drop
+            current_value *= crash_drop
+
+        # Recovery surges after crash
+        if 401 <= days_since_start <= 600 and random.random() < 0.15:
+            recovery_spike = 1.05 + random.random() * 0.08
+            current_value *= recovery_spike
+
+        # Quarterly earnings (occasional, light)
+        month = current_date.month
+        day_of_month = current_date.day
+        if day_of_month in range(25, 32) and month in [1, 4, 7, 10]:
+            if random.random() > 0.94:
+                earnings_spike = (1.04 + random.random() * 0.06) if random.random() > 0.5 else (0.92 - random.random() * 0.06)
+                current_value *= earnings_spike
+
+        # Seasonal mild adjustment
+        if month in [11, 12]:  # Holiday rally
+            current_value *= 1.0005
+        elif month in [1, 2]:  # Early year volatility
+            current_value *= 0.9995
+
+        # Cap extremes
+        if current_value < base_value * 0.7:
+            current_value = base_value * (0.7 + random.random() * 0.2)
+        if current_value > base_value * 2.5:
+            current_value *= 0.95 - random.random() * 0.05
+
+        # Round and compute balance
         current_value = round(current_value, 2)
-        # Calculate balance as 10% of portfolio value (representing cash balance)
-        current_balance = round(current_value * 0.10, 2)
-        
-        # Check if record already exists to avoid duplicates
+        cash_percentage = 0.08 + random.random() * 0.04
+        current_balance = round(current_value * cash_percentage, 2)
+
+        # Avoid duplicate entries
         existing = PortfolioHistory.query.filter_by(
-            portfolio_id=portfolio_id, 
+            portfolio_id=portfolio_id,
             date=current_date
         ).first()
-        
+
         if not existing:
             history_record = PortfolioHistory(
                 portfolio_id=portfolio_id,
@@ -243,16 +279,18 @@ def generate_portfolio_history(portfolio_id, years=3):
                 date=current_date
             )
             history_records.append(history_record)
-        
+
         current_date += timedelta(days=1)
-    
-    # Bulk insert for better performance
+
+    # Save to DB
     if history_records:
         db.session.bulk_save_objects(history_records)
         db.session.commit()
-        print(f"✅ Generated {len(history_records)} portfolio history records")
+        print(f"✅ Generated {len(history_records)} records")
+        print(f"📈 Portfolio range: ${min([r.value for r in history_records]):,.2f} - ${max([r.value for r in history_records]):,.2f}")
     else:
-        print("ℹ️ No new history records to generate (already exist)")
+        print("ℹ️ No new records to generate (already exists)")
+
 
 if __name__ == "__main__":
     ans = input("This will overwrite your database. Continue? [y/n] ")
