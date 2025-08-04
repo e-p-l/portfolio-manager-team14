@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
         {/* Portfolio Overview - Takes 2/3 of the space */}
         <Box flex={{ xs: 1, md: 2 }} sx={{ height: '100%' }}>
           <Box sx={{ height: '100%' }}>
-            <NetworthChart />
+            <NetworthChart portfolioId={DEFAULT_PORTFOLIO_ID} />
           </Box>
         </Box>
 
