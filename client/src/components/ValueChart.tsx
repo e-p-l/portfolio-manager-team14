@@ -23,8 +23,10 @@ interface PortfolioPerformanceData {
   valueChange: number;
 }
 
-interface PortfolioValueChartProps {
-  portfolioId: number;
+interface ValueChartProps {
+  portfolioId?: number;
+  assetSymbol?: string;
+  title?: string;
 }
 
 // Filter data based on time range
@@ -110,13 +112,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-// Portfolio chart component
-const PortfolioValueChart: React.FC<PortfolioValueChartProps> = ({ portfolioId }) => {
+// Value chart component (can be used for portfolio or individual assets)
+const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetSymbol, title = "Portfolio Value" }) => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<string>('3M');
   
-  // Fetch portfolio history data from backend
-  const { historyData, loading, error } = usePortfolioHistory(portfolioId);
+  // For now, only portfolio history is supported. Asset history can be added later
+  const { historyData, loading, error } = usePortfolioHistory(portfolioId || 1);
   
   // Filter data based on selected time range
   const performanceData = filterData(historyData, timeRange);
@@ -170,9 +172,9 @@ const PortfolioValueChart: React.FC<PortfolioValueChartProps> = ({ portfolioId }
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <Box display="flex" alignItems="center" mb={2}>
             <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
-            <Typography variant="h6">Portfolio Value</Typography>
+            <Typography variant="h6">{title}</Typography>
           </Box>
-          <Typography variant="body1" color="text.secondary">Loading portfolio history...</Typography>
+          <Typography variant="body1" color="text.secondary">Loading data...</Typography>
         </CardContent>
       </Card>
     );
@@ -185,7 +187,7 @@ const PortfolioValueChart: React.FC<PortfolioValueChartProps> = ({ portfolioId }
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <Box display="flex" alignItems="center" mb={2}>
             <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
-            <Typography variant="h6">Portfolio Value</Typography>
+            <Typography variant="h6">{title}</Typography>
           </Box>
           <Typography variant="body1" color="error.main">{error}</Typography>
         </CardContent>
@@ -199,7 +201,7 @@ const PortfolioValueChart: React.FC<PortfolioValueChartProps> = ({ portfolioId }
         <Box display="flex" alignItems="center" mb={2}>
           <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
           <Typography variant="h6">
-            Portfolio Value
+            {title}
           </Typography>
         </Box>
         
@@ -300,4 +302,4 @@ const PortfolioValueChart: React.FC<PortfolioValueChartProps> = ({ portfolioId }
   );
 };
 
-export default PortfolioValueChart;
+export default ValueChart;

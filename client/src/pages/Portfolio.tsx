@@ -4,7 +4,7 @@ import { ViewList } from '@mui/icons-material';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useHoldings } from '../hooks/useHoldings';
 import HoldingsTable from '../components/HoldingsTable';
-import PortfolioValueChart from '../components/PortfolioValueChart';
+import ValueChart from '../components/ValueChart';
 import SectorAllocationChart from '../components/SectorAllocationChart';
 import AssetClassChart from '../components/AssetClassChart';
 
@@ -56,7 +56,7 @@ const Portfolio: React.FC = () => {
             {/* Left column (2/3 width) */}
             <Box flex={{ xs: 1, md: 2 }} display="flex" flexDirection="column" gap={3}>
               {/* Portfolio Value (row 1, col 1-2) */}
-              <PortfolioValueChart portfolioId={DEFAULT_PORTFOLIO_ID} />
+              <ValueChart portfolioId={DEFAULT_PORTFOLIO_ID} title="Portfolio Value" />
 
               {/* Bottom row cards inside left column */}
               <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
