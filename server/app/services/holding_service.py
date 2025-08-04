@@ -1,6 +1,9 @@
 from app import db
 from app.models.holding import Holding
 from app.models.portfolio import Portfolio
+from app.models.transaction import Transaction
+
+from datetime import datetime, timezone
 
 def compute_pnl_from_sell(holding, quantity, sell_price):
     """
@@ -17,36 +20,15 @@ def update_portfolio_balance(portfolio, pnl):
     portfolio.balance += pnl
     db.session.commit()
 
-def sell_holding(holding_id, quantity, sell_price):
+def buy_asset(portfolio_id, asset_id, quantity, latest_price):
     """
-    Sells a quantity from a holding, computes PnL, and updates portfolio balance.
-    """
-    holding = Holding.query.get(holding_id)
-    if not holding:
-        raise ValueError("Holding not found.")
-
-    if quantity > holding.quantity:
-        raise ValueError("Cannot sell more than holding quantity.")
-
-    pnl = compute_pnl_from_sell(holding, quantity, sell_price)
-
-    holding.quantity -= quantity
-    db.session.commit()
-
-    portfolio = Portfolio.query.get(holding.portfolio_id)
-    update_portfolio_balance(portfolio, pnl)
-
-    return pnl
-
-def buy_holding(portfolio_id, asset_id, quantity, purchase_price):
-    """
-    Buys a holding by creating a new Holding record.
+    Buys a certain quantity of an asset, creating a new holding in the process.
     """
     portfolio = Portfolio.query.get(portfolio_id)
     if not portfolio:
         raise ValueError("Portfolio not found.")
 
-    cost = quantity * purchase_price
+    cost = quantity * latest_price
     if portfolio.balance < cost:
         raise ValueError("Insufficient balance in portfolio.")
     
@@ -54,12 +36,70 @@ def buy_holding(portfolio_id, asset_id, quantity, purchase_price):
         portfolio_id=portfolio_id,
         asset_id=asset_id,
         quantity=quantity,
-        purchase_price=purchase_price
+        purchase_price=latest_price
     )
     db.session.add(holding)
     db.session.commit()
 
-    portfolio.balance -= cost
+    update_portfolio_balance(portfolio, -cost)
+
+    transaction = Transaction(
+        portfolio_id=portfolio_id,
+        holding_id=holding.id,
+        quantity=quantity,
+        price=latest_price,
+        created_at=datetime.now(timezone.utc),
+        transaction_type='buy'
+    )
+
+    db.session.add(transaction)
     db.session.commit()
 
-    return holding
+    return transaction
+
+def sell_asset(portfolio_id, asset_id, quantity, latest_price):
+    """
+    Sells a certain quantity of an asset across possibly multiple holdings.
+    """
+    holdings = Holding.query.filter_by(portfolio_id=portfolio_id, asset_id=asset_id).filter(Holding.quantity > 0).order_by(Holding.purchase_date.asc()).all()
+
+    # compute total available quantity
+    total_quantity = 0
+    for h in holdings:
+        total_quantity += h.quantity
+    
+    if quantity > total_quantity:
+        raise ValueError("Cannot sell more than total holding quantity.")
+
+    portfolio = Portfolio.query.get(portfolio_id)    
+
+    # sell from holdings in FIFO order
+    remaining_to_sell = quantity
+    total_pnl = 0.0
+    transactions = []
+
+    for h in holdings:
+        if remaining_to_sell <= 0:
+            break
+        
+        # compute pnl for the quantity sold from this holding
+        sell_quantity = min(h.quantity, remaining_to_sell)
+        h.quantity -= sell_quantity
+        total_pnl += compute_pnl_from_sell(h, sell_quantity, latest_price)
+
+        # create transaction record for this holding sale
+        transaction = Transaction(
+            portfolio_id=portfolio_id,
+            holding_id=h.id,
+            quantity=sell_quantity,
+            price=latest_price,
+            created_at=datetime.now(timezone.utc),
+            transaction_type='sell'
+        )
+        db.session.add(transaction)
+        db.session.commit()
+
+        transactions.append(transaction)
+        remaining_to_sell -= sell_quantity
+
+    return transactions
