@@ -22,6 +22,7 @@ import {
 import { Add, Remove } from '@mui/icons-material';
 import { Holding } from '../services/holdingService';
 import { AssetService } from '../services/assetService';
+import { TransactionService } from '../services/transactionService';
 import { Asset } from '../types';
 
 interface HoldingsTableProps {
@@ -30,8 +31,6 @@ interface HoldingsTableProps {
   loading: boolean;
   onHoldingsChange?: () => void;
   hideActions?: boolean;
-  addHolding?: (selectedAsset: Asset, quantity: number) => Promise<any>;
-  removeHolding?: (holdingId: number, quantity: number) => Promise<any>;
 }
 
 const HoldingsTable: React.FC<HoldingsTableProps> = ({ 
@@ -39,9 +38,7 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   portfolioId, 
   loading, 
   onHoldingsChange,
-  hideActions = false,
-  addHolding,
-  removeHolding
+  hideActions = false
 }) => {
   const [openBuyDialog, setOpenBuyDialog] = useState(false);
   const [openSellDialog, setOpenSellDialog] = useState(false);
@@ -112,12 +109,20 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   };
 
   const handleBuy = async () => {
-    if (!addHolding || !selectedAsset || quantity <= 0) return;
+    if (!selectedAsset || quantity <= 0) return;
     
     try {
       setActionLoading(true);
-      // Pass the entire selected asset object directly to backend - no additional search needed
-      await addHolding(selectedAsset, quantity);
+      
+      // Validate that the asset has an ID (should be set when selected from search)
+      if (!selectedAsset.id) {
+        throw new Error('Selected asset is not properly initialized. Please search and select the asset again.');
+      }
+      
+      // Create BUY transaction using TransactionService
+      await TransactionService.buyAsset(portfolioId, selectedAsset, quantity);
+      
+      console.log(`Successfully bought ${quantity} shares of ${selectedAsset.symbol}`);
       handleClose();
       if (onHoldingsChange) onHoldingsChange();
     } catch (error) {
@@ -129,11 +134,21 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   };
 
   const handleSell = async () => {
-    if (!removeHolding || !selectedHolding || quantity <= 0) return;
+    if (!selectedHolding || quantity <= 0) return;
     
     try {
       setActionLoading(true);
-      await removeHolding(selectedHolding.id, quantity);
+      
+      // Create SELL transaction using TransactionService
+      // Backend requires asset_id even for sell transactions (backend design issue)
+      await TransactionService.sellHolding(
+        portfolioId, 
+        selectedHolding.id, 
+        selectedHolding.asset_id,  // Pass asset_id as required by backend
+        quantity
+      );
+      
+      console.log(`Successfully sold ${quantity} shares of ${selectedHolding.asset_symbol}`);
       handleClose();
       if (onHoldingsChange) onHoldingsChange();
     } catch (error) {
@@ -249,11 +264,11 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
       {/* Buy Dialog - only render when actions are not hidden */}
       {!hideActions && (
         <>
-          <Dialog open={openBuyDialog} onClose={handleClose}>
+            <Dialog open={openBuyDialog} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Buy Asset</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="textSecondary" gutterBottom>
-            Search for an asset by symbol or name to buy at current market price
+            Search for an asset and enter quantity
           </Typography>
           
           {!selectedAsset ? (
@@ -376,15 +391,18 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
             color="primary" 
             disabled={quantity <= 0 || !selectedAsset || actionLoading}
           >
-            {actionLoading ? <CircularProgress size={20} /> : 'Buy at Market Price'}
+            {actionLoading ? <CircularProgress size={20} /> : 'Buy Asset'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Sell Dialog */}
-      <Dialog open={openSellDialog} onClose={handleClose}>
+      <Dialog open={openSellDialog} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Sell {selectedHolding?.asset_symbol}</DialogTitle>
         <DialogContent>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Sell shares of {selectedHolding?.asset_name} ({selectedHolding?.asset_symbol})
+          </Typography>
           <Typography variant="body2" gutterBottom>
             You currently own: {selectedHolding?.quantity} shares
           </Typography>
@@ -410,7 +428,7 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
             color="primary" 
             disabled={!selectedHolding || quantity <= 0 || quantity > selectedHolding.quantity || actionLoading}
           >
-            {actionLoading ? <CircularProgress size={20} /> : 'Sell at Market Price'}
+            {actionLoading ? <CircularProgress size={20} /> : 'Sell Asset'}
           </Button>
         </DialogActions>
       </Dialog>
