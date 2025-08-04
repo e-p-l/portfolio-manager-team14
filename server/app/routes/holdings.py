@@ -67,7 +67,12 @@ class HoldingsByPortfolioResource(Resource):
                     merged_holdings[h.asset.symbol] = {
                         'quantity': h.quantity,
                         'current_price': fetch_latest_price(h.asset.id),
-                        'holdings_id': [h.id],
+                        'asset_name': h.asset.name,
+                        'asset_symbol': h.asset.symbol,
+                        'asset_id': h.asset.id,
+                        'asset_type': h.asset.asset_type,
+                        'asset_sector': h.asset.sector,
+                        'asset_dayChangeP': h.asset.day_changeP if hasattr(h.asset, 'day_changeP') else None,
                         'return': 'TODO'
                     }
                 else:
