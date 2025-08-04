@@ -56,7 +56,7 @@ const Portfolio: React.FC = () => {
             {/* Left column (2/3 width) */}
             <Box flex={{ xs: 1, md: 2 }} display="flex" flexDirection="column" gap={3}>
               {/* Portfolio Value (row 1, col 1-2) */}
-              <PortfolioValueChart />
+              <PortfolioValueChart portfolioId={DEFAULT_PORTFOLIO_ID} />
 
               {/* Bottom row cards inside left column */}
               <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>

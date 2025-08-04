@@ -10,13 +10,9 @@ import {
 } from '@mui/material';
 import { ShowChart } from '@mui/icons-material';
 import { format, subDays, subMonths, subYears, parseISO } from 'date-fns';
+import { usePortfolioHistory, PortfolioValue } from '../hooks/usePortfolioHistory';
 
 // Types
-interface PortfolioValue {
-  date: string; // ISO string format
-  value: number;
-}
-
 interface PortfolioPerformanceData {
   data: PortfolioValue[];
   startValue: number;
@@ -27,50 +23,9 @@ interface PortfolioPerformanceData {
   valueChange: number;
 }
 
-// Create mock data for portfolio value over time
-const generateMockData = (): PortfolioValue[] => {
-  const baseValue = 100000; // $100,000 starting value
-  const today = new Date();
-  const startDate = subYears(today, 2); // 2 years of data
-  const data: PortfolioValue[] = [];
-  
-  // Generate daily data for 2 years
-  let currentDate = startDate;
-  let currentValue = baseValue;
-  const volatility = 0.005; // Daily volatility
-  const annualGrowth = 0.12; // 12% annual growth
-  const dailyGrowth = Math.pow(1 + annualGrowth, 1/365) - 1;
-  
-  while (currentDate <= today) {
-    // Add some randomness to create realistic market movements
-    const randomFactor = 1 + (Math.random() * 2 - 1) * volatility;
-    // Apply daily growth trend
-    const growthFactor = 1 + dailyGrowth;
-    
-    currentValue = currentValue * randomFactor * growthFactor;
-    
-    // Add some market corrections and rallies
-    // Major correction around 6 months ago
-    const monthsAgo = (today.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    if (monthsAgo >= 5.9 && monthsAgo <= 6.1) {
-      currentValue = currentValue * 0.92; // 8% drop
-    }
-    
-    // Rally 3 months ago
-    if (monthsAgo >= 2.9 && monthsAgo <= 3.1) {
-      currentValue = currentValue * 1.07; // 7% rally
-    }
-    
-    data.push({
-      date: currentDate.toISOString(),
-      value: Math.round(currentValue * 100) / 100 // Round to 2 decimal places
-    });
-    
-    currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000); // Add 1 day
-  }
-  
-  return data;
-};
+interface PortfolioValueChartProps {
+  portfolioId: number;
+}
 
 // Filter data based on time range
 const filterData = (data: PortfolioValue[], range: string): PortfolioPerformanceData => {
@@ -156,15 +111,15 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // Portfolio chart component
-const PortfolioValueChart: React.FC = () => {
+const PortfolioValueChart: React.FC<PortfolioValueChartProps> = ({ portfolioId }) => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<string>('3M');
   
-  // Generate mock data once on component mount
-  const [allData] = useState<PortfolioValue[]>(generateMockData);
+  // Fetch portfolio history data from backend
+  const { historyData, loading, error } = usePortfolioHistory(portfolioId);
   
   // Filter data based on selected time range
-  const performanceData = filterData(allData, timeRange);
+  const performanceData = filterData(historyData, timeRange);
   const { data, percentChange, valueChange, endValue } = performanceData;
   
   // Format change value
@@ -207,6 +162,36 @@ const PortfolioValueChart: React.FC = () => {
   };
   
   const areaColor = percentChange >= 0 ? theme.palette.success.light : theme.palette.error.light;
+  
+  // Show loading state
+  if (loading) {
+    return (
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <Box display="flex" alignItems="center" mb={2}>
+            <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
+            <Typography variant="h6">Portfolio Value</Typography>
+          </Box>
+          <Typography variant="body1" color="text.secondary">Loading portfolio history...</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Show error state
+  if (error) {
+    return (
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <Box display="flex" alignItems="center" mb={2}>
+            <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
+            <Typography variant="h6">Portfolio Value</Typography>
+          </Box>
+          <Typography variant="body1" color="error.main">{error}</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
