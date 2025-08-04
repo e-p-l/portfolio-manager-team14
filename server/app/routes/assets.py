@@ -1,11 +1,10 @@
 from ..models.asset import Asset
-from ..services.asset_service import fetch_asset_metadata, fetch_latest_prices
+from ..services.asset_service import fetch_asset_metadata, fetch_latest_prices, search_assets, get_asset_info
 from .. import db
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
 from flask_restx import Namespace, Resource, fields
-import yfinance as yf
 
 
 api_ns = Namespace('assets', description='Asset operations')
@@ -22,38 +21,6 @@ asset_input_models = {
         'sector': fields.String(required=False),
     })
 }
-
-def get_asset_info(symbol):
-    """
-    Helper function to fetch asset details from yfinance.
-    Returns a dict with name, asset_type, sector, and day_changeP.
-    Calculates day_changeP
-    """
-    ticker = yf.Ticker(symbol)
-    info = ticker.info
-
-    name = info.get("longName", "Unknown")
-    asset_type = info.get("quoteType", "N/A")
-    sector = info.get("sector", "N/A") or info.get("industry", "N/A")
-    current_price = info.get("regularMarketPrice")
-    previous_close = info.get("regularMarketPreviousClose")
-
-    if current_price is not None and previous_close:
-        try:
-            day_changeP = round(((current_price - previous_close) / previous_close) * 100, 2)
-        except ZeroDivisionError:
-            day_changeP = 0.0
-    else:
-        day_changeP = 0.0
-
-    return {
-        "name": name,
-        "asset_type": asset_type,
-        "sector": sector,
-        "price": current_price,
-        "day_changeP": day_changeP
-    }
-
 
 @api_ns.route('/')
 class AssetListResource(Resource):
@@ -185,6 +152,30 @@ class AssetGainsResource(Resource):
                 for asset in assets
             ], 200
         except SQLAlchemyError as e:
+            return {"error": str(e)}, 500
+
+@api_ns.route('/search')
+class AssetSearchResource(Resource):
+    def get(self):
+        """
+        Search for assets by symbol or name.
+        Query parameter: q (search term)
+        Returns assets matching the search term in symbol or name.
+        Example: GET /assets/search?q=AAPL
+        """
+        search_term = request.args.get('q', '').strip()
+        
+        if not search_term:
+            return {"error": "Search term is required. Use ?q=search_term"}, 400
+        
+        if len(search_term) < 1:
+            return {"error": "Search term must be at least 1 character"}, 400
+        
+        try:
+            results = search_assets(search_term)
+            return results, 200
+            
+        except Exception as e:
             return {"error": str(e)}, 500
         
 

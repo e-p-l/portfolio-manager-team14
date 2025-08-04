@@ -12,12 +12,13 @@ const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now as requested
 
 const Portfolio: React.FC = () => {
   const { portfolio, loading: loadingPortfolio } = usePortfolio();
-  const { holdings, loading: loadingHoldings, error } = useHoldings(DEFAULT_PORTFOLIO_ID);
+  const { holdings, loading: loadingHoldings, addHolding, removeHolding, refreshHoldings } = useHoldings(DEFAULT_PORTFOLIO_ID);
   const [refreshKey, setRefreshKey] = useState(0); // Used to trigger refetch
 
   const handleHoldingsChange = () => {
     // Trigger refetch by changing the key
     setRefreshKey(prevKey => prevKey + 1);
+    refreshHoldings();
   };
 
   const loading = loadingPortfolio || loadingHoldings;
@@ -88,6 +89,8 @@ const Portfolio: React.FC = () => {
                     portfolioId={DEFAULT_PORTFOLIO_ID}
                     loading={loadingHoldings}
                     onHoldingsChange={handleHoldingsChange}
+                    addHolding={addHolding}
+                    removeHolding={removeHolding}
                   />
                 </CardContent>
               </Card>

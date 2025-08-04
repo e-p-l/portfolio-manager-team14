@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -16,10 +16,13 @@ import {
   IconButton,
   Typography,
   Box,
-  CircularProgress
+  CircularProgress,
+  Autocomplete
 } from '@mui/material';
-import { Add, Remove, Edit, Delete } from '@mui/icons-material';
-import { HoldingService, Holding } from '../services/holdingService';
+import { Add, Remove } from '@mui/icons-material';
+import { Holding } from '../services/holdingService';
+import { AssetService } from '../services/assetService';
+import { Asset } from '../types';
 
 interface HoldingsTableProps {
   holdings: Holding[];
@@ -27,6 +30,8 @@ interface HoldingsTableProps {
   loading: boolean;
   onHoldingsChange?: () => void;
   hideActions?: boolean;
+  addHolding?: (assetSymbol: string, quantity: number) => Promise<any>;
+  removeHolding?: (holdingId: number, quantity: number) => Promise<any>;
 }
 
 const HoldingsTable: React.FC<HoldingsTableProps> = ({ 
@@ -34,21 +39,53 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   portfolioId, 
   loading, 
   onHoldingsChange,
-  hideActions = false
+  hideActions = false,
+  addHolding,
+  removeHolding
 }) => {
   const [openBuyDialog, setOpenBuyDialog] = useState(false);
   const [openSellDialog, setOpenSellDialog] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
   const [quantity, setQuantity] = useState(0);
-  const [price, setPrice] = useState(0);
-  const [assetId, setAssetId] = useState(0);
   const [assetSymbol, setAssetSymbol] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [assetOptions, setAssetOptions] = useState<Asset[]>([]);
+  const [assetLoading, setAssetLoading] = useState(false);
+
+  // Search for assets when user types
+  const searchAssets = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 1) {
+      setAssetOptions([]);
+      return;
+    }
+
+    try {
+      setAssetLoading(true);
+      const assets = await AssetService.searchAssets(searchTerm);
+      setAssetOptions(assets);
+    } catch (error) {
+      console.error('Error searching assets:', error);
+      setAssetOptions([]);
+    } finally {
+      setAssetLoading(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchAssets(assetSymbol);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [assetSymbol]);
 
   const handleBuyOpen = () => {
     setQuantity(0);
-    setPrice(0);
-    setAssetId(0);
     setAssetSymbol('');
+    setSelectedAsset(null);
+    setAssetOptions([]);
     setOpenBuyDialog(true);
   };
 
@@ -61,35 +98,43 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   const handleClose = () => {
     setOpenBuyDialog(false);
     setOpenSellDialog(false);
+    setSelectedHolding(null);
+    setQuantity(0);
+    setAssetSymbol('');
+    setSelectedAsset(null);
+    setAssetOptions([]);
+    setActionLoading(false);
   };
 
   const handleBuy = async () => {
+    if (!addHolding || !selectedAsset || quantity <= 0) return;
+    
     try {
-      await HoldingService.createHolding(portfolioId, assetId, quantity, price);
-      if (onHoldingsChange) onHoldingsChange();
+      setActionLoading(true);
+      await addHolding(selectedAsset.symbol, quantity);
       handleClose();
+      if (onHoldingsChange) onHoldingsChange();
     } catch (error) {
       console.error('Error buying asset:', error);
+      alert(error instanceof Error ? error.message : 'Failed to buy asset');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleSell = async () => {
-    if (!selectedHolding) return;
+    if (!removeHolding || !selectedHolding || quantity <= 0) return;
     
     try {
-      // If selling all, delete the holding
-      if (quantity >= selectedHolding.quantity) {
-        await HoldingService.deleteHolding(selectedHolding.id);
-      } else {
-        // Otherwise update the quantity
-        await HoldingService.updateHolding(selectedHolding.id, {
-          quantity: selectedHolding.quantity - quantity
-        });
-      }
-      if (onHoldingsChange) onHoldingsChange();
+      setActionLoading(true);
+      await removeHolding(selectedHolding.id, quantity);
       handleClose();
+      if (onHoldingsChange) onHoldingsChange();
     } catch (error) {
       console.error('Error selling asset:', error);
+      alert('Failed to sell asset');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -201,24 +246,63 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
           <Dialog open={openBuyDialog} onClose={handleClose}>
         <DialogTitle>Buy Asset</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Asset Symbol"
-            fullWidth
-            variant="outlined"
-            value={assetSymbol}
-            onChange={(e) => setAssetSymbol(e.target.value)}
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Search for an asset by symbol or name to buy at current market price
+          </Typography>
+          
+          <Autocomplete
+            options={assetOptions}
+            getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
+            value={selectedAsset}
+            onChange={(event, newValue) => {
+              setSelectedAsset(newValue);
+            }}
+            inputValue={assetSymbol}
+            onInputChange={(event, newInputValue) => {
+              setAssetSymbol(newInputValue);
+            }}
+            loading={assetLoading}
+            loadingText="Searching assets..."
+            noOptionsText={assetSymbol.length > 0 ? "No assets found." : "Start typing to search for assets..."}
+            open={assetSymbol.length > 0}
+            filterOptions={(x) => x} // Disable built-in filtering since we do server-side search
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                margin="dense"
+                label="Search Asset (e.g., AAPL or Apple)"
+                fullWidth
+                variant="outlined"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {assetLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props}>
+                <Box>
+                  <Typography variant="body1" fontWeight="bold">
+                    {option.symbol}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {option.name}
+                  </Typography>
+                  {option.current_price && (
+                    <Typography variant="caption" color="primary">
+                      ${option.current_price.toFixed(2)}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            )}
           />
-          <TextField
-            margin="dense"
-            label="Asset ID"
-            type="number"
-            fullWidth
-            variant="outlined"
-            value={assetId}
-            onChange={(e) => setAssetId(Number(e.target.value))}
-          />
+          
           <TextField
             margin="dense"
             label="Quantity"
@@ -227,23 +311,30 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
             variant="outlined"
             value={quantity}
             onChange={(e) => setQuantity(Number(e.target.value))}
+            inputProps={{ min: 1 }}
           />
-          <TextField
-            margin="dense"
-            label="Price per Share"
-            type="number"
-            fullWidth
-            variant="outlined"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-          />
+          
+          {selectedAsset && selectedAsset.current_price && (
+            <Box mt={2} p={2} bgcolor="grey.50" borderRadius={1}>
+              <Typography variant="body2" color="textSecondary">
+                Current Price: <strong>${selectedAsset.current_price.toFixed(2)}</strong>
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Total Cost: <strong>${(selectedAsset.current_price * quantity).toFixed(2)}</strong>
+              </Typography>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleBuy} color="primary" disabled={quantity <= 0 || price <= 0 || assetId <= 0}>
-            Buy
+          <Button 
+            onClick={handleBuy} 
+            color="primary" 
+            disabled={quantity <= 0 || !selectedAsset || actionLoading}
+          >
+            {actionLoading ? <CircularProgress size={20} /> : 'Buy at Market Price'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -275,9 +366,9 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
           <Button 
             onClick={handleSell} 
             color="primary" 
-            disabled={!selectedHolding || quantity <= 0 || quantity > selectedHolding.quantity}
+            disabled={!selectedHolding || quantity <= 0 || quantity > selectedHolding.quantity || actionLoading}
           >
-            Sell
+            {actionLoading ? <CircularProgress size={20} /> : 'Sell at Market Price'}
           </Button>
         </DialogActions>
       </Dialog>

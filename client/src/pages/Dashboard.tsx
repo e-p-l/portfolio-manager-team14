@@ -19,7 +19,7 @@ import NetworthChart from '../components/NetworthChart';
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now
 
 const Dashboard: React.FC = () => {
-  const { holdings, loading: loadingHoldings } = useHoldings(DEFAULT_PORTFOLIO_ID);
+  const { holdings, loading: loadingHoldings, addHolding, removeHolding } = useHoldings(DEFAULT_PORTFOLIO_ID);
 
   // Get top 5 best performing holdings
   const getTopPerformingHoldings = () => {
