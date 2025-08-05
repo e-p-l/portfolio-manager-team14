@@ -1,23 +1,18 @@
 import React from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography
-} from '@mui/material';
-import { 
-  Analytics
-} from '@mui/icons-material';
+import { Box, Card, CardContent, Typography} from '@mui/material';
+import { Analytics} from '@mui/icons-material';
 import HoldingsTable from '../components/HoldingsTable';
 import CashFlowChart from '../components/CashFlowChart';
 import MarketMovers from '../components/MarketMovers';
 import MarketInsights from '../components/MarketInsights';
 import { useHoldings } from '../hooks/useHoldings';
+import { usePortfolio } from '../hooks/usePortfolio';
 import NetworthChart from '../components/NetworthChart';
 
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now
 
 const Dashboard: React.FC = () => {
+  const { portfolio, loading: loadingPortfolio } = usePortfolio();
   const { holdings, loading: loadingHoldings, addHolding, removeHolding, topPerformers } = useHoldings(DEFAULT_PORTFOLIO_ID);
 
   // Get top 5 best performing holdings - now using pre-computed data
@@ -46,7 +41,10 @@ const Dashboard: React.FC = () => {
             Account Balance
           </Typography>
           <Typography variant="h5" fontWeight="bold" color="primary">
-            $12,340.50
+                          ${portfolio?.balance?.toLocaleString('en-US', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                          }) || '0.00'}                        {/* $12,340.50 */}
           </Typography>
         </Box>
       </Box>

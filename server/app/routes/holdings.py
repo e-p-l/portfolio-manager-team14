@@ -60,7 +60,7 @@ class HoldingsByPortfolioResource(Resource):
     def get(self, portfolio_id):
         """Returns all holdings for a specific portfolio. Merged by asset with batch price fetching."""
         try:
-            holdings = Holding.query.options(joinedload(Holding.asset)).filter_by(portfolio_id=portfolio_id).all()
+            holdings = Holding.query.options(joinedload(Holding.asset)).filter_by(portfolio_id=portfolio_id).filter(Holding.quantity > 0).all()
             
             if not holdings:
                 return {}, 200
