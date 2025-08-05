@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, app
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
@@ -11,7 +11,7 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "*"}})
 
     # app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(app.root_path, 'investment_tracker.db')}"
-    app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+mysqlconnector://root:password@localhost:3306/portfolio_manager_db"
+    app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:password@localhost:3306/portfolio_manager_db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = "dev"
 

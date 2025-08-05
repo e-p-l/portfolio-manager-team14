@@ -1,15 +1,24 @@
 from .. import db
 from ..models.portfolio import Portfolio
+from ..models.portfolio_history import PortfolioHistory
+
+from ..services.portfolio_service import backfill_portfolio_history
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
 from flask_restx import Namespace, Resource, fields
-from datetime import datetime
+from datetime import datetime, timezone
 
 api_ns = Namespace('portfolios', description='Portfolio operations')
-portfolio_model = api_ns.model('Portfolio', {
-    'name': fields.String(required=True),
-})
+
+portfolio_input_models = {
+    'create': api_ns.model('Portfolio', {
+        'name': fields.String(required=True),
+    }),
+    'backfill': api_ns.model('PortfolioUpdate', {
+        'start': fields.String(required=False),
+    })
+}
 
 @api_ns.route('/')
 class PortfolioListResource(Resource):
@@ -21,7 +30,7 @@ class PortfolioListResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
-    @api_ns.expect(portfolio_model)
+    @api_ns.expect(portfolio_input_models['create'])
     def post(self):
         """
         Creates a new portfolio.
@@ -53,7 +62,7 @@ class PortfolioResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
-    @api_ns.expect(portfolio_model)
+    @api_ns.expect(portfolio_input_models['create'])
     def put(self, portfolio_id):
         """
         Updates an existing portfolio.
@@ -67,8 +76,10 @@ class PortfolioResource(Resource):
         try:
             if 'name' in data:
                 portfolio.name = data['name']
-            portfolio.updated_at = datetime.utcnow()
+            if 'creation_date' in data:
+                portfolio.creation_date = datetime.strptime(data['creation_date'], '%Y-%m-%d').date()
             db.session.commit()
+
             return portfolio.serialize(), 200
         except SQLAlchemyError as e:
             db.session.rollback()

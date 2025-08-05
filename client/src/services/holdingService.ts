@@ -1,11 +1,23 @@
 import { apiClient } from './apiClient';
 
+export interface Asset {
+  id?: number; // Optional - backend can assign if needed
+  symbol: string;
+  name: string;
+  current_price?: number;
+  asset_type?: string;
+  sector?: string;
+  day_changeP?: number;
+}
+
 export interface Holding {
   id: number;
   portfolio_id: number;
   asset_id: number;
   asset_name?: string;
   asset_symbol?: string;
+  asset_type?: string;
+  asset_sector?: string;
   quantity: number;
   purchase_price: number;
   current_price?: number;
@@ -13,7 +25,7 @@ export interface Holding {
 
 export class HoldingService {
   static async getHoldings(): Promise<Holding[]> {
-    const response = await apiClient.get<Holding[]>('/holdings');
+    const response = await apiClient.get<Holding[]>('/holdings/');
     return response;
   }
 
@@ -27,12 +39,12 @@ export class HoldingService {
     return response;
   }
 
-  static async createHolding(portfolioId: number, assetId: number, quantity: number, purchasePrice: number): Promise<Holding> {
-    const response = await apiClient.post<Holding>('/holdings', {
+  static async createHolding(portfolioId: number, asset: Asset, quantity: number): Promise<Holding> {
+    const response = await apiClient.post<Holding>('/holdings/', {
       portfolio_id: portfolioId,
-      asset_id: assetId,
-      quantity: quantity,
-      purchase_price: purchasePrice
+      asset: asset, // Send the entire asset object to the backend
+      quantity: quantity
+      // Backend will extract asset_id and use current_price as purchase_price
     });
     return response;
   }

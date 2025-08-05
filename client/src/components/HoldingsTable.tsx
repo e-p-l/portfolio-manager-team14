@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -16,37 +16,78 @@ import {
   IconButton,
   Typography,
   Box,
-  CircularProgress
+  CircularProgress,
+  Autocomplete
 } from '@mui/material';
-import { Add, Remove, Edit, Delete } from '@mui/icons-material';
-import { HoldingService, Holding } from '../services/holdingService';
+import { Add, Remove } from '@mui/icons-material';
+import { Holding } from '../services/holdingService';
+import { AssetService } from '../services/assetService';
+import { TransactionService } from '../services/transactionService';
+import { Asset } from '../types';
 
 interface HoldingsTableProps {
   holdings: Holding[];
   portfolioId: number;
   loading: boolean;
   onHoldingsChange?: () => void;
+  hideActions?: boolean;
 }
 
 const HoldingsTable: React.FC<HoldingsTableProps> = ({ 
   holdings, 
   portfolioId, 
   loading, 
-  onHoldingsChange 
+  onHoldingsChange,
+  hideActions = false
 }) => {
   const [openBuyDialog, setOpenBuyDialog] = useState(false);
   const [openSellDialog, setOpenSellDialog] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
   const [quantity, setQuantity] = useState(0);
-  const [price, setPrice] = useState(0);
-  const [assetId, setAssetId] = useState(0);
   const [assetSymbol, setAssetSymbol] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [assetOptions, setAssetOptions] = useState<Asset[]>([]);
+  const [assetLoading, setAssetLoading] = useState(false);
+
+  // Search for assets when user types
+  const searchAssets = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 1) {
+      setAssetOptions([]);
+      return;
+    }
+
+    try {
+      setAssetLoading(true);
+      const assets = await AssetService.searchAssets(searchTerm);
+      setAssetOptions(assets);
+    } catch (error) {
+      console.error('Error searching assets:', error);
+      setAssetOptions([]);
+    } finally {
+      setAssetLoading(false);
+    }
+  };
+
+  // Debounced search - only search when manually typing, not when selecting
+  useEffect(() => {
+    // Don't search if an asset is already selected
+    if (selectedAsset) {
+      return;
+    }
+    
+    const timeoutId = setTimeout(() => {
+      searchAssets(assetSymbol);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [assetSymbol, selectedAsset]);
 
   const handleBuyOpen = () => {
     setQuantity(0);
-    setPrice(0);
-    setAssetId(0);
     setAssetSymbol('');
+    setSelectedAsset(null);
+    setAssetOptions([]);
     setOpenBuyDialog(true);
   };
 
@@ -59,35 +100,62 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   const handleClose = () => {
     setOpenBuyDialog(false);
     setOpenSellDialog(false);
+    setSelectedHolding(null);
+    setQuantity(0);
+    setAssetSymbol('');
+    setSelectedAsset(null);
+    setAssetOptions([]);
+    setActionLoading(false);
   };
 
   const handleBuy = async () => {
+    if (!selectedAsset || quantity <= 0) return;
+    
     try {
-      await HoldingService.createHolding(portfolioId, assetId, quantity, price);
-      if (onHoldingsChange) onHoldingsChange();
+      setActionLoading(true);
+      
+      // Validate that the asset has an ID (should be set when selected from search)
+      if (!selectedAsset.id) {
+        throw new Error('Selected asset is not properly initialized. Please search and select the asset again.');
+      }
+      
+      // Create BUY transaction using TransactionService
+      await TransactionService.buyAsset(portfolioId, selectedAsset, quantity);
+      
+      console.log(`Successfully bought ${quantity} shares of ${selectedAsset.symbol}`);
       handleClose();
+      if (onHoldingsChange) onHoldingsChange();
     } catch (error) {
       console.error('Error buying asset:', error);
+      alert(error instanceof Error ? error.message : 'Failed to buy asset. Please try again.');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleSell = async () => {
-    if (!selectedHolding) return;
+    if (!selectedHolding || quantity <= 0) return;
     
     try {
-      // If selling all, delete the holding
-      if (quantity >= selectedHolding.quantity) {
-        await HoldingService.deleteHolding(selectedHolding.id);
-      } else {
-        // Otherwise update the quantity
-        await HoldingService.updateHolding(selectedHolding.id, {
-          quantity: selectedHolding.quantity - quantity
-        });
-      }
-      if (onHoldingsChange) onHoldingsChange();
+      setActionLoading(true);
+      
+      // Create SELL transaction using TransactionService
+      // Backend requires asset_id even for sell transactions (backend design issue)
+      await TransactionService.sellHolding(
+        portfolioId, 
+        selectedHolding.id, 
+        selectedHolding.asset_id,  // Pass asset_id as required by backend
+        quantity
+      );
+      
+      console.log(`Successfully sold ${quantity} shares of ${selectedHolding.asset_symbol}`);
       handleClose();
+      if (onHoldingsChange) onHoldingsChange();
     } catch (error) {
       console.error('Error selling asset:', error);
+      alert(error instanceof Error ? error.message : 'Failed to sell asset. Please try again.');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -114,17 +182,19 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">Your Assets</Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<Add />}
-          onClick={handleBuyOpen}
-        >
-          Buy Asset
-        </Button>
-      </Box>
+      {!hideActions && (
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6">Your Assets</Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            startIcon={<Add />}
+            onClick={handleBuyOpen}
+          >
+            Buy Asset
+          </Button>
+        </Box>
+      )}
       
       {holdings.length === 0 ? (
         <Box textAlign="center" p={3}>
@@ -133,43 +203,57 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
           </Typography>
         </Box>
       ) : (
-        <TableContainer component={Paper} sx={{ maxHeight: 440 }}>
-          <Table stickyHeader aria-label="holdings table" size="small">
+        <TableContainer component={Paper} sx={{ maxHeight: '750px', overflowY: 'auto' }}>
+          <Table 
+            stickyHeader 
+            aria-label="holdings table" 
+            size="small"
+            sx={{
+              '& .MuiTableCell-root': {
+                paddingTop: '8px',
+                paddingBottom: '8px',
+              }
+            }}
+          >
             <TableHead>
               <TableRow>
                 <TableCell>Symbol</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell align="right">Quantity</TableCell>
-                <TableCell align="right">Purchase Price</TableCell>
-                <TableCell align="right">Current Price</TableCell>
+                <TableCell align="right">Price</TableCell>
                 <TableCell align="right">Total Value</TableCell>
-                <TableCell align="right">Gain/Loss</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                {/* <TableCell align="right">Gain/Loss</TableCell> */}
+                {!hideActions && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {holdings.map((holding) => (
                 <TableRow key={holding.id}>
-                  <TableCell>{holding.asset_symbol}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight="600" sx={{ color: '#1a73e8' }}>
+                      {holding.asset_symbol}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{holding.asset_name}</TableCell>
                   <TableCell align="right">{holding.quantity}</TableCell>
                   <TableCell align="right">${holding.purchase_price.toFixed(2)}</TableCell>
-                  <TableCell align="right">${holding.current_price?.toFixed(2) || holding.purchase_price.toFixed(2)}</TableCell>
                   <TableCell align="right">${calculateTotalValue(holding).toFixed(2)}</TableCell>
-                  <TableCell align="right" sx={{
+                  {/* <TableCell align="right" sx={{
                     color: calculateGainLoss(holding) >= 0 ? 'success.main' : 'error.main'
                   }}>
                     {calculateGainLoss(holding).toFixed(2)}%
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton 
-                      size="small" 
-                      color="primary"
-                      onClick={() => handleSellOpen(holding)}
-                    >
-                      <Remove fontSize="small" />
-                    </IconButton>
-                  </TableCell>
+                  </TableCell> */}
+                  {!hideActions && (
+                    <TableCell align="right">
+                      <IconButton 
+                        size="small" 
+                        color="primary"
+                        onClick={() => handleSellOpen(holding)}
+                      >
+                        <Remove fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -177,28 +261,105 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
         </TableContainer>
       )}
 
-      {/* Buy Dialog */}
-      <Dialog open={openBuyDialog} onClose={handleClose}>
+      {/* Buy Dialog - only render when actions are not hidden */}
+      {!hideActions && (
+        <>
+            <Dialog open={openBuyDialog} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Buy Asset</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Asset Symbol"
-            fullWidth
-            variant="outlined"
-            value={assetSymbol}
-            onChange={(e) => setAssetSymbol(e.target.value)}
-          />
-          <TextField
-            margin="dense"
-            label="Asset ID"
-            type="number"
-            fullWidth
-            variant="outlined"
-            value={assetId}
-            onChange={(e) => setAssetId(Number(e.target.value))}
-          />
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Search for an asset and enter quantity
+          </Typography>
+          
+          {!selectedAsset ? (
+            <Autocomplete
+              options={assetOptions}
+              getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
+              value={selectedAsset}
+              onChange={(event, newValue) => {
+                setSelectedAsset(newValue);
+                // Clear search input when asset is selected to prevent further searches
+                if (newValue) {
+                  setAssetSymbol('');
+                  setAssetOptions([]); // Clear options to close dropdown
+                }
+              }}
+              inputValue={assetSymbol}
+              onInputChange={(event, newInputValue, reason) => {
+                // Only update search when user is typing manually
+                if (reason === 'input') {
+                  setAssetSymbol(newInputValue);
+                }
+                // Don't trigger search when clearing or selecting
+              }}
+              loading={assetLoading}
+              loadingText="Searching assets..."
+              noOptionsText="No assets found"
+              filterOptions={(x) => x} // Disable built-in filtering
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  margin="dense"
+                  label="Search Asset (e.g., AAPL or Apple)"
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {assetLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box component="li" {...props}>
+                  <Box>
+                    <Typography variant="body1" fontWeight="bold">
+                      {option.symbol}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {option.name}
+                    </Typography>
+                    {option.current_price && (
+                      <Typography variant="caption" color="primary">
+                        ${option.current_price.toFixed(2)}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            />
+          ) : (
+            <Box mt={2} mb={2}>
+              <Box display="flex" alignItems="center" justifyContent="space-between" p={2} bgcolor="grey.50" borderRadius={1} border="1px solid" borderColor="grey.300">
+                <Box>
+                  <Typography variant="h6" color="primary">
+                    {selectedAsset.symbol} - {selectedAsset.name}
+                  </Typography>
+                  {selectedAsset.current_price && (
+                    <Typography variant="body2" color="textSecondary">
+                      Current Price: ${selectedAsset.current_price.toFixed(2)}
+                    </Typography>
+                  )}
+                </Box>
+                <Button 
+                  variant="outlined"
+                  size="small" 
+                  onClick={() => {
+                    setSelectedAsset(null);
+                    setAssetSymbol('');
+                  }}
+                  color="primary"
+                >
+                  Change Asset
+                </Button>
+              </Box>
+            </Box>
+          )}
+          
           <TextField
             margin="dense"
             label="Quantity"
@@ -207,31 +368,41 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
             variant="outlined"
             value={quantity}
             onChange={(e) => setQuantity(Number(e.target.value))}
+            inputProps={{ min: 1 }}
           />
-          <TextField
-            margin="dense"
-            label="Price per Share"
-            type="number"
-            fullWidth
-            variant="outlined"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-          />
+          
+          {selectedAsset && selectedAsset.current_price && (
+            <Box mt={2} p={2} bgcolor="grey.50" borderRadius={1}>
+              <Typography variant="body2" color="textSecondary">
+                Current Price: <strong>${selectedAsset.current_price.toFixed(2)}</strong>
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Total Cost: <strong>${(selectedAsset.current_price * quantity).toFixed(2)}</strong>
+              </Typography>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleBuy} color="primary" disabled={quantity <= 0 || price <= 0 || assetId <= 0}>
-            Buy
+          <Button 
+            onClick={handleBuy} 
+            color="primary" 
+            disabled={quantity <= 0 || !selectedAsset || actionLoading}
+          >
+            {actionLoading ? <CircularProgress size={20} /> : 'Buy Asset'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Sell Dialog */}
-      <Dialog open={openSellDialog} onClose={handleClose}>
+      <Dialog open={openSellDialog} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>Sell {selectedHolding?.asset_symbol}</DialogTitle>
         <DialogContent>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Sell shares of {selectedHolding?.asset_name} ({selectedHolding?.asset_symbol})
+          </Typography>
           <Typography variant="body2" gutterBottom>
             You currently own: {selectedHolding?.quantity} shares
           </Typography>
@@ -255,12 +426,14 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
           <Button 
             onClick={handleSell} 
             color="primary" 
-            disabled={!selectedHolding || quantity <= 0 || quantity > selectedHolding.quantity}
+            disabled={!selectedHolding || quantity <= 0 || quantity > selectedHolding.quantity || actionLoading}
           >
-            Sell
+            {actionLoading ? <CircularProgress size={20} /> : 'Sell Asset'}
           </Button>
         </DialogActions>
       </Dialog>
+        </>
+      )}
     </>
   );
 };

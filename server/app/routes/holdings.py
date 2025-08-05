@@ -1,8 +1,10 @@
 from .. import db
 from ..models.holding import Holding
+from ..services.asset_service import fetch_latest_price
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 from flask_restx import Namespace, Resource, fields
 
 api_ns = Namespace('holdings', description='Holding operations')
@@ -24,31 +26,6 @@ class HoldingListResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
-    @api_ns.expect(holding_model)
-    def post(self):
-        """
-        Creates a new holding.
-        Expects JSON with portfolio_id, asset_id, quantity, purchase_price, and purchase_date.
-        """
-        data = request.get_json()
-        if not data or 'portfolio_id' not in data or 'asset_id' not in data or 'quantity' not in data or 'purchase_price' not in data or 'purchase_date' not in data:
-            return {"error": "Invalid input"}, 400
-
-        try:
-            new_holding = Holding(
-                portfolio_id=data['portfolio_id'],
-                asset_id=data['asset_id'],
-                quantity=data['quantity'],
-                purchase_price=data['purchase_price'],
-                purchase_date=data['purchase_date']
-            )
-            db.session.add(new_holding)
-            db.session.commit()
-            return new_holding.serialize(), 201
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            return {"error": str(e)}, 500
-
 @api_ns.route('/<int:holding_id>')
 class HoldingResource(Resource):
     def get(self, holding_id):
@@ -62,30 +39,10 @@ class HoldingResource(Resource):
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
 
-    @api_ns.expect(holding_model)
-    def put(self, holding_id):
-        """
-        Updates an existing holding.
-        Expects JSON with optional fields: quantity and purchase_price.
-        """
-        data = request.get_json()
-        holding = Holding.query.get(holding_id)
-        if not holding:
-            return {"error": "Holding not found"}, 404
-
-        try:
-            if 'quantity' in data:
-                holding.quantity = data['quantity']
-            if 'purchase_price' in data:
-                holding.purchase_price = data['purchase_price']
-            db.session.commit()
-            return holding.serialize(), 200
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            return {"error": str(e)}, 500
-
     def delete(self, holding_id):
         """Deletes a specific holding by its ID."""
+        print(f"Received DELETE request for holding {holding_id}")
+        
         holding = Holding.query.get(holding_id)
         if not holding:
             return {"error": "Holding not found"}, 404
@@ -101,12 +58,56 @@ class HoldingResource(Resource):
 @api_ns.route('/portfolio/<int:portfolio_id>')
 class HoldingsByPortfolioResource(Resource):
     def get(self, portfolio_id):
-        """Returns all holdings for a specific portfolio."""
+        """Returns all holdings for a specific portfolio. Merged by asset with batch price fetching."""
         try:
-            holdings = Holding.query.filter_by(portfolio_id=portfolio_id).all()
-            if holdings:
-                return [h.serialize() for h in holdings], 200
-            else:
-                return [], 200
+            holdings = Holding.query.options(joinedload(Holding.asset)).filter_by(portfolio_id=portfolio_id).all()
+            
+            if not holdings:
+                return {}, 200
+            
+            # Get unique symbols for batch price fetching
+            symbols = list(set(h.asset.symbol for h in holdings))
+            
+            # Batch fetch latest prices for all symbols at once
+            from ..services.asset_service import fetch_latest_prices
+            price_data = fetch_latest_prices(symbols)
+            
+            merged_holdings = {}
+            for h in holdings:
+                symbol = h.asset.symbol
+                if symbol not in merged_holdings:
+                    # Get price from batch data or fallback to stored price
+                    current_price = None
+                    if symbol in price_data:
+                        current_price = price_data[symbol].get('price')
+                    
+                    # Fallback to stored asset price if batch fetch failed
+                    if current_price is None:
+                        current_price = h.asset.current_price if hasattr(h.asset, 'current_price') else 100.0
+                    
+                    merged_holdings[symbol] = {
+                        'quantity': h.quantity,
+                        'current_price': current_price,
+                        'asset_name': h.asset.name,
+                        'asset_symbol': h.asset.symbol,
+                        'asset_id': h.asset.id,
+                        'asset_type': h.asset.asset_type,
+                        'asset_sector': h.asset.sector,
+                        'asset_dayChangeP': price_data.get(symbol, {}).get('day_changeP') if symbol in price_data else None,
+                        'purchase_price': h.purchase_price,
+                        'return': 'TODO'
+                    }
+                else:
+                    merged_holdings[symbol]['quantity'] += h.quantity
+                    # Weight average purchase price when merging
+                    total_qty = merged_holdings[symbol]['quantity']
+                    merged_holdings[symbol]['purchase_price'] = (
+                        (merged_holdings[symbol]['purchase_price'] * (total_qty - h.quantity) + 
+                         h.purchase_price * h.quantity) / total_qty
+                    )
+            
+            return merged_holdings, 200
+
         except SQLAlchemyError as e:
+            print(f"Error fetching holdings: {e}")
             return {"error": str(e)}, 500

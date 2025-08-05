@@ -5,7 +5,8 @@
 ##################################################
 
 from app import db
-from datetime import datetime
+
+from datetime import date
 
 class Portfolio(db.Model):
     __tablename__   = "portfolios"
@@ -15,17 +16,22 @@ class Portfolio(db.Model):
 
     # portfolio data
     name            = db.Column(db.String(100), nullable=False)
+    balance         = db.Column(db.Float, default=0.0)
+    creation_date   = db.Column(db.Date, nullable=False)
 
     # relationships
     holdings        = db.relationship("Holding", back_populates="portfolio")
     transactions    = db.relationship("Transaction", back_populates="portfolio")
+    history         = db.relationship("PortfolioHistory", back_populates="portfolio")
     
-    def __init__(self, name, description=None):
+    def __init__(self, name):
         self.name = name
-        
+        self.balance = 10000.0
+        self.creation_date = date.today()
 
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
+            "balance": self.balance,
         }

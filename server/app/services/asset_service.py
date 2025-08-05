@@ -1,6 +1,6 @@
 import yfinance as yf
 from cachetools import TTLCache
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app import db
 from app.models.asset import Asset
@@ -17,15 +17,43 @@ def fetch_latest_prices(symbols):
             cache[symbol] = {
                 'price': metadata['price'],
                 'day_change': metadata['day_change'],
-                'day_change_percent': metadata['day_change_percent'],
+                'day_changeP': metadata['day_changeP'],
                 'sector': metadata['sector'],
                 'asset_type': metadata['asset_type'],
-                'update_time': datetime.utcnow()
+                'update_time': datetime.now(timezone.utc).isoformat()
             }
         except Exception as e:
             print(f"Error fetching data for {symbol}:", e)
 
     return {symbol: cache[symbol] for symbol in symbols if symbol in cache}
+
+def fetch_latest_price(asset_id):
+    """
+    Fetches the latest price for a given asset_id 
+    """
+    asset = Asset.query.get(asset_id)
+    if not asset:
+        print(f"Asset with id {asset_id} not found.")
+        return None
+
+    symbol = asset.symbol.upper()
+    ticker = yf.Ticker(symbol)
+    info = ticker.info
+    price = info.get("regularMarketPrice", None)
+
+    return price
+
+def update_asset_history(asset_id, price, date):
+    """
+    Updates the asset_history table for the given asset,date and price.
+    """
+    history = AssetHistory.query.filter_by(asset_id=asset_id, date=date).first()
+    if history:
+        history.price = price
+    else:
+        history = AssetHistory(asset_id=asset_id, price=price, date=date)
+        db.session.add(history)
+    db.session.commit()
 
 def fetch_asset_metadata(symbol):
     """
@@ -41,12 +69,12 @@ def fetch_asset_metadata(symbol):
     current_price = info.get("regularMarketPrice", 0)
     previous_close = info.get("previousClose", 0)
     day_change = current_price - previous_close
-    day_change_percent = ((day_change / previous_close) * 100) if previous_close else 0
+    day_changeP = ((day_change / previous_close) * 100) if previous_close else 0
 
     return {
         "price": current_price,
         "day_change": round(day_change, 2),
-        "day_change_percent": round(day_change_percent, 2),
+        "day_changeP": round(day_changeP, 2),
         "sector": sector,
         "asset_type": asset_type
     }
@@ -77,9 +105,9 @@ def dataframe_to_nested_dict(df):
                 result[date_str][symbol][field] = row[col]
     return result
 
-def save_price_to_db(symbol, price, timestamp):
+def save_price_to_db(symbol, price, date):
     """
-    Save the fetched price into a MySQL table called `stock_prices`.
+    Save the fetched price into a MySQL table called `asset_history`.
     """
     try:
         asset = Asset.query.filter_by(symbol=symbol).first()
@@ -90,9 +118,133 @@ def save_price_to_db(symbol, price, timestamp):
         asset_history = AssetHistory(
             asset_id=asset.id,
             price=price,
-            timestamp=timestamp
+            date=date
         )
         db.session.add(asset_history)
         db.session.commit()
     except Exception as e:
         print("Database error:", e)
+
+
+def get_asset_info(symbol):
+    """
+    Helper function to fetch asset details from yfinance.
+    Returns a dict with name, asset_type, sector, and day_changeP.
+    Calculates day_changeP
+    """
+    ticker = yf.Ticker(symbol)
+    info = ticker.info
+
+    name = info.get("longName", "Unknown")
+    asset_type = info.get("quoteType", "N/A")
+    sector = info.get("sector", "N/A") or info.get("industry", "N/A")
+    current_price = info.get("regularMarketPrice")
+    previous_close = info.get("regularMarketPreviousClose")
+
+    if current_price is not None and previous_close:
+        try:
+            day_changeP = round(((current_price - previous_close) / previous_close) * 100, 2)
+        except ZeroDivisionError:
+            day_changeP = 0.0
+    else:
+        day_changeP = 0.0
+
+    return {
+        "name": name,
+        "asset_type": asset_type,
+        "sector": sector,
+        "price": current_price,
+        "day_changeP": day_changeP
+    }
+
+
+def search_assets(search_term):
+    """
+    Search for assets by symbol or name.
+    Returns a list of assets matching the search term.
+    Includes database search and automatic symbol discovery.
+    """
+    if not search_term or len(search_term) < 1:
+        return []
+    
+    try:
+        # Search in database first
+        search_pattern = f"%{search_term.upper()}%"
+        db_assets = Asset.query.filter(
+            db.or_(
+                Asset.symbol.ilike(search_pattern),
+                Asset.name.ilike(search_pattern)
+            )
+        ).limit(10).all()
+        
+        results = []
+        
+        # Add database results with current prices
+        for asset in db_assets:
+            try:
+                # Get current price from yfinance
+                info = get_asset_info(asset.symbol)
+                results.append({
+                    "id": asset.id,
+                    "symbol": asset.symbol,
+                    "name": asset.name,
+                    "asset_type": asset.asset_type,
+                    "sector": asset.sector,
+                    "current_price": info.get("price"),
+                    "day_changeP": info.get("day_changeP")
+                })
+            except Exception:
+                # If yfinance fails, use asset without current price
+                results.append({
+                    "id": asset.id,
+                    "symbol": asset.symbol,
+                    "name": asset.name,
+                    "asset_type": asset.asset_type,
+                    "sector": asset.sector,
+                    "current_price": None,
+                    "day_changeP": 0.0
+                })
+        
+        # If we have fewer than 10 results and search term looks like a symbol,
+        # try to find it in yfinance and add to database
+        if len(results) < 10 and len(search_term) <= 5 and search_term.isalpha():
+            try:
+                symbol = search_term.upper()
+                # Check if this symbol already exists in our results
+                existing_symbols = [r["symbol"] for r in results]
+                
+                if symbol not in existing_symbols:
+                    info = get_asset_info(symbol)
+                    if info and info.get("name") != "Unknown":
+                        # Check if asset exists in database
+                        existing_asset = Asset.query.filter_by(symbol=symbol).first()
+                        
+                        if not existing_asset:
+                            # Add new asset to database
+                            new_asset = Asset(
+                                symbol=symbol,
+                                name=info["name"],
+                                asset_type=info["asset_type"],
+                                sector=info["sector"],
+                                day_changeP=info["day_changeP"]
+                            )
+                            db.session.add(new_asset)
+                            db.session.commit()
+                            
+                            results.insert(0, {
+                                "id": new_asset.id,
+                                "symbol": new_asset.symbol,
+                                "name": new_asset.name,
+                                "asset_type": new_asset.asset_type,
+                                "sector": new_asset.sector,
+                                "current_price": info.get("price"),
+                                "day_changeP": info.get("day_changeP")
+                            })
+            except Exception:
+                pass  # Ignore errors when trying to add new symbols
+        
+        return results
+        
+    except Exception as e:
+        print(f"Error searching assets: {e}")
+        return []

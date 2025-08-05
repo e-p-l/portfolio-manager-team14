@@ -10,13 +10,9 @@ import {
 } from '@mui/material';
 import { ShowChart } from '@mui/icons-material';
 import { format, subDays, subMonths, subYears, parseISO } from 'date-fns';
+import { usePortfolioHistory, PortfolioValue } from '../hooks/usePortfolioHistory';
 
 // Types
-interface PortfolioValue {
-  date: string; // ISO string format
-  value: number;
-}
-
 interface PortfolioPerformanceData {
   data: PortfolioValue[];
   startValue: number;
@@ -24,53 +20,14 @@ interface PortfolioPerformanceData {
   percentChange: number;
   highValue: number;
   lowValue: number;
-  absoluteChange: number;
+  valueChange: number;
 }
 
-// Create mock data for portfolio value over time
-const generateMockData = (): PortfolioValue[] => {
-  const baseValue = 100000; // $100,000 starting value
-  const today = new Date();
-  const startDate = subYears(today, 2); // 2 years of data
-  const data: PortfolioValue[] = [];
-  
-  // Generate daily data for 2 years
-  let currentDate = startDate;
-  let currentValue = baseValue;
-  const volatility = 0.005; // Daily volatility
-  const annualGrowth = 0.12; // 12% annual growth
-  const dailyGrowth = Math.pow(1 + annualGrowth, 1/365) - 1;
-  
-  while (currentDate <= today) {
-    // Add some randomness to create realistic market movements
-    const randomFactor = 1 + (Math.random() * 2 - 1) * volatility;
-    // Apply daily growth trend
-    const growthFactor = 1 + dailyGrowth;
-    
-    currentValue = currentValue * randomFactor * growthFactor;
-    
-    // Add some market corrections and rallies
-    // Major correction around 6 months ago
-    const monthsAgo = (today.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    if (monthsAgo >= 5.9 && monthsAgo <= 6.1) {
-      currentValue = currentValue * 0.92; // 8% drop
-    }
-    
-    // Rally 3 months ago
-    if (monthsAgo >= 2.9 && monthsAgo <= 3.1) {
-      currentValue = currentValue * 1.07; // 7% rally
-    }
-    
-    data.push({
-      date: currentDate.toISOString(),
-      value: Math.round(currentValue * 100) / 100 // Round to 2 decimal places
-    });
-    
-    currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000); // Add 1 day
-  }
-  
-  return data;
-};
+interface ValueChartProps {
+  portfolioId?: number;
+  assetSymbol?: string;
+  title?: string;
+}
 
 // Filter data based on time range
 const filterData = (data: PortfolioValue[], range: string): PortfolioPerformanceData => {
@@ -110,8 +67,8 @@ const filterData = (data: PortfolioValue[], range: string): PortfolioPerformance
   // Calculate performance metrics
   const startValue = filteredData[0]?.value || 0;
   const endValue = filteredData[filteredData.length - 1]?.value || 0;
-  const absoluteChange = endValue - startValue;
-  const percentChange = startValue ? (absoluteChange / startValue) * 100 : 0;
+  const valueChange = endValue - startValue;
+  const percentChange = startValue ? (valueChange / startValue) * 100 : 0;
   
   // Find high and low values
   const values = filteredData.map(item => item.value);
@@ -123,7 +80,7 @@ const filterData = (data: PortfolioValue[], range: string): PortfolioPerformance
     startValue,
     endValue,
     percentChange,
-    absoluteChange,
+    valueChange,
     highValue,
     lowValue
   };
@@ -155,25 +112,24 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-// Portfolio chart component
-const PortfolioValueChart: React.FC = () => {
+// Value chart component (can be used for portfolio or individual assets)
+const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetSymbol, title = "Portfolio Value" }) => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<string>('3M');
-  const [chartType, setChartType] = useState<'value' | 'change'>('value');
   
-  // Generate mock data once on component mount
-  const [allData] = useState<PortfolioValue[]>(generateMockData);
+  // For now, only portfolio history is supported. Asset history can be added later
+  const { historyData, loading, error } = usePortfolioHistory(portfolioId || 1);
   
   // Filter data based on selected time range
-  const performanceData = filterData(allData, timeRange);
-  const { data, percentChange, absoluteChange, endValue } = performanceData;
+  const performanceData = filterData(historyData, timeRange);
+  const { data, percentChange, valueChange, endValue } = performanceData;
   
   // Format change value
   const formattedChange = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     signDisplay: 'always'
-  }).format(absoluteChange);
+  }).format(valueChange);
   
   // Format percentage
   const formattedPercentage = new Intl.NumberFormat('en-US', {
@@ -196,18 +152,10 @@ const PortfolioValueChart: React.FC = () => {
     }
   }, []);
   
-  // Change chart type handler
-  const handleChartTypeChange = useCallback((_: React.MouseEvent<HTMLElement>, newType: 'value' | 'change') => {
-    if (newType !== null) {
-      setChartType(newType);
-    }
-  }, []);
   
-  // Format date for X-axis ticks
   const formatXAxis = (tickItem: string) => {
     const date = parseISO(tickItem);
     
-    // Format differently based on time range
     if (timeRange === '1W' || timeRange === '1M') {
       return format(date, 'MMM d');
     } else {
@@ -215,30 +163,46 @@ const PortfolioValueChart: React.FC = () => {
     }
   };
   
-  // Calculate point colors based on performance
   const areaColor = percentChange >= 0 ? theme.palette.success.light : theme.palette.error.light;
   
-  return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Box display="flex" alignItems="center">
+  // Show loading state
+  if (loading) {
+    return (
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <Box display="flex" alignItems="center" mb={2}>
             <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
-            <Typography variant="h6">
-              Portfolio Value
-            </Typography>
+            <Typography variant="h6">{title}</Typography>
           </Box>
-          
-          <ToggleButtonGroup
-            size="small"
-            value={chartType}
-            exclusive
-            onChange={handleChartTypeChange}
-            aria-label="chart type"
-          >
-            <ToggleButton value="value">Value</ToggleButton>
-            <ToggleButton value="change">Change</ToggleButton>
-          </ToggleButtonGroup>
+          <Typography variant="body1" color="text.secondary">Loading data...</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Show error state
+  if (error) {
+    return (
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <Box display="flex" alignItems="center" mb={2}>
+            <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
+            <Typography variant="h6">{title}</Typography>
+          </Box>
+          <Typography variant="body1" color="error.main">{error}</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Box display="flex" alignItems="center" mb={2}>
+          <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
+          <Typography variant="h6">
+            {title}
+          </Typography>
         </Box>
         
         <Box display="flex" flexDirection="column" mb={2}>
@@ -260,7 +224,7 @@ const PortfolioValueChart: React.FC = () => {
           </Box>
         </Box>
         
-        <Box height={300}>
+        <Box sx={{ flex: 1, minHeight: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={data}
@@ -307,7 +271,7 @@ const PortfolioValueChart: React.FC = () => {
                 type="monotone" 
                 dataKey="value" 
                 stroke={areaColor} 
-                fillOpacity={1}
+                fillOpacity={0.6}
                 fill="url(#colorValue)"
                 animationDuration={750}
                 isAnimationActive={true}
@@ -338,4 +302,4 @@ const PortfolioValueChart: React.FC = () => {
   );
 };
 
-export default PortfolioValueChart;
+export default ValueChart;
