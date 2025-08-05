@@ -217,24 +217,35 @@ export const useHoldings = (portfolioId: number) => {
         throw new Error('Please select a valid asset');
       }
       
-      if (!selectedAsset.current_price) {
-        throw new Error(`Current price not available for ${selectedAsset.symbol}`);
-      }
-      
       if (quantity <= 0) {
         throw new Error('Quantity must be greater than 0');
       }
       
-      const newHolding = await HoldingService.createHolding(
-        portfolioId,
-        selectedAsset,
-        quantity
-      );
+      // Use transaction API for buying
+      const response = await fetch('/api/transactions/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          portfolio_id: portfolioId,
+          asset_id: selectedAsset.id,
+          quantity: quantity,
+          transaction_type: 'buy'
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to buy holding');
+      }
+      
+      const transaction = await response.json();
       
       // Clear cache to force refresh
       holdingsCache.delete(portfolioId);
       await fetchHoldings(true);
-      return newHolding;
+      return transaction;
     } catch (err) {
       console.error('Error adding holding:', err);
       setError(err instanceof Error ? err.message : 'Failed to add holding');
@@ -244,7 +255,8 @@ export const useHoldings = (portfolioId: number) => {
     }
   }, [portfolioId, fetchHoldings]);
 
-  // Remove holding function
+  // Remove/sell holding function
+  // Remove/sell holding function - now uses transaction API
   const removeHolding = useCallback(async (holdingId: number, quantity: number) => {
     try {
       setLoading(true);
@@ -263,12 +275,23 @@ export const useHoldings = (portfolioId: number) => {
         throw new Error(`Cannot sell ${quantity} shares. You only own ${holding.quantity} shares.`);
       }
       
-      if (quantity >= holding.quantity) {
-        await HoldingService.deleteHolding(holdingId);
-      } else {
-        await HoldingService.updateHolding(holdingId, {
-          quantity: holding.quantity - quantity
-        });
+      // Use transaction API instead of direct holding manipulation
+      const response = await fetch('/api/transactions/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          portfolio_id: portfolioId,
+          holding_id: holdingId,
+          quantity: quantity,
+          transaction_type: 'sell'
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to sell holding');
       }
       
       // Clear cache to force refresh

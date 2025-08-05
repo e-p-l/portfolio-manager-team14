@@ -4,28 +4,30 @@ import { ViewList } from '@mui/icons-material';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { useHoldings } from '../hooks/useHoldings';
 import HoldingsTable from '../components/HoldingsTable';
-import PortfolioValueChart from '../components/PortfolioValueChart';
+import ValueChart from '../components/ValueChart';
 import SectorAllocationChart from '../components/SectorAllocationChart';
 import AssetClassChart from '../components/AssetClassChart';
 
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now as requested
 
 const Portfolio: React.FC = () => {
-  const { portfolio, loading: loadingPortfolio } = usePortfolio();
+  const { portfolio, loading: loadingPortfolio, refetchPortfolio } = usePortfolio();
   const { 
     holdings, 
     loading: loadingHoldings, 
     refreshHoldings,
     sectorAllocation,
-    assetClassAllocation
+    assetClassAllocation,
   } = useHoldings(DEFAULT_PORTFOLIO_ID);
   const [refreshKey, setRefreshKey] = useState(0); // Used to trigger refetch
 
-  const handleHoldingsChange = () => {
-    // Trigger refetch by changing the key
-    setRefreshKey(prevKey => prevKey + 1);
-    refreshHoldings();
-  };
+  const handleHoldingsChange = async () => {
+  // Trigger refetch by changing the key
+  setRefreshKey(prevKey => prevKey + 1);
+  await refreshHoldings();
+  // Refetch portfolio to update balance
+  await refetchPortfolio();
+};
 
   const loading = loadingPortfolio || loadingHoldings;
 
@@ -52,7 +54,10 @@ const Portfolio: React.FC = () => {
                 Account Balance
               </Typography>
               <Typography variant="h5" fontWeight="bold" color="primary">
-                $12,340.50
+                ${portfolio?.balance?.toLocaleString('en-US', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+                }) || '0.00'}                        {/* $12,340.50 */}
               </Typography>
             </Box>
           </Box>
@@ -62,7 +67,7 @@ const Portfolio: React.FC = () => {
             {/* Left column (2/3 width) */}
             <Box flex={{ xs: 1, md: 2 }} display="flex" flexDirection="column" gap={3}>
               {/* Portfolio Value (row 1, col 1-2) */}
-              <PortfolioValueChart />
+              <ValueChart portfolioId={DEFAULT_PORTFOLIO_ID} title="Portfolio Value" />
 
               {/* Bottom row cards inside left column */}
               <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>

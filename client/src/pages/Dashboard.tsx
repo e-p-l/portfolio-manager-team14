@@ -13,7 +13,6 @@ import CashFlowChart from '../components/CashFlowChart';
 import MarketMovers from '../components/MarketMovers';
 import MarketInsights from '../components/MarketInsights';
 import { useHoldings } from '../hooks/useHoldings';
-import PortfolioValueChart from '../components/PortfolioValueChart';
 import NetworthChart from '../components/NetworthChart';
 
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now
@@ -57,7 +56,7 @@ const Dashboard: React.FC = () => {
         {/* Portfolio Overview - Takes 2/3 of the space */}
         <Box flex={{ xs: 1, md: 2 }} sx={{ height: '100%' }}>
           <Box sx={{ height: '100%' }}>
-            <NetworthChart />
+            <NetworthChart portfolioId={DEFAULT_PORTFOLIO_ID} />
           </Box>
         </Box>
 

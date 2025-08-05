@@ -79,9 +79,10 @@ def backfill_portfolio_history(portfolio_id):
                     db.session.add(AssetHistory(asset_id=asset.id, price=close, date=current))
             
         if value != 0.0:
+            balance = round(value * 0.10, 2)  # 10% as cash balance
             existing = PortfolioHistory.query.filter_by(date=current, portfolio_id=portfolio_id).first()
             if not existing:
-                db.session.add(PortfolioHistory(date=current, value=value, portfolio_id=portfolio_id))
+                db.session.add(PortfolioHistory(date=current, value=value, balance=balance, portfolio_id=portfolio_id))
         current += timedelta(days=1)
 
     db.session.commit()

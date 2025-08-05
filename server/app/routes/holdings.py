@@ -109,4 +109,5 @@ class HoldingsByPortfolioResource(Resource):
             return merged_holdings, 200
 
         except SQLAlchemyError as e:
+            print(f"Error fetching holdings: {e}")
             return {"error": str(e)}, 500
