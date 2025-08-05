@@ -76,8 +76,10 @@ class PortfolioResource(Resource):
         try:
             if 'name' in data:
                 portfolio.name = data['name']
-            portfolio.updated_at = datetime.now(timezone.utc)
+            if 'creation_date' in data:
+                portfolio.creation_date = datetime.strptime(data['creation_date'], '%Y-%m-%d').date()
             db.session.commit()
+
             return portfolio.serialize(), 200
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -104,24 +106,8 @@ class PortfolioHistoryResource(Resource):
         Get all historical values for a portfolio.
         """
         try:
+            backfill_portfolio_history(portfolio_id)
             history = PortfolioHistory.query.filter_by(portfolio_id=portfolio_id).order_by(PortfolioHistory.date).all()
             return [h.serialize() for h in history], 200
         except SQLAlchemyError as e:
-            return {"error": str(e)}, 500
-
-
-    @api_ns.expect(portfolio_input_models['backfill'])    
-    def post(self, portfolio_id):
-        """
-        Backfill historical value for a portfolio.
-        """
-        data = request.get_json()
-
-        if data is None or 'start' not in data:
-            return {"error": "Invalid input"}, 400
-
-        try:
-            backfill_portfolio_history(portfolio_id, datetime.strptime(data['start'], '%Y-%m-%d').date())
-            return {"message": "Portfolio values updated"}, 200
-        except Exception as e:
             return {"error": str(e)}, 500
