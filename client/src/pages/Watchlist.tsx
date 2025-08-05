@@ -1,118 +1,145 @@
-import React, { useState } from 'react';
-import { Typography, Box } from '@mui/material';
-import WatchlistTable, { WatchlistAsset } from '../components/WatchlistTable';
+import React, { useState, useEffect } from 'react';
+import { 
+  Typography, 
+  Box, 
+  Button, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogActions, 
+  TextField, 
+  Autocomplete, 
+  CircularProgress 
+} from '@mui/material';
+import { Add } from '@mui/icons-material';
+import WatchlistTable from '../components/WatchlistTable';
 import AssetDetailSidebar from '../components/AssetDetailSidebar';
 import ValueChart from '../components/ValueChart';
+import { useWatchlist } from '../hooks/useWatchlist';
+import { WatchlistItem, Asset } from '../types';
+import { AssetService } from '../services/assetService';
 
-// Mock watchlist data - easily replaceable with real API data
-const mockWatchlistAssets: WatchlistAsset[] = [
-  {
-    symbol: 'AAPL',
-    name: 'Apple Inc.',
-    price: 189.50,
-    change: 2.15,
-    changePercent: 1.15,
-    volume: '58.2M',
-    marketCap: '2.98T',
-    sector: 'Technology',
-    logo: undefined
-  },
-  {
-    symbol: 'TSLA',
-    name: 'Tesla, Inc.',
-    price: 248.73,
-    change: -5.42,
-    changePercent: -2.13,
-    volume: '42.1M',
-    marketCap: '791.5B',
-    sector: 'Consumer Cyclical',
-    logo: undefined
-  },
-  {
-    symbol: 'NVDA',
-    name: 'NVIDIA Corporation',
-    price: 875.28,
-    change: 18.95,
-    changePercent: 2.21,
-    volume: '24.8M',
-    marketCap: '2.16T',
-    sector: 'Technology',
-    logo: undefined
-  },
-  {
-    symbol: 'AMZN',
-    name: 'Amazon.com, Inc.',
-    price: 142.81,
-    change: 1.23,
-    changePercent: 0.87,
-    volume: '31.5M',
-    marketCap: '1.48T',
-    sector: 'Consumer Cyclical',
-    logo: undefined
-  },
-  {
-    symbol: 'GOOGL',
-    name: 'Alphabet Inc.',
-    price: 162.35,
-    change: -0.89,
-    changePercent: -0.55,
-    volume: '18.7M',
-    marketCap: '2.04T',
-    sector: 'Communication Services',
-    logo: undefined
-  },
-  {
-    symbol: 'MSFT',
-    name: 'Microsoft Corporation',
-    price: 427.12,
-    change: 3.87,
-    changePercent: 0.91,
-    volume: '22.3M',
-    marketCap: '3.17T',
-    sector: 'Technology',
-    logo: undefined
-  },
-  {
-    symbol: 'META',
-    name: 'Meta Platforms, Inc.',
-    price: 498.37,
-    change: 7.21,
-    changePercent: 1.47,
-    volume: '15.9M',
-    marketCap: '1.26T',
-    sector: 'Communication Services',
-    logo: undefined
-  },
-  {
-    symbol: 'AMD',
-    name: 'Advanced Micro Devices, Inc.',
-    price: 127.63,
-    change: -2.14,
-    changePercent: -1.65,
-    volume: '38.4M',
-    marketCap: '206.8B',
-    sector: 'Technology',
-    logo: undefined
-  }
-];
+const DEFAULT_PORTFOLIO_ID = 1; // Match the same ID used in other components
 
 const Watchlist: React.FC = () => {
-  const [watchlistAssets, setWatchlistAssets] = useState<WatchlistAsset[]>(mockWatchlistAssets);
+  const { 
+    watchlist, 
+    loading, 
+    error, 
+    addToWatchlist,
+    removeFromWatchlist 
+  } = useWatchlist(DEFAULT_PORTFOLIO_ID);
+  
   // Default to first asset selected
-  const [selectedAsset, setSelectedAsset] = useState<WatchlistAsset | null>(mockWatchlistAssets[0] || null);
+  const [selectedItem, setSelectedItem] = useState<WatchlistItem | null>(null);
+  
+  // Add to watchlist dialog state
+  const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [assetSymbol, setAssetSymbol] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [assetOptions, setAssetOptions] = useState<Asset[]>([]);
+  const [assetLoading, setAssetLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const handleAssetClick = (asset: WatchlistAsset) => {
-    setSelectedAsset(asset);
-  };
+  // Update selected item when watchlist loads
+  React.useEffect(() => {
+    if (watchlist.length > 0 && !selectedItem) {
+      setSelectedItem(watchlist[0]);
+    }
+  }, [watchlist, selectedItem]);
 
-  const handleRemoveFromWatchlist = (symbol: string) => {
-    setWatchlistAssets(prev => prev.filter(asset => asset.symbol !== symbol));
-    // If we're viewing the removed asset, switch to first remaining asset
-    if (selectedAsset && selectedAsset.symbol === symbol) {
-      const remaining = watchlistAssets.filter(asset => asset.symbol !== symbol);
-      setSelectedAsset(remaining[0] || null);
+  // Search for assets when user types
+  const searchAssets = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 1) {
+      setAssetOptions([]);
+      return;
+    }
+
+    try {
+      setAssetLoading(true);
+      const assets = await AssetService.searchAssets(searchTerm);
+      setAssetOptions(assets);
+    } catch (error) {
+      console.error('Error searching assets:', error);
+      setAssetOptions([]);
+    } finally {
+      setAssetLoading(false);
     }
   };
+
+  // Debounced search - only search when manually typing, not when selecting
+  useEffect(() => {
+    // Don't search if an asset is already selected
+    if (selectedAsset) {
+      return;
+    }
+    
+    const timeoutId = setTimeout(() => {
+      searchAssets(assetSymbol);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [assetSymbol, selectedAsset]);
+
+  const handleAddOpen = () => {
+    setAssetSymbol('');
+    setSelectedAsset(null);
+    setAssetOptions([]);
+    setOpenAddDialog(true);
+  };
+
+  const handleAddClose = () => {
+    setOpenAddDialog(false);
+    setAssetSymbol('');
+    setSelectedAsset(null);
+    setAssetOptions([]);
+    setActionLoading(false);
+  };
+
+  const handleAddToWatchlist = async () => {
+    if (!selectedAsset || !selectedAsset.id) return;
+    
+    try {
+      setActionLoading(true);
+      
+      await addToWatchlist({
+        asset_id: selectedAsset.id
+      });
+      
+      console.log(`Successfully added ${selectedAsset.symbol} to watchlist`);
+      handleAddClose();
+    } catch (error) {
+      console.error('Error adding to watchlist:', error);
+      alert(error instanceof Error ? error.message : 'Failed to add to watchlist. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAssetClick = (item: WatchlistItem) => {
+    setSelectedItem(item);
+  };
+
+  const handleRemoveFromWatchlist = async (assetId: number) => {
+    try {
+      await removeFromWatchlist(assetId);
+      
+      // If we're viewing the removed asset, switch to first remaining asset
+      if (selectedItem && selectedItem.asset_id === assetId) {
+        const remaining = watchlist.filter(item => item.asset_id !== assetId);
+        setSelectedItem(remaining[0] || null);
+      }
+      
+      console.log(`Successfully removed asset from watchlist`);
+    } catch (error) {
+      console.error('Failed to remove from watchlist:', error);
+      // Error is already handled by the WatchlistTable component
+      throw error;
+    }
+  };
+
+  // Convert WatchlistItem to the format expected by AssetDetailSidebar
+  const selectedAssetForSidebar = selectedItem;
 
   return (
     <Box>
@@ -129,44 +156,158 @@ const Watchlist: React.FC = () => {
           Watchlist
         </Typography>
         
-        <Box textAlign="right">
-          <Typography variant="body2" color="textSecondary">
-            Total Assets
-          </Typography>
-          <Typography variant="h5" fontWeight="bold" color="primary">
-            {watchlistAssets.length}
-          </Typography>
-        </Box>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          startIcon={<Add />}
+          onClick={handleAddOpen}
+        >
+          Add to Watchlist
+        </Button>
       </Box>
+
+      {/* Error message */}
+      {error && (
+        <Box mb={2} p={2} bgcolor="error.light" borderRadius={1}>
+          <Typography color="error">{error}</Typography>
+        </Box>
+      )}
 
       {/* First row - 2:1 ratio */}
       <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} sx={{ height: '450px', mb: 3 }}>
         {/* Value Chart - Takes 2/3 of the space */}
         <Box flex={{ xs: 1, md: 2 }} sx={{ height: '100%' }}>
-          {selectedAsset && (
+          {selectedItem && selectedItem.asset_id && (
             <ValueChart 
-              assetSymbol={selectedAsset.symbol} 
-              title={`${selectedAsset.symbol} Price Chart`}
+              assetId={selectedItem.asset_id} 
+              title={`${selectedItem.asset_symbol} Price Chart`}
             />
           )}
         </Box>
 
         {/* Asset Detail Sidebar - Takes 1/3 of the space */}
         <Box flex={{ xs: 1, md: 1 }} sx={{ height: '100%' }}>
-          {selectedAsset && (
-            <AssetDetailSidebar asset={selectedAsset} />
+          {selectedAssetForSidebar && (
+            <AssetDetailSidebar asset={selectedAssetForSidebar} />
           )}
         </Box>
       </Box>
 
       {/* Second row - Watchlist Table */}
-      <Box sx={{ height: '400px' }}>
-        <WatchlistTable 
-          assets={watchlistAssets}
+      <Box>
+        <WatchlistTable
+          portfolioId={DEFAULT_PORTFOLIO_ID}
+          watchlistItems={watchlist}
           onAssetClick={handleAssetClick}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
+          loading={loading}
         />
       </Box>
+
+      {/* Add to Watchlist Dialog */}
+      <Dialog open={openAddDialog} onClose={handleAddClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Asset to Watchlist</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Search for an asset to add to your watchlist
+          </Typography>
+          
+          {!selectedAsset ? (
+            <Autocomplete
+              options={assetOptions}
+              getOptionLabel={(option) => `${option.symbol} - ${option.name}`}
+              value={selectedAsset}
+              onChange={(event, newValue) => {
+                setSelectedAsset(newValue);
+                // Clear search input when asset is selected
+                if (newValue) {
+                  setAssetSymbol(`${newValue.symbol} - ${newValue.name}`);
+                }
+              }}
+              inputValue={assetSymbol}
+              onInputChange={(event, newInputValue, reason) => {
+                // Only update search when user is typing manually
+                if (reason === 'input') {
+                  setAssetSymbol(newInputValue);
+                }
+                // Don't trigger search when clearing or selecting
+              }}
+              loading={assetLoading}
+              loadingText="Searching assets..."
+              noOptionsText="No assets found"
+              filterOptions={(x) => x} // Disable built-in filtering
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  margin="dense"
+                  label="Search Asset (e.g., AAPL or Apple)"
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {assetLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box component="li" {...props}>
+                  <Box>
+                    <Typography variant="body1" fontWeight="bold">
+                      {option.symbol}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {option.name}
+                    </Typography>
+                    {option.sector && (
+                      <Typography variant="caption" color="text.secondary">
+                        {option.sector}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              )}
+            />
+          ) : (
+            <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, mt: 1 }}>
+              <Typography variant="h6">{selectedAsset.symbol}</Typography>
+              <Typography variant="body2" color="text.secondary">{selectedAsset.name}</Typography>
+              {selectedAsset.sector && (
+                <Typography variant="caption" color="text.secondary">
+                  Sector: {selectedAsset.sector}
+                </Typography>
+              )}
+              <Button 
+                size="small" 
+                onClick={() => {
+                  setSelectedAsset(null);
+                  setAssetSymbol('');
+                }} 
+                sx={{ mt: 1 }}
+              >
+                Choose Different Asset
+              </Button>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleAddClose} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleAddToWatchlist} 
+            color="primary" 
+            disabled={!selectedAsset || actionLoading}
+            variant="contained"
+          >
+            {actionLoading ? <CircularProgress size={20} /> : 'Add to Watchlist'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

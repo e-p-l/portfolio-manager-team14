@@ -11,10 +11,13 @@ import {
 import { ShowChart } from '@mui/icons-material';
 import { format, subDays, subMonths, subYears, parseISO } from 'date-fns';
 import { usePortfolioHistory, PortfolioValue } from '../hooks/usePortfolioHistory';
+import { useAssetHistory, AssetValue } from '../hooks/useAssetHistory';
 
 // Types
-interface PortfolioPerformanceData {
-  data: PortfolioValue[];
+type HistoryData = PortfolioValue | AssetValue; // Both have same structure: { date: string, value: number }
+
+interface PerformanceData {
+  data: HistoryData[];
   startValue: number;
   endValue: number;
   percentChange: number;
@@ -25,12 +28,12 @@ interface PortfolioPerformanceData {
 
 interface ValueChartProps {
   portfolioId?: number;
-  assetSymbol?: string;
+  assetId?: number;
   title?: string;
 }
 
 // Filter data based on time range
-const filterData = (data: PortfolioValue[], range: string): PortfolioPerformanceData => {
+const filterData = (data: HistoryData[], range: string): PerformanceData => {
   const today = new Date();
   let startDate: Date;
   
@@ -113,12 +116,17 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // Value chart component (can be used for portfolio or individual assets)
-const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetSymbol, title = "Portfolio Value" }) => {
+const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "Value Chart" }) => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<string>('3M');
   
-  // For now, only portfolio history is supported. Asset history can be added later
-  const { historyData, loading, error } = usePortfolioHistory(portfolioId || 1);
+  // Use appropriate hook based on what's provided
+  const portfolioHistory = usePortfolioHistory(portfolioId || 0);
+  const assetHistory = useAssetHistory(assetId || null);
+  
+  // Determine which data to use
+  const isPortfolio = !!portfolioId;
+  const { historyData, loading, error } = isPortfolio ? portfolioHistory : assetHistory;
   
   // Filter data based on selected time range
   const performanceData = filterData(historyData, timeRange);
