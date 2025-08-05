@@ -80,8 +80,7 @@ class PortfolioResource(Resource):
         try:
             if 'name' in data:
                 portfolio.name = data['name']
-            if 'creation_date' in data:
-                portfolio.creation_date = datetime.strptime(data['creation_date'], '%Y-%m-%d').date()
+                portfolio.updated_at = datetime.now(timezone.utc)
             db.session.commit()
 
             return portfolio.serialize(), 200
@@ -110,7 +109,7 @@ class PortfolioHistoryResource(Resource):
         Get all historical values for a portfolio.
         """
         try:
-            backfill_portfolio_history(portfolio_id)
+            # backfill_portfolio_history(portfolio_id)
             history = PortfolioHistory.query.filter_by(portfolio_id=portfolio_id).order_by(PortfolioHistory.date).all()
             return [h.serialize() for h in history], 200
         except SQLAlchemyError as e:

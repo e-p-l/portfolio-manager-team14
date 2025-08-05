@@ -119,21 +119,26 @@ def sell_asset(portfolio_id, asset_id, quantity, latest_price):
     if quantity > total_quantity:
         raise ValueError("Cannot sell more than total holding quantity.")
 
-    portfolio = Portfolio.query.get(portfolio_id)    
+    portfolio = Portfolio.query.get(portfolio_id)   
+    if not portfolio:
+        raise ValueError("Portfolio not found.") 
 
     # sell from holdings in FIFO order
     remaining_to_sell = quantity
-    total_pnl = 0.0
+    total_sale_proceeds = 0.0
     transactions = []
 
     for h in holdings:
         if remaining_to_sell <= 0:
             break
         
-        # compute pnl for the quantity sold from this holding
+        # compute sale proceeds for the quantity sold from this holding
         sell_quantity = min(h.quantity, remaining_to_sell)
+        sale_proceeds = sell_quantity * latest_price
+        total_sale_proceeds += sale_proceeds
+
+        # update holding quantity
         h.quantity -= sell_quantity
-        total_pnl += compute_pnl_from_sell(h, sell_quantity, latest_price)
 
         # create transaction record for this holding sale
         transaction = Transaction(
@@ -150,6 +155,13 @@ def sell_asset(portfolio_id, asset_id, quantity, latest_price):
         transactions.append(transaction)
         remaining_to_sell -= sell_quantity
 
+    # Add total sale proceeds to portfolio balance
+    portfolio.balance += total_sale_proceeds
+    db.session.commit()
+    
+    print(f"Total sale proceeds added to portfolio: {total_sale_proceeds}")
+    print(f"Portfolio new balance: {portfolio.balance}")
+    
     return transactions
 
 def get_asset_return(portfolio_id, asset_id):
