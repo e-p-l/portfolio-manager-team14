@@ -63,7 +63,7 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
       const transactionDate = new Date(transaction.created_at);
       
       if (transactionDate >= cutoffDate) {
-        const amount = transaction.quantity * transaction.price;
+        const amount = Math.round((transaction.quantity * transaction.price) * 100) / 100;
         
         if (transaction.transaction_type === 'buy') {
           totalPurchases += amount;
@@ -74,8 +74,8 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
     });
 
     return [
-      { name: 'Sales', value: Math.round(totalSales * 100) / 100, color: '#4caf50' },
-      { name: 'Purchases', value: Math.round(totalPurchases * 100) / 100, color: '#f44336' },
+      { name: 'Sales', value: totalSales, color: '#4caf50' },
+      { name: 'Purchases', value: totalPurchases, color: '#f44336' },
     ];
   };
 

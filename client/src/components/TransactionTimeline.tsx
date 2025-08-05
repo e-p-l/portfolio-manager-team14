@@ -95,7 +95,7 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
         {/* Timeline List */}
         <List sx={{ p: 0 }}>
           {transactions.map((transaction, index) => {
-            const transactionAmount = transaction.quantity * transaction.price;
+            const transactionAmount = Math.round((transaction.quantity * transaction.price) * 100) / 100;
             return (
             <React.Fragment key={transaction.id}>
               <ListItem sx={{ py: 2, px: 0 }}>
