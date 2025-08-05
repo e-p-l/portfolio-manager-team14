@@ -20,7 +20,7 @@ import {
   Button,
   CircularProgress
 } from '@mui/material';
-import { TrendingUp, TrendingDown, Remove } from '@mui/icons-material';
+import { TrendingUp, TrendingDown, Delete } from '@mui/icons-material';
 import { WatchlistItem } from '../types';
 
 interface WatchlistTableProps {
@@ -243,7 +243,7 @@ const WatchlistTable: React.FC<WatchlistTableProps> = ({
                             }
                           }}
                         >
-                          <Remove fontSize="small" />
+                          <Delete fontSize="small" />
                         </IconButton>
                       )}
                     </TableCell>

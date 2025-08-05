@@ -256,11 +256,17 @@ if __name__ == "__main__":
             for portfolio in portfolios:
                 generate_portfolio_history(portfolio.id, years=3)
             
-            # Generate asset history for all watchlist assets
-            print("\n🔄 Generating asset history for watchlist items...")
-            watchlist_assets = db.session.query(Asset).join(Watchlist, Asset.id == Watchlist.asset_id).distinct().all()
+            # Generate asset history for ALL assets (not just watchlist)
+            print("\n🔄 Generating asset history for all assets...")
+            all_assets = Asset.query.all()
             
-            for asset in watchlist_assets:
+            for asset in all_assets:
+                # Check if history already exists
+                existing_history = AssetHistory.query.filter_by(asset_id=asset.id).first()
+                if existing_history:
+                    print(f"ℹ️ Asset {asset.symbol} already has history, skipping...")
+                    continue
+                
                 # Get current price from latest transaction or use a reasonable default
                 latest_holding = Holding.query.filter_by(asset_id=asset.id).first()
                 current_price = latest_holding.purchase_price if latest_holding else 100.0 + random.random() * 200  # Random price between $100-$300

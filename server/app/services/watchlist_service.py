@@ -35,10 +35,20 @@ def add_to_watchlist(portfolio_id, asset_id, notes=None):
     db.session.add(watchlist_item)
     db.session.commit()
 
-    # Generate asset history for the newly added watchlist item
+    # Generate asset history for the newly added watchlist item (only if it doesn't exist)
     # This runs in the background and doesn't affect the main operation
     try:
-        generate_asset_history_for_new_watchlist_item(asset_id, asset.symbol)
+        from app.models.asset_history import AssetHistory
+        
+        # Check if asset already has historical data
+        existing_history = AssetHistory.query.filter_by(asset_id=asset_id).first()
+        
+        if not existing_history:
+            print(f"🔄 Generating asset history for new watchlist item: {asset.symbol}")
+            generate_asset_history_for_new_watchlist_item(asset_id, asset.symbol)
+        else:
+            print(f"✅ Asset {asset.symbol} already has history data, skipping generation")
+            
     except Exception as e:
         # Log the error but don't fail the watchlist addition
         print(f"⚠️ Warning: Failed to generate asset history for {asset.symbol}: {e}")
