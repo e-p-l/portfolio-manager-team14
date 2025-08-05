@@ -86,4 +86,20 @@ class PortfolioResource(Resource):
             return {"message": "Portfolio deleted successfully"}, 200
         except SQLAlchemyError as e:
             db.session.rollback()
+<<<<<<< Updated upstream
+=======
+            return {"error": str(e)}, 500
+
+@api_ns.route('/<int:portfolio_id>/history')
+class PortfolioHistoryResource(Resource):
+    def get(self, portfolio_id):
+        """
+        Get all historical values for a portfolio.
+        """
+        try:
+            # backfill_portfolio_history(portfolio_id)
+            history = PortfolioHistory.query.filter_by(portfolio_id=portfolio_id).order_by(PortfolioHistory.date).all()
+            return [h.serialize() for h in history], 200
+        except SQLAlchemyError as e:
+>>>>>>> Stashed changes
             return {"error": str(e)}, 500
