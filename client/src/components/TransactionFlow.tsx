@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, Typography, Box, Select, MenuItem, FormControl, CircularProgress } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
-import { usePortfolio } from '../hooks/usePortfolio';
-import { usePortfolioHistory } from '../hooks/usePortfolioHistory';
 import { useTransactions } from '../hooks/useTransactions';
 
 interface TransactionFlowProps {
@@ -25,32 +23,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
   };
 
   const daysBack = getDaysBack(selectedPeriod);
-  const { portfolio, loading: loadingPortfolio } = usePortfolio();
-  const { historyData, loading: loadingHistory } = usePortfolioHistory(portfolioId);
   const { transactions, loading: loadingTransactions } = useTransactions(portfolioId);
-
-  // Calculate cash flow: current balance - historical balance
-  const calculateCashFlow = () => {
-    if (!portfolio || !historyData.length) {
-      return 0;
-    }
-
-    const currentBalance = portfolio.balance;
-    
-    // Find historical balance from the specified days back
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysBack);
-    
-    // Find the closest historical entry to our cutoff date
-    const historicalEntry = historyData.find(entry => {
-      const entryDate = new Date(entry.date);
-      return entryDate >= cutoffDate;
-    });
-    
-    const historicalBalance = historicalEntry ? historicalEntry.value * 0.1 : currentBalance; // 10% as cash balance
-    
-    return currentBalance - historicalBalance;
-  };
 
   // Calculate transaction flow from real transaction data
   const calculateTransactionFlow = () => {
@@ -71,9 +44,9 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
         const amount = transaction.quantity * transaction.price;
         
         if (transaction.transaction_type === 'buy') {
-          totalOutflow += amount; // Money going out to buy assets
+          totalOutflow += amount; // Purchases: money spent buying assets
         } else if (transaction.transaction_type === 'sell') {
-          totalInflow += amount; // Money coming in from selling assets
+          totalInflow += amount; // Sales: money received from selling assets
         }
       }
     });
@@ -82,7 +55,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
   };
 
   const { totalInflow, totalOutflow } = calculateTransactionFlow();
-  const netFlow = calculateCashFlow(); // Use simple cash flow calculation
+  const netFlow = totalInflow - totalOutflow; // Net trading activity (sales - purchases)
   const totalVolume = totalInflow + totalOutflow;
 
   const getPeriodLabel = (period: string) => {
@@ -94,14 +67,14 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
     }
   };
 
-  const loading = loadingPortfolio || loadingHistory || loadingTransactions;
+  const loading = loadingTransactions;
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h6">
-            Transaction Flow
+            Trading Activity
           </Typography>
           
           {/* Period Filter */}
@@ -128,7 +101,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
                 ${netFlow.toLocaleString()}
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Net Cash Flow ({getPeriodLabel(selectedPeriod)})
+                Net Trading Activity ({getPeriodLabel(selectedPeriod)})
               </Typography>
             </>
           )}
@@ -136,7 +109,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
 
         {/* Flow Visualization */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Inflow */}
+          {/* Sales */}
           <Box
             sx={{
               display: 'flex',
@@ -162,7 +135,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
             <TrendingUp sx={{ mr: 2, color: '#4caf50', zIndex: 1 }} />
             <Box sx={{ zIndex: 1, flex: 1 }}>
               <Typography variant="body1" fontWeight="bold">
-                Money In
+                Sales
               </Typography>
               <Typography variant="h6" color="#4caf50">
                 +${totalInflow.toLocaleString()}
@@ -173,7 +146,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
             </Typography>
           </Box>
 
-          {/* Outflow */}
+          {/* Purchases */}
           <Box
             sx={{
               display: 'flex',
@@ -199,7 +172,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
             <TrendingDown sx={{ mr: 2, color: '#f44336', zIndex: 1 }} />
             <Box sx={{ zIndex: 1, flex: 1 }}>
               <Typography variant="body1" fontWeight="bold">
-                Money Out
+                Purchases
               </Typography>
               <Typography variant="h6" color="#f44336">
                 -${totalOutflow.toLocaleString()}

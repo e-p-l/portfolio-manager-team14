@@ -33,16 +33,16 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
   const { transactions, loading, error } = useTransactions(portfolioId);
   const getIcon = (transactionType: string) => {
     switch (transactionType.toLowerCase()) {
-      case 'buy': return <TrendingUp sx={{ fontSize: 16 }} />;
-      case 'sell': return <TrendingDown sx={{ fontSize: 16 }} />;
+      case 'buy': return <TrendingDown sx={{ fontSize: 16 }} />;
+      case 'sell': return <TrendingUp sx={{ fontSize: 16 }} />;
       default: return <SwapHoriz sx={{ fontSize: 16 }} />;
     }
   };
 
   const getTypeColor = (transactionType: string) => {
     switch (transactionType.toLowerCase()) {
-      case 'buy': return '#4caf50';
-      case 'sell': return '#f44336';
+      case 'buy': return '#f44336';
+      case 'sell': return '#4caf50';
       default: return '#ff9800';
     }
   };
@@ -119,9 +119,9 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
                       size="small"
                       color={
                         transaction.transaction_type === 'buy' 
-                          ? 'success' 
+                          ? 'error' 
                           : transaction.transaction_type === 'sell'
-                          ? 'error'
+                          ? 'success'
                           : 'warning'
                       }
                       variant="filled"
@@ -147,9 +147,9 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
                     <Typography 
                       variant="h6" 
                       fontWeight="bold"
-                      color={transaction.transaction_type === 'sell' ? 'error.main' : 'success.main'}
+                      color={transaction.transaction_type === 'sell' ? 'success.main' : 'error.main'}
                     >
-                      {transaction.transaction_type === 'sell' ? '-' : '+'}${transactionAmount.toLocaleString()}
+                      {transaction.transaction_type === 'sell' ? '+' : '-'}${transactionAmount.toLocaleString()}
                     </Typography>
                   </Box>
                 </Box>
