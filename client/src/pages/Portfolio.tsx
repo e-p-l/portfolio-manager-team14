@@ -29,91 +29,87 @@ const Portfolio: React.FC = () => {
   await refetchPortfolio();
 };
 
-  const loading = loadingPortfolio || loadingHoldings;
-
   return (
     <Box>
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <>
-          <Box display="flex" justifyContent="space-between" alignItems="center" sx={{
-            borderBottom: '2px solid #e0e0e0',
-            paddingBottom: '8px',
-            marginBottom: '24px'
-          }}>
-            <Typography variant="h4" component="h1" sx={{ 
-              fontWeight: 500, 
-              color: '#1976d2',
-            }}>
-              Portfolio - {portfolio?.name || 'My Portfolio'}
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{
+        borderBottom: '2px solid #e0e0e0',
+        paddingBottom: '8px',
+        marginBottom: '24px'
+      }}>
+        <Typography variant="h4" component="h1" sx={{ 
+          fontWeight: 500, 
+          color: '#1976d2',
+        }}>
+          Portfolio - {portfolio?.name || 'My Portfolio'}
+        </Typography>
+        
+        <Box textAlign="right">
+          <Typography variant="body2" color="textSecondary">
+            Account Balance
+          </Typography>
+          {loadingPortfolio ? (
+            <CircularProgress size={20} />
+          ) : (
+            <Typography variant="h5" fontWeight="bold" color="primary">
+              ${portfolio?.balance?.toLocaleString('en-US', { 
+              minimumFractionDigits: 2, 
+              maximumFractionDigits: 2 
+              }) || '0.00'}
             </Typography>
-            
-            <Box textAlign="right">
-              <Typography variant="body2" color="textSecondary">
-                Account Balance
-              </Typography>
-              <Typography variant="h5" fontWeight="bold" color="primary">
-                ${portfolio?.balance?.toLocaleString('en-US', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-                }) || '0.00'}                        {/* $12,340.50 */}
-              </Typography>
-            </Box>
-          </Box>
-          
-          {/* Main content layout with 2:1 ratio */}
+          )}
+        </Box>
+      </Box>
+      
+      {/* Main content layout with 2:1 ratio */}
+      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
+        {/* Left column (2/3 width) */}
+        <Box flex={{ xs: 1, md: 2 }} display="flex" flexDirection="column" gap={3}>
+          {/* Portfolio Value (row 1, col 1-2) - has its own loading */}
+          <ValueChart portfolioId={DEFAULT_PORTFOLIO_ID} title="Portfolio Value" />
+
+          {/* Bottom row cards inside left column */}
           <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
-            {/* Left column (2/3 width) */}
-            <Box flex={{ xs: 1, md: 2 }} display="flex" flexDirection="column" gap={3}>
-              {/* Portfolio Value (row 1, col 1-2) */}
-              <ValueChart portfolioId={DEFAULT_PORTFOLIO_ID} title="Portfolio Value" />
-
-              {/* Bottom row cards inside left column */}
-              <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3}>
-                {/* Sector Allocation (row 2, col 1) */}
-                <Box flex={1}>
-                  <SectorAllocationChart 
-                    sectorData={sectorAllocation} 
-                    loading={loadingHoldings} 
-                  />
-                </Box>
-
-                {/* Asset Classes (row 2, col 2) */}
-                <Box flex={1}>
-                  <AssetClassChart 
-                    assetClassData={assetClassAllocation} 
-                    loading={loadingHoldings} 
-                  />
-                </Box>
-              </Box>
+            {/* Sector Allocation (row 2, col 1) - has its own loading */}
+            <Box flex={1}>
+              <SectorAllocationChart 
+                sectorData={sectorAllocation} 
+                loading={loadingHoldings} 
+              />
             </Box>
-            
-            {/* Right column (1/3 width) - Holdings (row 1-2, col 3) */}
-            <Box flex={{ xs: 1, md: 1 }} display="flex" flexDirection="column" gap={3}>
-              {/* Holdings table - tall card that spans both rows */}
-              <Card sx={{ height: '100%' }}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <ViewList sx={{ mr: 1, color: '#0277bd' }} />
-                    <Typography variant="h6" gutterBottom>
-                      Holdings
-                    </Typography>
-                  </Box>
-                  <HoldingsTable 
-                    key={refreshKey}
-                    holdings={holdings} 
-                    portfolioId={DEFAULT_PORTFOLIO_ID}
-                    loading={loadingHoldings}
-                    onHoldingsChange={handleHoldingsChange}
-                  />
-                </CardContent>
-              </Card>
 
+            {/* Asset Classes (row 2, col 2) - has its own loading */}
+            <Box flex={1}>
+              <AssetClassChart 
+                assetClassData={assetClassAllocation} 
+                loading={loadingHoldings} 
+              />
             </Box>
           </Box>
-        </>
-      )}
+        </Box>
+        
+        {/* Right column (1/3 width) - Holdings (row 1-2, col 3) */}
+        <Box flex={{ xs: 1, md: 1 }} display="flex" flexDirection="column" gap={3}>
+          {/* Holdings table - tall card that spans both rows - has its own loading */}
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={2}>
+                <ViewList sx={{ mr: 1, color: '#0277bd' }} />
+                <Typography variant="h6" gutterBottom>
+                  Holdings
+                </Typography>
+              </Box>
+              <HoldingsTable 
+                key={refreshKey}
+                holdings={holdings} 
+                portfolioId={DEFAULT_PORTFOLIO_ID}
+                loading={loadingHoldings}
+                onHoldingsChange={handleHoldingsChange}
+              />
+            </CardContent>
+          </Card>
+
+        </Box>
+      </Box>
     </Box>
   );
 };
