@@ -210,9 +210,15 @@ const WatchlistTable: React.FC<WatchlistTableProps> = ({
                     </TableCell>
                     
                     <TableCell align="center">
-                      <Typography variant="body2" color="text.secondary">
-                        N/A
-                      </Typography>
+                      <Chip 
+                        label={item.asset_type || 'Unknown'} 
+                        size="small" 
+                        variant="outlined"
+                        sx={{ 
+                          fontSize: '0.75rem',
+                          textTransform: 'capitalize'
+                        }}
+                      />
                     </TableCell>
                     
                     <TableCell align="center">
