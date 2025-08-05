@@ -3,10 +3,8 @@ from ..models.watchlist import Watchlist
 from ..models.asset import Asset
 from ..services.watchlist_service import (
     add_to_watchlist,
-    remove_from_watchlist,
     remove_from_watchlist_by_asset,
     get_watchlist_by_portfolio,
-    update_watchlist_notes
 )
 from ..services.asset_service import fetch_latest_prices
 

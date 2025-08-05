@@ -83,21 +83,19 @@ export interface WatchlistItem {
   portfolio_id: number;
   asset_id: number;
   added_date: string;
-  notes?: string;
   asset_symbol?: string;
   asset_name?: string;
   asset_type?: string;
   asset_sector?: string;
-  day_changeP?: number;
   current_price?: number;
   day_change?: number;
+  day_changeP?: number;
 }
 
 export interface CreateWatchlistRequest {
   asset_id: number;
-  notes?: string;
 }
 
 export interface UpdateWatchlistRequest {
-  notes?: string;
+  // No updateable fields in current backend model
 }

@@ -30,7 +30,6 @@ export const useWatchlist = (portfolioId: number) => {
           current_price: 875.50,
           day_changeP: 2.45,
           day_change: 20.90,
-          notes: 'AI leader with strong growth potential'
         },
         {
           id: 2,
@@ -44,7 +43,6 @@ export const useWatchlist = (portfolioId: number) => {
           current_price: 245.80,
           day_changeP: -1.20,
           day_change: -2.98,
-          notes: 'EV market leader'
         },
         {
           id: 3,
@@ -58,7 +56,6 @@ export const useWatchlist = (portfolioId: number) => {
           current_price: 142.30,
           day_changeP: 0.85,
           day_change: 1.20,
-          notes: 'Search and cloud dominance'
         },
         {
           id: 4,
@@ -72,7 +69,6 @@ export const useWatchlist = (portfolioId: number) => {
           current_price: 158.90,
           day_changeP: 1.75,
           day_change: 2.73,
-          notes: 'E-commerce and AWS growth'
         }
       ]);
     } finally {
@@ -101,15 +97,15 @@ export const useWatchlist = (portfolioId: number) => {
   }, [portfolioId, fetchWatchlist]);
 
   // Remove asset from watchlist
-  const removeFromWatchlist = useCallback(async (watchlistId: number) => {
+  const removeFromWatchlist = useCallback(async (assetId: number) => {
     try {
       setLoading(true);
       setError(null);
       
-      await WatchlistService.removeFromWatchlist(watchlistId);
+      await WatchlistService.removeFromWatchlist(portfolioId, assetId);
       
       // Remove from local state immediately for better UX
-      setWatchlist(prev => prev.filter(item => item.id !== watchlistId));
+      setWatchlist(prev => prev.filter(item => item.asset_id !== assetId));
     } catch (err) {
       console.error('Error removing from watchlist:', err);
       setError(err instanceof Error ? err.message : 'Failed to remove from watchlist');
@@ -117,7 +113,7 @@ export const useWatchlist = (portfolioId: number) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [portfolioId]);
 
   // Remove asset from watchlist by asset ID
   const removeFromWatchlistByAsset = useCallback(async (assetId: number) => {
@@ -138,25 +134,6 @@ export const useWatchlist = (portfolioId: number) => {
     }
   }, [portfolioId]);
 
-  // Update watchlist notes
-  const updateWatchlistNotes = useCallback(async (watchlistId: number, notes: string) => {
-    try {
-      setError(null);
-      
-      const updatedItem = await WatchlistService.updateWatchlistNotes(watchlistId, { notes });
-      
-      // Update local state
-      setWatchlist(prev => prev.map(item => 
-        item.id === watchlistId ? { ...item, notes: updatedItem.notes } : item
-      ));
-      
-      return updatedItem;
-    } catch (err) {
-      console.error('Error updating watchlist notes:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update notes');
-      throw err;
-    }
-  }, []);
 
   useEffect(() => {
     if (portfolioId) {
@@ -171,7 +148,6 @@ export const useWatchlist = (portfolioId: number) => {
     addToWatchlist, 
     removeFromWatchlist,
     removeFromWatchlistByAsset,
-    updateWatchlistNotes,
     refreshWatchlist: fetchWatchlist 
   };
 };
