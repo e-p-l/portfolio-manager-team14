@@ -47,6 +47,7 @@ class TransactionListResource(Resource):
 
         if not all(field in data for field in required_fields):
             return {"error": "Missing required fields"}, 400
+<<<<<<<<< Temporary merge branch 1
         
         try:
             latest_price = fetch_latest_price(data['asset_id'])
