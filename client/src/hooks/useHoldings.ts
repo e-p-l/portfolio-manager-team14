@@ -2,40 +2,15 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { HoldingService, Holding } from '../services/holdingService';
 import { Asset } from '../types';
 
-// Global cache to share data across components
-const holdingsCache = new Map<number, {
-  data: Holding[];
-  timestamp: number;
-  loading: boolean;
-}>();
-
-const CACHE_DURATION = 30000; // 30 seconds cache
-
 export const useHoldings = (portfolioId: number) => {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchHoldings = useCallback(async (forceRefresh = false) => {
-    const now = Date.now();
-    const cached = holdingsCache.get(portfolioId);
-    
-    // Use cache if available and not expired
-    if (!forceRefresh && cached && (now - cached.timestamp) < CACHE_DURATION) {
-      setHoldings(cached.data);
-      setLoading(cached.loading);
-      return;
-    }
-
     try {
       setLoading(true);
-      
-      // Update cache loading state
-      holdingsCache.set(portfolioId, {
-        data: cached?.data || [],
-        timestamp: now,
-        loading: true
-      });
+      setError(null);
 
       const data = await HoldingService.getHoldingsByPortfolio(portfolioId);
       
@@ -52,13 +27,6 @@ export const useHoldings = (portfolioId: number) => {
         purchase_price: holding.purchase_price || holding.current_price,
         current_price: holding.current_price
       }));
-      
-      // Update cache
-      holdingsCache.set(portfolioId, {
-        data: holdingsArray,
-        timestamp: now,
-        loading: false
-      });
 
       setHoldings(holdingsArray);
       setError(null);
@@ -105,12 +73,6 @@ export const useHoldings = (portfolioId: number) => {
           current_price: 410.30
         }
       ];
-      
-      holdingsCache.set(portfolioId, {
-        data: fallbackData,
-        timestamp: now,
-        loading: false
-      });
       
       setHoldings(fallbackData);
     } finally {
@@ -242,8 +204,7 @@ export const useHoldings = (portfolioId: number) => {
       
       const transaction = await response.json();
       
-      // Clear cache to force refresh
-      holdingsCache.delete(portfolioId);
+      // Refresh holdings data
       await fetchHoldings(true);
       return transaction;
     } catch (err) {
@@ -294,8 +255,7 @@ export const useHoldings = (portfolioId: number) => {
         throw new Error(errorData.error || 'Failed to sell holding');
       }
       
-      // Clear cache to force refresh
-      holdingsCache.delete(portfolioId);
+      // Refresh holdings data
       await fetchHoldings(true);
     } catch (err) {
       console.error('Error removing holding:', err);
