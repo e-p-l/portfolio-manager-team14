@@ -1,3 +1,5 @@
+from app.services.cache import cache
+
 from ..models.asset import Asset
 from ..services.asset_service import fetch_asset_metadata, fetch_latest_prices, search_assets, get_asset_info
 from .. import db
@@ -21,6 +23,7 @@ asset_input_models = {
         'sector': fields.String(required=False),
     })
 }
+
 
 @api_ns.route('/')
 class AssetListResource(Resource):
@@ -232,3 +235,10 @@ class MarketMoversResource(Resource):
 
         except Exception as e:
             return {"error": str(e)}, 500
+
+@api_ns.route('/cache')
+class AssetCacheResource(Resource):
+    def get(self):
+        """Returns the current contents of the asset price cache."""
+        # Convert cache to a regular dict for JSON serialization
+        return {k: dict(v) if hasattr(v, 'items') else v for k, v in cache.items()}, 200
