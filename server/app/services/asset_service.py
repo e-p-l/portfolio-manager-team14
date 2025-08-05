@@ -1,29 +1,18 @@
 import yfinance as yf
-from cachetools import TTLCache
 from datetime import datetime, timezone
 
 from app import db
 from app.models.asset import Asset
 from app.models.asset_history import AssetHistory
 
-cache = TTLCache(maxsize=100, ttl=300)
+from app.services.cache import cache
 
 def fetch_latest_prices(symbols):
-    # Fetches the latest stock prices for the given symbols. with caching
     uncached_symbols = [s for s in symbols if s not in cache]
+    
     for symbol in uncached_symbols:
-        try:
-            metadata = fetch_asset_metadata(symbol)
-            cache[symbol] = {
-                'price': metadata['price'],
-                'day_change': metadata['day_change'],
-                'day_changeP': metadata['day_changeP'],
-                'sector': metadata['sector'],
-                'asset_type': metadata['asset_type'],
-                'update_time': datetime.now(timezone.utc).isoformat()
-            }
-        except Exception as e:
-            print(f"Error fetching data for {symbol}:", e)
+        cache[symbol] = fetch_asset_metadata(symbol)
+        print(f"Cached metadata for: {symbol}")
 
     return {symbol: cache[symbol] for symbol in symbols if symbol in cache}
 
@@ -37,11 +26,14 @@ def fetch_latest_price(asset_id):
         return None
 
     symbol = asset.symbol.upper()
-    ticker = yf.Ticker(symbol)
-    info = ticker.info
-    price = info.get("regularMarketPrice", None)
 
-    return price
+    if symbol in cache:
+        return cache[symbol]['price']
+    else:
+        cache[symbol] = fetch_asset_metadata(symbol)
+        print(f"Cached metadata for: {symbol}")
+    
+    return cache[symbol]['price']
 
 def update_asset_history(asset_id, price, date):
     """
@@ -62,21 +54,19 @@ def fetch_asset_metadata(symbol):
     ticker = yf.Ticker(symbol)
     info = ticker.info
 
+    price = info.get("regularMarketPrice", 0)
     sector = info.get("sector", "N/A")
-    asset_type = info.get("quoteType", "stock")  # 'ETF', 'equity', 'mutualfund', etc.
-
-    # Day change calculation
-    current_price = info.get("regularMarketPrice", 0)
-    previous_close = info.get("previousClose", 0)
-    day_change = current_price - previous_close
-    day_changeP = ((day_change / previous_close) * 100) if previous_close else 0
+    asset_type = info.get("quoteType", "stock")
+    day_change = info.get("regularMarketChange", 0)
+    day_changeP = info.get("regularMarketChangePercent", 0)
 
     return {
-        "price": current_price,
+        "price":price,
+        "sector": sector,
+        "asset_type": asset_type,
         "day_change": round(day_change, 2),
         "day_changeP": round(day_changeP, 2),
-        "sector": sector,
-        "asset_type": asset_type
+        "update_time": datetime.now(timezone.utc).isoformat()
     }
 
 def get_asset_info(symbol):
@@ -109,7 +99,6 @@ def get_asset_info(symbol):
         "price": current_price,
         "day_changeP": day_changeP
     }
-
 
 def search_assets(search_term):
     """
