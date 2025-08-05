@@ -177,9 +177,9 @@ const Watchlist: React.FC = () => {
       <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} sx={{ height: '450px', mb: 3 }}>
         {/* Value Chart - Takes 2/3 of the space */}
         <Box flex={{ xs: 1, md: 2 }} sx={{ height: '100%' }}>
-          {selectedItem && selectedItem.asset_symbol && (
+          {selectedItem && selectedItem.asset_id && (
             <ValueChart 
-              assetSymbol={selectedItem.asset_symbol} 
+              assetId={selectedItem.asset_id} 
               title={`${selectedItem.asset_symbol} Price Chart`}
             />
           )}
