@@ -193,7 +193,6 @@ def get_portfolio_aum(portfolio_id):
 
     for h in holdings:
         aum += h.quantity * fetch_latest_price(h.asset_id)
-        print(f"{h.quantity} * {h.asset_id} = {aum}")
     
     # TODO: Commented out since deposite/withdrawal from balance is not implemented
     # return aum + Portfolio.query.get(portfolio_id).balance
