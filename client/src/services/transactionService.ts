@@ -9,6 +9,7 @@ export interface Transaction {
   price: number;
   created_at: string;
   transaction_type: 'buy' | 'sell';
+  asset_symbol?: string; // Added asset symbol
 }
 
 export interface CreateTransactionRequest {
@@ -56,18 +57,13 @@ export const TransactionService = {
     return await apiClient.get<Transaction[]>('/transactions/');
   },
 
+  // Get transactions by portfolio
+  async getTransactionsByPortfolio(portfolioId: number): Promise<Transaction[]> {
+    return await apiClient.get<Transaction[]>(`/portfolios/${portfolioId}/transactions`);
+  },
+
   // Get a specific transaction
   async getTransaction(id: number): Promise<Transaction> {
     return await apiClient.get<Transaction>(`/transactions/${id}`);
   },
-
-  // Update a transaction
-  async updateTransaction(id: number, updates: Partial<Transaction>): Promise<Transaction> {
-    return await apiClient.put<Transaction>(`/transactions/${id}`, updates);
-  },
-
-  // Delete a transaction
-  async deleteTransaction(id: number): Promise<{ message: string }> {
-    return await apiClient.delete<{ message: string }>(`/transactions/${id}`);
-  }
 };

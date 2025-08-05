@@ -8,7 +8,8 @@ import {
   List,
   ListItem,
   Avatar,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
 import { 
   TrendingUp, 
@@ -16,53 +17,33 @@ import {
   SwapHoriz,
   AccessTime 
 } from '@mui/icons-material';
-
-interface Transaction {
-  id: number;
-  type: 'BUY' | 'SELL' | 'TRANSFER';
-  symbol: string;
-  amount: number;
-  date: string;
-  shares?: number;
-  price?: number;
-}
+import { useTransactions } from '../hooks/useTransactions';
 
 interface TransactionTimelineProps {
-  transactions?: Transaction[];
+  portfolioId?: number;
   title?: string;
 }
 
-// Mock data that's easily replaceable
-const defaultMockTransactions: Transaction[] = [
-  { id: 1, type: 'BUY', symbol: 'AAPL', amount: 5000, date: '2024-07-28', shares: 26, price: 192.31 },
-  { id: 2, type: 'SELL', symbol: 'GOOGL', amount: 3200, date: '2024-07-25', shares: 12, price: 266.67 },
-  { id: 3, type: 'BUY', symbol: 'MSFT', amount: 4100, date: '2024-07-22', shares: 10, price: 410.00 },
-  { id: 4, type: 'BUY', symbol: 'TSLA', amount: 2800, date: '2024-07-20', shares: 11, price: 254.55 },
-  { id: 5, type: 'SELL', symbol: 'AMZN', amount: 1500, date: '2024-07-18', shares: 8, price: 187.50 },
-  { id: 6, type: 'TRANSFER', symbol: 'CASH', amount: 2000, date: '2024-07-15', shares: undefined, price: undefined },
-  { id: 7, type: 'BUY', symbol: 'NVDA', amount: 6200, date: '2024-07-12', shares: 15, price: 413.33 },
-  { id: 8, type: 'SELL', symbol: 'META', amount: 2900, date: '2024-07-10', shares: 7, price: 414.29 },
-];
+const DEFAULT_PORTFOLIO_ID = 1;
 
 const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ 
-  transactions = defaultMockTransactions,
+  portfolioId = DEFAULT_PORTFOLIO_ID,
   title = "Transaction History"
 }) => {
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'BUY': return <TrendingUp sx={{ fontSize: 16 }} />;
-      case 'SELL': return <TrendingDown sx={{ fontSize: 16 }} />;
-      case 'TRANSFER': return <SwapHoriz sx={{ fontSize: 16 }} />;
-      default: return <TrendingUp sx={{ fontSize: 16 }} />;
+  const { transactions, loading, error } = useTransactions(portfolioId);
+  const getIcon = (transactionType: string) => {
+    switch (transactionType.toLowerCase()) {
+      case 'buy': return <TrendingUp sx={{ fontSize: 16 }} />;
+      case 'sell': return <TrendingDown sx={{ fontSize: 16 }} />;
+      default: return <SwapHoriz sx={{ fontSize: 16 }} />;
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'BUY': return '#4caf50';
-      case 'SELL': return '#f44336';
-      case 'TRANSFER': return '#ff9800';
-      default: return '#4caf50';
+  const getTypeColor = (transactionType: string) => {
+    switch (transactionType.toLowerCase()) {
+      case 'buy': return '#4caf50';
+      case 'sell': return '#f44336';
+      default: return '#ff9800';
     }
   };
 
@@ -74,6 +55,36 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
     });
   };
 
+  if (loading) {
+    return (
+      <Card sx={{ height: '100%' }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            {title}
+          </Typography>
+          <Box display="flex" justifyContent="center" py={4}>
+            <CircularProgress />
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card sx={{ height: '100%' }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            {title}
+          </Typography>
+          <Box display="flex" justifyContent="center" py={4}>
+            <Typography color="error">{error}</Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
@@ -83,64 +94,62 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
 
         {/* Timeline List */}
         <List sx={{ p: 0 }}>
-          {transactions.map((transaction, index) => (
+          {transactions.map((transaction, index) => {
+            const transactionAmount = transaction.quantity * transaction.price;
+            return (
             <React.Fragment key={transaction.id}>
               <ListItem sx={{ py: 2, px: 0 }}>
                 {/* Timeline Avatar */}
                 <Avatar
                   sx={{
-                    backgroundColor: getTypeColor(transaction.type),
+                    backgroundColor: getTypeColor(transaction.transaction_type),
                     mr: 2,
                     width: 40,
                     height: 40
                   }}
                 >
-                  {getIcon(transaction.type)}
+                  {getIcon(transaction.transaction_type)}
                 </Avatar>
 
                 {/* Transaction Content */}
                 <Box sx={{ flex: 1 }}>
                   <Box display="flex" alignItems="center" gap={1} mb={0.5}>
                     <Chip 
-                      label={transaction.type}
+                      label={transaction.transaction_type.toUpperCase()}
                       size="small"
                       color={
-                        transaction.type === 'BUY' 
+                        transaction.transaction_type === 'buy' 
                           ? 'success' 
-                          : transaction.type === 'SELL'
+                          : transaction.transaction_type === 'sell'
                           ? 'error'
                           : 'warning'
                       }
                       variant="filled"
                     />
                     <Typography variant="subtitle1" fontWeight="bold">
-                      {transaction.symbol}
+                      {transaction.asset_symbol || 'Unknown Asset'}
                     </Typography>
-                    {transaction.shares && (
-                      <Typography variant="body2" color="textSecondary">
-                        {transaction.shares} shares
-                      </Typography>
-                    )}
-                    {transaction.price && (
-                      <Typography variant="body2" color="textSecondary">
-                        @ ${transaction.price}
-                      </Typography>
-                    )}
+                    <Typography variant="body2" color="textSecondary">
+                      {transaction.quantity} shares
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      @ ${transaction.price.toFixed(2)}
+                    </Typography>
                   </Box>
                   
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Box display="flex" alignItems="center" gap={1}>
                       <AccessTime fontSize="small" color="action" />
                       <Typography variant="body2" color="textSecondary">
-                        {formatDate(transaction.date)}
+                        {formatDate(transaction.created_at)}
                       </Typography>
                     </Box>
                     <Typography 
                       variant="h6" 
                       fontWeight="bold"
-                      color={transaction.type === 'SELL' ? 'error.main' : 'success.main'}
+                      color={transaction.transaction_type === 'sell' ? 'error.main' : 'success.main'}
                     >
-                      {transaction.type === 'SELL' ? '-' : '+'}${transaction.amount.toLocaleString()}
+                      {transaction.transaction_type === 'sell' ? '-' : '+'}${transactionAmount.toLocaleString()}
                     </Typography>
                   </Box>
                 </Box>
@@ -151,7 +160,8 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
                 <Divider variant="inset" component="li" sx={{ ml: 7 }} />
               )}
             </React.Fragment>
-          ))}
+            );
+          })}
         </List>
 
         {/* Empty state */}

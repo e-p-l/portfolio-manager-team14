@@ -1,30 +1,100 @@
 import React, { useState } from 'react';
-import { Card, CardContent, Typography, Box, Select, MenuItem, FormControl } from '@mui/material';
-import { AccountBalance, TrendingUp, TrendingDown } from '@mui/icons-material';
+import { Card, CardContent, Typography, Box, Select, MenuItem, FormControl, CircularProgress } from '@mui/material';
+import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import { usePortfolio } from '../hooks/usePortfolio';
+import { usePortfolioHistory } from '../hooks/usePortfolioHistory';
+import { useTransactions } from '../hooks/useTransactions';
 
 interface TransactionFlowProps {
-  data?: {
-    totalInflow: number;
-    totalOutflow: number;
-    period: string;
-  };
+  portfolioId?: number;
 }
 
-// Mock data for different periods (easily replaceable)
-const mockData = {
-  '30d': { totalInflow: 15900, totalOutflow: 3200, period: 'Last 30 Days' },
-  '1y': { totalInflow: 125000, totalOutflow: 28000, period: 'Last Year' },
-  'all': { totalInflow: 250000, totalOutflow: 65000, period: 'All Time' }
-};
+const DEFAULT_PORTFOLIO_ID = 1;
 
-const TransactionFlow: React.FC<TransactionFlowProps> = ({ data }) => {
+const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT_PORTFOLIO_ID }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   
-  // Use provided data or mock data
-  const currentData = data || mockData[selectedPeriod as keyof typeof mockData];
-  const { totalInflow, totalOutflow, period } = currentData;
-  const netFlow = totalInflow - totalOutflow;
+  // Get the number of days based on selected period
+  const getDaysBack = (period: string) => {
+    switch (period) {
+      case '30d': return 30;
+      case '1y': return 365;
+      case 'all': return 1095; // 3 years
+      default: return 30;
+    }
+  };
+
+  const daysBack = getDaysBack(selectedPeriod);
+  const { portfolio, loading: loadingPortfolio } = usePortfolio();
+  const { historyData, loading: loadingHistory } = usePortfolioHistory(portfolioId);
+  const { transactions, loading: loadingTransactions } = useTransactions(portfolioId);
+
+  // Calculate cash flow: current balance - historical balance
+  const calculateCashFlow = () => {
+    if (!portfolio || !historyData.length) {
+      return 0;
+    }
+
+    const currentBalance = portfolio.balance;
+    
+    // Find historical balance from the specified days back
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysBack);
+    
+    // Find the closest historical entry to our cutoff date
+    const historicalEntry = historyData.find(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= cutoffDate;
+    });
+    
+    const historicalBalance = historicalEntry ? historicalEntry.value * 0.1 : currentBalance; // 10% as cash balance
+    
+    return currentBalance - historicalBalance;
+  };
+
+  // Calculate transaction flow from real transaction data
+  const calculateTransactionFlow = () => {
+    if (!transactions.length) {
+      return { totalInflow: 0, totalOutflow: 0 };
+    }
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysBack);
+
+    let totalInflow = 0;
+    let totalOutflow = 0;
+
+    transactions.forEach(transaction => {
+      const transactionDate = new Date(transaction.created_at);
+      
+      if (transactionDate >= cutoffDate) {
+        const amount = transaction.quantity * transaction.price;
+        
+        if (transaction.transaction_type === 'buy') {
+          totalOutflow += amount; // Money going out to buy assets
+        } else if (transaction.transaction_type === 'sell') {
+          totalInflow += amount; // Money coming in from selling assets
+        }
+      }
+    });
+
+    return { totalInflow, totalOutflow };
+  };
+
+  const { totalInflow, totalOutflow } = calculateTransactionFlow();
+  const netFlow = calculateCashFlow(); // Use simple cash flow calculation
   const totalVolume = totalInflow + totalOutflow;
+
+  const getPeriodLabel = (period: string) => {
+    switch (period) {
+      case '30d': return 'Last 30 Days';
+      case '1y': return 'Last Year';
+      case 'all': return 'All Time';
+      default: return 'Last 30 Days';
+    }
+  };
+
+  const loading = loadingPortfolio || loadingHistory || loadingTransactions;
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -50,12 +120,18 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ data }) => {
 
         {/* Summary */}
         <Box mb={3}>
-          <Typography variant="h4" color="primary" fontWeight="bold">
-            ${netFlow.toLocaleString()}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Net Cash Flow ({period})
-          </Typography>
+          {loading ? (
+            <CircularProgress size={24} />
+          ) : (
+            <>
+              <Typography variant="h4" color="primary" fontWeight="bold">
+                ${netFlow.toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Net Cash Flow ({getPeriodLabel(selectedPeriod)})
+              </Typography>
+            </>
+          )}
         </Box>
 
         {/* Flow Visualization */}

@@ -114,3 +114,17 @@ class PortfolioHistoryResource(Resource):
             return [h.serialize() for h in history], 200
         except SQLAlchemyError as e:
             return {"error": str(e)}, 500
+
+@api_ns.route('/<int:portfolio_id>/transactions')
+class PortfolioTransactionsResource(Resource):
+    def get(self, portfolio_id):
+        """
+        Get all transactions for a specific portfolio.
+        """
+        try:
+            from ..models.transaction import Transaction
+            
+            transactions = Transaction.query.filter_by(portfolio_id=portfolio_id).order_by(Transaction.created_at.desc()).all()
+            return [t.serialize() for t in transactions], 200
+        except Exception as e:
+            return {"error": str(e)}, 500
