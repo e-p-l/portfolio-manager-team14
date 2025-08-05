@@ -3,6 +3,7 @@ from ..models.portfolio import Portfolio
 from ..models.portfolio_history import PortfolioHistory
 
 from ..services.portfolio_service import backfill_portfolio_history
+from ..services.holding_service import get_portfolio_aum, get_portfolio_return
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
@@ -56,7 +57,10 @@ class PortfolioResource(Resource):
         try:
             portfolio = Portfolio.query.get(portfolio_id)
             if portfolio:
-                return portfolio.serialize(), 200
+                portfolio_data = portfolio.serialize()
+                portfolio_data['aum'] = get_portfolio_aum(portfolio_id)
+                portfolio_data['return'] = get_portfolio_return(portfolio_id)
+                return portfolio_data, 200
             else:
                 return {"error": "Portfolio not found"}, 404
         except SQLAlchemyError as e:
@@ -76,8 +80,7 @@ class PortfolioResource(Resource):
         try:
             if 'name' in data:
                 portfolio.name = data['name']
-            if 'creation_date' in data:
-                portfolio.creation_date = datetime.strptime(data['creation_date'], '%Y-%m-%d').date()
+                portfolio.updated_at = datetime.now(timezone.utc)
             db.session.commit()
 
             return portfolio.serialize(), 200
@@ -106,7 +109,7 @@ class PortfolioHistoryResource(Resource):
         Get all historical values for a portfolio.
         """
         try:
-            backfill_portfolio_history(portfolio_id)
+            # backfill_portfolio_history(portfolio_id)
             history = PortfolioHistory.query.filter_by(portfolio_id=portfolio_id).order_by(PortfolioHistory.date).all()
             return [h.serialize() for h in history], 200
         except SQLAlchemyError as e:

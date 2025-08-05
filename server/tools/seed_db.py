@@ -38,7 +38,7 @@ def seed_database():
 
         # === Insert live-data-backed objects ===
         info = get_asset_info(symbol)
-        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="ETF", day_changeP=info['day_changeP'])
+        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="sector", day_changeP=info['day_changeP'])
         db.session.add(asset)
         db.session.commit()
 
