@@ -74,8 +74,8 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
     });
 
     return [
-      { name: 'Sales', value: totalSales, color: '#4caf50' },
-      { name: 'Purchases', value: totalPurchases, color: '#f44336' },
+      { name: 'Sales', value: Math.round(totalSales * 100) / 100, color: '#4caf50' },
+      { name: 'Purchases', value: Math.round(totalPurchases * 100) / 100, color: '#f44336' },
     ];
   };
 
@@ -102,65 +102,74 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
           {title}
         </Typography>
 
-        <Box sx={{ flex: 1, position: 'relative', minHeight: 200, zIndex: 1 }}>
-          <ResponsiveContainer width="100%" height="100%" style={{ zIndex: 10 }}>
-            <PieChart style={{ zIndex: 10 }}>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 9999 }} />
-            </PieChart>
-          </ResponsiveContainer>
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 300 }}>
+          {/* Chart Section */}
+          <Box sx={{ flex: 1, position: 'relative', height: '100%', zIndex: 1 }}>
+            <ResponsiveContainer width="100%" height="100%" style={{ zIndex: 10 }}>
+              <PieChart style={{ zIndex: 10 }}>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={120}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 9999 }} />
+              </PieChart>
+            </ResponsiveContainer>
 
-          {/* Center value */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
-              zIndex: 5,
-              pointerEvents: 'none', // This prevents the center text from interfering with tooltip
-            }}
-          >
-            <Typography variant="h6" fontWeight="bold">
-              ${total.toLocaleString()}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Total Volume
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* Legend */}
-        <Box display="flex" justifyContent="center" gap={3} mt={2}>
-          {data.map((item) => (
-            <Box key={item.name} display="flex" alignItems="center">
-              <Box
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  backgroundColor: item.color,
-                  mr: 1
-                }}
-              />
-              <Typography variant="body2">
-                {item.name}: ${item.value.toLocaleString()}
+            {/* Center value */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                textAlign: 'center',
+                zIndex: 5,
+                pointerEvents: 'none', // This prevents the center text from interfering with tooltip
+              }}
+            >
+              <Typography variant="h6" fontWeight="bold">
+                ${total.toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Total Volume
               </Typography>
             </Box>
-          ))}
+          </Box>
+
+          {/* Legend Section - Vertical on the right */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, ml: 4, minWidth: 180 }}>
+            {data.map((item) => (
+              <Box key={item.name} display="flex" alignItems="center">
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    backgroundColor: item.color,
+                    mr: 2,
+                    flexShrink: 0
+                  }}
+                />
+                <Box>
+                  <Typography variant="body1" fontWeight="600">
+                    {item.name}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    ${item.value.toLocaleString()}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
         </Box>
       </CardContent>
     </Card>

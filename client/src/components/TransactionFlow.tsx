@@ -41,7 +41,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
       const transactionDate = new Date(transaction.created_at);
       
       if (transactionDate >= cutoffDate) {
-        const amount = transaction.quantity * transaction.price;
+        const amount = Math.round((transaction.quantity * transaction.price) * 100) / 100;
         
         if (transaction.transaction_type === 'buy') {
           totalOutflow += amount; // Purchases: money spent buying assets
