@@ -32,4 +32,7 @@ def create_app():
     from .routes.transactions import api_ns as transactions_api_ns
     api.add_namespace(transactions_api_ns, path='/transactions')
 
+    from .routes.watchlist import api_ns as watchlist_api_ns
+    api.add_namespace(watchlist_api_ns, path='/watchlist')
+
     return app

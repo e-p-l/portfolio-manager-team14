@@ -1,118 +1,60 @@
 import React, { useState } from 'react';
 import { Typography, Box } from '@mui/material';
-import WatchlistTable, { WatchlistAsset } from '../components/WatchlistTable';
+import WatchlistTable from '../components/WatchlistTable';
 import AssetDetailSidebar from '../components/AssetDetailSidebar';
 import ValueChart from '../components/ValueChart';
+import { useWatchlist } from '../hooks/useWatchlist';
+import { WatchlistItem } from '../types';
 
-// Mock watchlist data - easily replaceable with real API data
-const mockWatchlistAssets: WatchlistAsset[] = [
-  {
-    symbol: 'AAPL',
-    name: 'Apple Inc.',
-    price: 189.50,
-    change: 2.15,
-    changePercent: 1.15,
-    volume: '58.2M',
-    marketCap: '2.98T',
-    sector: 'Technology',
-    logo: undefined
-  },
-  {
-    symbol: 'TSLA',
-    name: 'Tesla, Inc.',
-    price: 248.73,
-    change: -5.42,
-    changePercent: -2.13,
-    volume: '42.1M',
-    marketCap: '791.5B',
-    sector: 'Consumer Cyclical',
-    logo: undefined
-  },
-  {
-    symbol: 'NVDA',
-    name: 'NVIDIA Corporation',
-    price: 875.28,
-    change: 18.95,
-    changePercent: 2.21,
-    volume: '24.8M',
-    marketCap: '2.16T',
-    sector: 'Technology',
-    logo: undefined
-  },
-  {
-    symbol: 'AMZN',
-    name: 'Amazon.com, Inc.',
-    price: 142.81,
-    change: 1.23,
-    changePercent: 0.87,
-    volume: '31.5M',
-    marketCap: '1.48T',
-    sector: 'Consumer Cyclical',
-    logo: undefined
-  },
-  {
-    symbol: 'GOOGL',
-    name: 'Alphabet Inc.',
-    price: 162.35,
-    change: -0.89,
-    changePercent: -0.55,
-    volume: '18.7M',
-    marketCap: '2.04T',
-    sector: 'Communication Services',
-    logo: undefined
-  },
-  {
-    symbol: 'MSFT',
-    name: 'Microsoft Corporation',
-    price: 427.12,
-    change: 3.87,
-    changePercent: 0.91,
-    volume: '22.3M',
-    marketCap: '3.17T',
-    sector: 'Technology',
-    logo: undefined
-  },
-  {
-    symbol: 'META',
-    name: 'Meta Platforms, Inc.',
-    price: 498.37,
-    change: 7.21,
-    changePercent: 1.47,
-    volume: '15.9M',
-    marketCap: '1.26T',
-    sector: 'Communication Services',
-    logo: undefined
-  },
-  {
-    symbol: 'AMD',
-    name: 'Advanced Micro Devices, Inc.',
-    price: 127.63,
-    change: -2.14,
-    changePercent: -1.65,
-    volume: '38.4M',
-    marketCap: '206.8B',
-    sector: 'Technology',
-    logo: undefined
-  }
-];
+const DEFAULT_PORTFOLIO_ID = 1; // Match the same ID used in other components
 
 const Watchlist: React.FC = () => {
-  const [watchlistAssets, setWatchlistAssets] = useState<WatchlistAsset[]>(mockWatchlistAssets);
+  const { 
+    watchlist, 
+    loading, 
+    error, 
+    removeFromWatchlist 
+  } = useWatchlist(DEFAULT_PORTFOLIO_ID);
+  
   // Default to first asset selected
-  const [selectedAsset, setSelectedAsset] = useState<WatchlistAsset | null>(mockWatchlistAssets[0] || null);
+  const [selectedItem, setSelectedItem] = useState<WatchlistItem | null>(null);
 
-  const handleAssetClick = (asset: WatchlistAsset) => {
-    setSelectedAsset(asset);
+  // Update selected item when watchlist loads
+  React.useEffect(() => {
+    if (watchlist.length > 0 && !selectedItem) {
+      setSelectedItem(watchlist[0]);
+    }
+  }, [watchlist, selectedItem]);
+
+  const handleAssetClick = (item: WatchlistItem) => {
+    setSelectedItem(item);
   };
 
-  const handleRemoveFromWatchlist = (symbol: string) => {
-    setWatchlistAssets(prev => prev.filter(asset => asset.symbol !== symbol));
-    // If we're viewing the removed asset, switch to first remaining asset
-    if (selectedAsset && selectedAsset.symbol === symbol) {
-      const remaining = watchlistAssets.filter(asset => asset.symbol !== symbol);
-      setSelectedAsset(remaining[0] || null);
+  const handleRemoveFromWatchlist = async (watchlistId: number) => {
+    try {
+      await removeFromWatchlist(watchlistId);
+      // If we're viewing the removed asset, switch to first remaining asset
+      if (selectedItem && selectedItem.id === watchlistId) {
+        const remaining = watchlist.filter(item => item.id !== watchlistId);
+        setSelectedItem(remaining[0] || null);
+      }
+    } catch (error) {
+      console.error('Failed to remove from watchlist:', error);
     }
   };
+
+  // Convert WatchlistItem to the format expected by AssetDetailSidebar
+  const selectedAssetForSidebar = selectedItem ? {
+    symbol: selectedItem.asset_symbol || '',
+    name: selectedItem.asset_name || '',
+    price: selectedItem.current_price || 0,
+    change: selectedItem.day_change || 0,
+    changePercent: selectedItem.day_changeP || 0,
+    volume: 'N/A', // Volume not available in current backend
+    marketCap: 'N/A', // Market cap not available in current backend
+    sector: selectedItem.asset_sector || 'Unknown',
+    logo: undefined
+  } : null;
 
   return (
     <Box>
@@ -134,27 +76,34 @@ const Watchlist: React.FC = () => {
             Total Assets
           </Typography>
           <Typography variant="h5" fontWeight="bold" color="primary">
-            {watchlistAssets.length}
+            {watchlist.length}
           </Typography>
         </Box>
       </Box>
+
+      {/* Error message */}
+      {error && (
+        <Box mb={2} p={2} bgcolor="error.light" borderRadius={1}>
+          <Typography color="error">{error}</Typography>
+        </Box>
+      )}
 
       {/* First row - 2:1 ratio */}
       <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={3} sx={{ height: '450px', mb: 3 }}>
         {/* Value Chart - Takes 2/3 of the space */}
         <Box flex={{ xs: 1, md: 2 }} sx={{ height: '100%' }}>
-          {selectedAsset && (
+          {selectedItem && selectedItem.asset_symbol && (
             <ValueChart 
-              assetSymbol={selectedAsset.symbol} 
-              title={`${selectedAsset.symbol} Price Chart`}
+              assetSymbol={selectedItem.asset_symbol} 
+              title={`${selectedItem.asset_symbol} Price Chart`}
             />
           )}
         </Box>
 
         {/* Asset Detail Sidebar - Takes 1/3 of the space */}
         <Box flex={{ xs: 1, md: 1 }} sx={{ height: '100%' }}>
-          {selectedAsset && (
-            <AssetDetailSidebar asset={selectedAsset} />
+          {selectedAssetForSidebar && (
+            <AssetDetailSidebar asset={selectedAssetForSidebar} />
           )}
         </Box>
       </Box>
@@ -162,9 +111,10 @@ const Watchlist: React.FC = () => {
       {/* Second row - Watchlist Table */}
       <Box sx={{ height: '400px' }}>
         <WatchlistTable 
-          assets={watchlistAssets}
+          watchlistItems={watchlist}
           onAssetClick={handleAssetClick}
           onRemoveFromWatchlist={handleRemoveFromWatchlist}
+          loading={loading}
         />
       </Box>
     </Box>

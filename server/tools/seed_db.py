@@ -13,6 +13,7 @@ from app.routes.assets import get_asset_info
 from app.models.holding import Holding
 from app.models.transaction import Transaction
 from app.models.portfolio_history import PortfolioHistory
+from app.models.watchlist import Watchlist
 
 def seed_database():
     app = create_app()
@@ -178,6 +179,67 @@ def seed_database():
 
             except Exception as e:
                 print(f"❌ Error adding {sym}: {e}")
+
+        # === WATCHLIST SEEDING ===
+        print("🔄 Adding watchlist items to Portfolio 1...")
+        
+        # Get some assets that weren't added as holdings for the watchlist
+        watchlist_symbols = [
+            ("GOOGL", "Alphabet Inc."),
+            ("AMZN", "Amazon.com Inc."),
+            ("TSLA", "Tesla Inc."),
+            ("NVDA", "NVIDIA Corporation"),
+            ("META", "Meta Platforms Inc."),
+            ("CRM", "Salesforce Inc."),
+            ("NFLX", "Netflix Inc."),
+            ("AMD", "Advanced Micro Devices")
+        ]
+        
+        for sym, name in watchlist_symbols:
+            try:
+                # Check if asset already exists
+                existing_asset = Asset.query.filter_by(symbol=sym).first()
+                
+                if not existing_asset:
+                    # Create the asset if it doesn't exist
+                    ticker = yf.Ticker(sym)
+                    data = ticker.history(period="1d")
+                    
+                    if data.empty:
+                        print(f"❌ No data for watchlist asset {sym}")
+                        continue
+                    
+                    yf_info = ticker.info
+                    custom_info = get_asset_info(sym)
+                    
+                    sector = yf_info.get("sector", "Unknown").split()[0] if "sector" in yf_info else "Unknown"
+                    day_changeP = custom_info['day_changeP']
+                    
+                    existing_asset = Asset(
+                        symbol=sym,
+                        name=name,
+                        asset_type="equity",
+                        sector=sector,
+                        day_changeP=day_changeP
+                    )
+                    db.session.add(existing_asset)
+                    db.session.commit()
+                
+                # Add to watchlist
+                watchlist_item = Watchlist(
+                    portfolio_id=portfolio.id,
+                    asset_id=existing_asset.id,
+                    notes=f"Watching {sym} for potential investment opportunities"
+                )
+                db.session.add(watchlist_item)
+                db.session.commit()
+                
+                print(f"✅ Added {sym} to watchlist")
+                
+            except Exception as e:
+                print(f"❌ Error adding {sym} to watchlist: {e}")
+        
+        print("✅ Watchlist seeding completed!")
 
 def generate_portfolio_history(portfolio_id, years=3):
     from datetime import datetime, timedelta

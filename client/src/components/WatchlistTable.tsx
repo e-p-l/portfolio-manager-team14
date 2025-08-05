@@ -15,29 +15,20 @@ import {
   Avatar
 } from '@mui/material';
 import { TrendingUp, TrendingDown, Remove } from '@mui/icons-material';
-
-export interface WatchlistAsset {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: string;
-  marketCap: string;
-  sector: string;
-  logo?: string;
-}
+import { WatchlistItem } from '../types';
 
 interface WatchlistTableProps {
-  assets: WatchlistAsset[];
-  onAssetClick: (asset: WatchlistAsset) => void;
-  onRemoveFromWatchlist?: (symbol: string) => void;
+  watchlistItems: WatchlistItem[];
+  onAssetClick: (item: WatchlistItem) => void;
+  onRemoveFromWatchlist?: (watchlistId: number) => void;
+  loading?: boolean;
 }
 
 const WatchlistTable: React.FC<WatchlistTableProps> = ({ 
-  assets, 
+  watchlistItems, 
   onAssetClick, 
-  onRemoveFromWatchlist 
+  onRemoveFromWatchlist,
+  loading = false
 }) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -92,100 +83,113 @@ const WatchlistTable: React.FC<WatchlistTableProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {assets.map((asset) => (
-                <TableRow 
-                  key={asset.symbol}
-                  hover
-                  sx={{ 
-                    cursor: 'pointer',
-                    '&:hover': { backgroundColor: '#f5f5f5' }
-                  }}
-                  onClick={() => onAssetClick(asset)}
-                >
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Avatar 
-                        sx={{ width: 32, height: 32, fontSize: '0.75rem' }}
-                        src={asset.logo}
-                      >
-                        {asset.symbol.charAt(0)}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          {asset.symbol}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" noWrap>
-                          {asset.name}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight="medium">
-                      {formatPrice(asset.price)}
-                    </Typography>
-                  </TableCell>
-                  
-                  <TableCell align="right">
-                    <Box display="flex" flexDirection="column" alignItems="flex-end">
-                      <Box display="flex" alignItems="center" gap={0.5}>
-                        {asset.changePercent >= 0 ? (
-                          <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
-                        ) : (
-                          <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />
-                        )}
-                        <Typography 
-                          variant="body2" 
-                          color={asset.changePercent >= 0 ? 'success.main' : 'error.main'}
-                          fontWeight="medium"
-                        >
-                          {formatChange(asset.change)}
-                        </Typography>
-                      </Box>
-                      <Typography 
-                        variant="caption" 
-                        color={asset.changePercent >= 0 ? 'success.main' : 'error.main'}
-                      >
-                        {formatPercent(asset.changePercent)}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell align="center">
-                    <Typography variant="body2" color="text.secondary">
-                      {asset.volume}
-                    </Typography>
-                  </TableCell>
-                  
-                  <TableCell align="center">
-                    <Chip 
-                      label={asset.sector} 
-                      size="small" 
-                      variant="outlined"
-                      sx={{ fontSize: '0.75rem' }}
-                    />
-                  </TableCell>
-                  
-                  <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                    {onRemoveFromWatchlist && (
-                      <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => onRemoveFromWatchlist(asset.symbol)}
-                        sx={{ 
-                          '&:hover': { 
-                            backgroundColor: 'error.light',
-                            color: 'white'
-                          }
-                        }}
-                      >
-                        <Remove fontSize="small" />
-                      </IconButton>
-                    )}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    <Typography color="text.secondary">Loading...</Typography>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : watchlistItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    <Typography color="text.secondary">No assets in watchlist</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                watchlistItems.map((item) => (
+                  <TableRow 
+                    key={item.id}
+                    hover
+                    sx={{ 
+                      cursor: 'pointer',
+                      '&:hover': { backgroundColor: '#f5f5f5' }
+                    }}
+                    onClick={() => onAssetClick(item)}
+                  >
+                    <TableCell>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <Avatar 
+                          sx={{ width: 32, height: 32, fontSize: '0.75rem' }}
+                        >
+                          {item.asset_symbol?.charAt(0) || '?'}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" fontWeight="bold">
+                            {item.asset_symbol}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" noWrap>
+                            {item.asset_name}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    
+                    <TableCell align="right">
+                      <Typography variant="body2" fontWeight="medium">
+                        {item.current_price ? formatPrice(item.current_price) : 'N/A'}
+                      </Typography>
+                    </TableCell>
+                    
+                    <TableCell align="right">
+                      <Box display="flex" flexDirection="column" alignItems="flex-end">
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          {(item.day_changeP || 0) >= 0 ? (
+                            <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
+                          ) : (
+                            <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />
+                          )}
+                          <Typography 
+                            variant="body2" 
+                            color={(item.day_changeP || 0) >= 0 ? 'success.main' : 'error.main'}
+                            fontWeight="medium"
+                          >
+                            {item.day_change ? formatChange(item.day_change) : 'N/A'}
+                          </Typography>
+                        </Box>
+                        <Typography 
+                          variant="caption" 
+                          color={(item.day_changeP || 0) >= 0 ? 'success.main' : 'error.main'}
+                        >
+                          {item.day_changeP ? formatPercent(item.day_changeP) : 'N/A'}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    
+                    <TableCell align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        N/A
+                      </Typography>
+                    </TableCell>
+                    
+                    <TableCell align="center">
+                      <Chip 
+                        label={item.asset_sector || 'Unknown'} 
+                        size="small" 
+                        variant="outlined"
+                        sx={{ fontSize: '0.75rem' }}
+                      />
+                    </TableCell>
+                    
+                    <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                      {onRemoveFromWatchlist && (
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          onClick={() => onRemoveFromWatchlist(item.id)}
+                          sx={{ 
+                            '&:hover': { 
+                              backgroundColor: 'error.light',
+                              color: 'white'
+                            }
+                          }}
+                        >
+                          <Remove fontSize="small" />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
