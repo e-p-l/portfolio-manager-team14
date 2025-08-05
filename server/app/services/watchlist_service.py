@@ -2,6 +2,7 @@ from app import db
 from app.models.watchlist import Watchlist
 from app.models.asset import Asset
 from app.models.portfolio import Portfolio
+from app.utils.seeding_functions import generate_asset_history_for_new_watchlist_item
 
 from datetime import datetime, timezone
 
@@ -33,6 +34,14 @@ def add_to_watchlist(portfolio_id, asset_id, notes=None):
     
     db.session.add(watchlist_item)
     db.session.commit()
+
+    # Generate asset history for the newly added watchlist item
+    # This runs in the background and doesn't affect the main operation
+    try:
+        generate_asset_history_for_new_watchlist_item(asset_id, asset.symbol)
+    except Exception as e:
+        # Log the error but don't fail the watchlist addition
+        print(f"⚠️ Warning: Failed to generate asset history for {asset.symbol}: {e}")
 
     return watchlist_item
 

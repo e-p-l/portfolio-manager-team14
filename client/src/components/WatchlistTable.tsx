@@ -100,9 +100,6 @@ const WatchlistTable: React.FC<WatchlistTableProps> = ({
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6">Watchlist ({watchlistItems.length})</Typography>
-      </Box>
       
       <Card sx={{ display: 'flex', flexDirection: 'column' }}>
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 0 }}>
