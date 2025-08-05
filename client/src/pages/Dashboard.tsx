@@ -18,23 +18,11 @@ import NetworthChart from '../components/NetworthChart';
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now
 
 const Dashboard: React.FC = () => {
-  const { holdings, loading: loadingHoldings } = useHoldings(DEFAULT_PORTFOLIO_ID);
+  const { holdings, loading: loadingHoldings, addHolding, removeHolding, topPerformers } = useHoldings(DEFAULT_PORTFOLIO_ID);
 
-  // Get top 5 best performing holdings
+  // Get top 5 best performing holdings - now using pre-computed data
   const getTopPerformingHoldings = () => {
-    if (!holdings || holdings.length === 0) return [];
-    
-    const sortedHoldings = holdings
-      .map(holding => ({
-        ...holding,
-        gainLossPercent: holding.current_price 
-          ? ((holding.current_price - holding.purchase_price) / holding.purchase_price) * 100
-          : 0
-      }))
-      .sort((a, b) => b.gainLossPercent - a.gainLossPercent)
-      .slice(0, 5);
-      
-    return sortedHoldings;
+    return topPerformers;
   };
 
   const topHoldings = getTopPerformingHoldings();

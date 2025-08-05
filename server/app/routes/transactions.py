@@ -47,7 +47,7 @@ class TransactionListResource(Resource):
 
         if not all(field in data for field in required_fields):
             return {"error": "Missing required fields"}, 400
-          
+        
         try:
             latest_price = fetch_latest_price(data['asset_id'])
             update_asset_history(data['asset_id'], latest_price, date.today())
