@@ -293,16 +293,16 @@ def generate_asset_history(asset_id, current_price, day_changeP, years=3):
             daily_growth = 0.001 + random.random() * 0.0005  # 0.10-0.15% daily
             volatility = 0.018
         
-        # Special handling for last 7 days based on day_changeP
+        # Special handling for last 7 days based on day_changeP - SUBTLE movements only
         if days_until_today <= 7:
             if day_changeP > 0:
-                # Slight decline leading to today's rally
-                daily_growth = -0.002 - random.random() * 0.003  # -0.2 to -0.5% daily decline
-                volatility = 0.01
+                # Very slight decline leading to today's rally (profit taking before the bounce)
+                daily_growth = -0.0003 - random.random() * 0.0005  # -0.03% to -0.08% daily decline (very gentle)
+                volatility = 0.008  # Lower volatility for more predictable pattern
             else:
-                # Slight increase before today's drop
-                daily_growth = 0.001 + random.random() * 0.002  # 0.1 to 0.3% daily increase
-                volatility = 0.01
+                # Very slight increase before today's drop (building up before the fall)
+                daily_growth = 0.0002 + random.random() * 0.0004  # 0.02% to 0.06% daily increase (very gentle)
+                volatility = 0.008  # Lower volatility for more predictable pattern
         
         # Apply daily movement
         random_factor = 1 + (random.random() * 2 - 1) * volatility
@@ -356,17 +356,17 @@ def generate_asset_history(asset_id, current_price, day_changeP, years=3):
     if history_records:
         history_records[-1].price = current_price
         
-        # Adjust the previous days according to day_changeP pattern
+        # Adjust the previous days according to day_changeP pattern - VERY SUBTLE
         if len(history_records) >= 7:
             for i in range(-7, -1):  # Last 7 days excluding today
                 record = history_records[i]
                 if day_changeP > 0:
-                    # Gradual decline, then rally today
-                    decline_factor = 0.998 - random.random() * 0.004  # 0.2-0.6% daily decline
+                    # Very gradual decline, then rally today (gentle profit taking pattern)
+                    decline_factor = 0.9996 - random.random() * 0.0006  # 0.04-0.10% daily decline (very gentle)
                     record.price = round(history_records[i+1].price / decline_factor, 2)
                 else:
-                    # Gradual increase, then drop today
-                    increase_factor = 1.002 + random.random() * 0.003  # 0.2-0.5% daily increase
+                    # Very gradual increase, then drop today (gentle buildup pattern)
+                    increase_factor = 1.0003 + random.random() * 0.0005  # 0.03-0.08% daily increase (very gentle)
                     record.price = round(history_records[i+1].price / increase_factor, 2)
     
     # Save to database
