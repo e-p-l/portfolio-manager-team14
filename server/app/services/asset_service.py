@@ -79,53 +79,6 @@ def fetch_asset_metadata(symbol):
         "asset_type": asset_type
     }
 
-def fetch_historical_prices(symbols, period="1y", interval="1d"):
-    """
-    Fetches historical stock data for the given symbols.
-    """
-    data = yf.download(tickers=symbols, period=period, interval=interval, progress=False, auto_adjust=True)
-    data.columns = ['_'.join(col) for col in data.columns.values]
-    result = dataframe_to_nested_dict(data)
-    
-    return result
-
-def dataframe_to_nested_dict(df):
-    """
-    Converts a DataFrame with columns like 'Close_NVDA' to a nested dict:
-    """
-    result = {}
-    for idx, row in df.iterrows():
-        date_str = str(idx)
-        result[date_str] = {}
-        for col in df.columns:
-            if '_' in col:
-                field, symbol = col.split('_', 1)
-                if symbol not in result[date_str]:
-                    result[date_str][symbol] = {}
-                result[date_str][symbol][field] = row[col]
-    return result
-
-def save_price_to_db(symbol, price, date):
-    """
-    Save the fetched price into a MySQL table called `asset_history`.
-    """
-    try:
-        asset = Asset.query.filter_by(symbol=symbol).first()
-        if not asset:
-            print(f"Asset {symbol} not found in database.")
-            return None
-        
-        asset_history = AssetHistory(
-            asset_id=asset.id,
-            price=price,
-            date=date
-        )
-        db.session.add(asset_history)
-        db.session.commit()
-    except Exception as e:
-        print("Database error:", e)
-
-
 def get_asset_info(symbol):
     """
     Helper function to fetch asset details from yfinance.
