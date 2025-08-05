@@ -76,8 +76,7 @@ class PortfolioResource(Resource):
         try:
             if 'name' in data:
                 portfolio.name = data['name']
-            if 'creation_date' in data:
-                portfolio.creation_date = datetime.strptime(data['creation_date'], '%Y-%m-%d').date()
+                portfolio.updated_at = datetime.now(timezone.utc)
             db.session.commit()
 
             return portfolio.serialize(), 200
@@ -97,8 +96,6 @@ class PortfolioResource(Resource):
             return {"message": "Portfolio deleted successfully"}, 200
         except SQLAlchemyError as e:
             db.session.rollback()
-<<<<<<< Updated upstream
-=======
             return {"error": str(e)}, 500
 
 @api_ns.route('/<int:portfolio_id>/history')
@@ -112,5 +109,4 @@ class PortfolioHistoryResource(Resource):
             history = PortfolioHistory.query.filter_by(portfolio_id=portfolio_id).order_by(PortfolioHistory.date).all()
             return [h.serialize() for h in history], 200
         except SQLAlchemyError as e:
->>>>>>> Stashed changes
             return {"error": str(e)}, 500
