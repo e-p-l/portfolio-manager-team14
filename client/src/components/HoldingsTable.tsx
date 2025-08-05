@@ -165,13 +165,6 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
       : holding.quantity * holding.purchase_price;
   };
 
-  const calculateGainLoss = (holding: Holding) => {
-    if (!holding.current_price) return 0;
-    const costBasis = holding.quantity * holding.purchase_price;
-    const currentValue = holding.quantity * holding.current_price;
-    return ((currentValue - costBasis) / costBasis) * 100;
-  };
-
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100%">
@@ -247,8 +240,14 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
                     <TableCell align="right">
                       <IconButton 
                         size="small" 
-                        color="primary"
+                        color="error"
                         onClick={() => handleSellOpen(holding)}
+                        sx={{ 
+                          '&:hover': { 
+                            backgroundColor: 'error.light',
+                            color: 'white'
+                          }
+                        }}
                       >
                         <Remove fontSize="small" />
                       </IconButton>

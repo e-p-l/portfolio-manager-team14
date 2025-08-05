@@ -3,6 +3,8 @@ import { Typography, Box } from '@mui/material';
 import TransactionTimeline from '../components/TransactionTimeline';
 import TransactionFlow from '../components/TransactionFlow';
 
+const DEFAULT_PORTFOLIO_ID = 1;
+
 const Transactions: React.FC = () => {
   return (
     <Box>
@@ -19,11 +21,11 @@ const Transactions: React.FC = () => {
       {/* Transaction page layout */}
       <Box display="flex" flexDirection="column" gap={3}>
         <Box>
-          <TransactionFlow />
+          <TransactionFlow portfolioId={DEFAULT_PORTFOLIO_ID} />
         </Box>
         
         <Box>
-          <TransactionTimeline />
+          <TransactionTimeline portfolioId={DEFAULT_PORTFOLIO_ID} />
         </Box>
       </Box>
     </Box>
