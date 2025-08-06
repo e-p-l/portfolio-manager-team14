@@ -7,6 +7,7 @@ import HoldingsTable from '../components/HoldingsTable';
 import ValueChart from '../components/ValueChart';
 import SectorAllocationChart from '../components/SectorAllocationChart';
 import AssetClassChart from '../components/AssetClassChart';
+import BalanceNotification, { useBalanceNotification } from '../components/balanceNotification';
 
 const DEFAULT_PORTFOLIO_ID = 1; // Hardcoded for now as requested
 
@@ -20,14 +21,20 @@ const Portfolio: React.FC = () => {
     assetClassAllocation,
   } = useHoldings(DEFAULT_PORTFOLIO_ID);
   const [refreshKey, setRefreshKey] = useState(0); // Used to trigger refetch
+  const { notification, showNotification, hideNotification } = useBalanceNotification();
 
-  const handleHoldingsChange = async () => {
-  // Trigger refetch by changing the key
-  setRefreshKey(prevKey => prevKey + 1);
-  await refreshHoldings();
-  // Refetch portfolio to update balance
-  await refetchPortfolio();
-};
+  const handleHoldingsChange = async (transactionValue?: number) => {
+    // Show notification if transaction value is provided
+    if (transactionValue !== undefined && transactionValue !== 0) {
+      showNotification(transactionValue);
+    }
+    
+    // Trigger refetch by changing the key
+    setRefreshKey(prevKey => prevKey + 1);
+    await refreshHoldings();
+    // Refetch portfolio to update balance
+    await refetchPortfolio();
+  };
 
   return (
     <Box>
@@ -110,6 +117,13 @@ const Portfolio: React.FC = () => {
 
         </Box>
       </Box>
+      
+      {/* Balance Notification */}
+      <BalanceNotification
+        amount={notification.amount}
+        visible={notification.visible}
+        onComplete={hideNotification}
+      />
     </Box>
   );
 };
