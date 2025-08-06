@@ -4,12 +4,95 @@ Separated from seed_db.py for better organization and reusability.
 """
 
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app import db
 from app.models.portfolio_history import PortfolioHistory
 from app.models.asset_history import AssetHistory
 from app.models.holding import Holding
+from app.models.transaction import Transaction
 
+
+def generate_random_date_2024():
+    """Generate a random date between start of 2024 and now"""
+    start_2024 = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    time_diff = (now - start_2024).total_seconds()
+    random_seconds = random.uniform(0, time_diff)
+    return start_2024 + timedelta(seconds=random_seconds)
+
+
+def create_random_sell_transaction(portfolio_id):
+    """Create a random sell transaction from existing holdings"""
+    try:
+        # Get all current holdings for this portfolio
+        holdings = Holding.query.filter_by(portfolio_id=portfolio_id).all()
+        
+        if not holdings:
+            return False
+        
+        # Pick a random holding to sell from
+        holding = random.choice(holdings)
+        
+        if holding.quantity <= 0:
+            return False
+        
+        # Sell between 1 and all available quantity
+        sell_quantity = random.randint(1, holding.quantity)
+        
+        # Get current asset price (we'll use purchase price as approximation)
+        current_price = holding.purchase_price * random.uniform(0.8, 1.2)  # Simulate price movement
+        
+        # Get the purchase date from the most recent buy transaction for this holding
+        latest_buy_txn = Transaction.query.filter_by(
+            portfolio_id=portfolio_id,
+            holding_id=holding.id,
+            transaction_type="buy"
+        ).order_by(Transaction.created_at.desc()).first()
+        
+        if latest_buy_txn:
+            # Sell transaction should be after the buy transaction
+            buy_date = latest_buy_txn.created_at
+            
+            # Ensure buy_date is timezone-aware
+            if buy_date.tzinfo is None:
+                buy_date = buy_date.replace(tzinfo=timezone.utc)
+            
+            # Random time between buy date and now
+            now = datetime.now(timezone.utc)
+            time_diff = (now - buy_date).total_seconds()
+            if time_diff > 0:
+                random_seconds = random.uniform(0, time_diff)
+                sell_date = buy_date + timedelta(seconds=random_seconds)
+            else:
+                sell_date = now
+        else:
+            # Fallback: random date in 2024 if no buy transaction found
+            sell_date = generate_random_date_2024()
+        
+        # Create sell transaction
+        sell_txn = Transaction(
+            portfolio_id=portfolio_id,
+            holding_id=holding.id,
+            quantity=sell_quantity,
+            price=current_price,
+            created_at=sell_date,
+            transaction_type="sell"
+        )
+        
+        # Update holding quantity
+        holding.quantity -= sell_quantity
+        
+        # If quantity becomes 0, we could delete the holding, but let's keep it for history
+        
+        db.session.add(sell_txn)
+        db.session.commit()
+        
+        print(f"💰 SOLD {sell_quantity} shares of {holding.asset.symbol} at ${current_price:.2f}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error in create_random_sell_transaction: {e}")
+        return False
 
 def generate_portfolio_history(portfolio_id, years=3):
     """Generate realistic portfolio value history over time."""

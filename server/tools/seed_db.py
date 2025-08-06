@@ -15,7 +15,15 @@ from app.models.transaction import Transaction
 from app.models.portfolio_history import PortfolioHistory
 from app.models.asset_history import AssetHistory
 from app.models.watchlist import Watchlist
-from app.utils.seeding_functions import generate_portfolio_history, generate_asset_history, generate_asset_history_for_new_watchlist_item
+from app.utils.seeding_functions import create_random_sell_transaction, generate_portfolio_history, generate_asset_history, generate_asset_history_for_new_watchlist_item
+
+def generate_random_date_2024():
+    """Generate a random date between start of 2024 and now"""
+    start_2024 = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    time_diff = (now - start_2024).total_seconds()
+    random_seconds = random.uniform(0, time_diff)
+    return start_2024 + timedelta(seconds=random_seconds)
 
 def seed_database():
     app = create_app()
@@ -46,12 +54,15 @@ def seed_database():
         db.session.add(portfolio)
         db.session.commit()
 
+        # Generate random date from 2024
+        random_buy_date = generate_random_date_2024()
+        
         holding = Holding(
             portfolio_id=portfolio.id,
             asset_id=asset.id,
             quantity=5,
             purchase_price=price,
-            purchase_date=datetime.now(timezone.utc)
+            purchase_date=random_buy_date
         )
         db.session.add(holding)
         db.session.commit()
@@ -61,11 +72,15 @@ def seed_database():
             holding_id=holding.id,
             quantity=5,
             price=price,
-            created_at=datetime.now(timezone.utc),
+            created_at=random_buy_date,
             transaction_type="buy"
         )
         db.session.add(txn)
         db.session.commit()
+
+        # 40% chance of sell transaction after initial buy
+        if random.random() < 0.4:
+            create_random_sell_transaction(portfolio.id)
 
         print("✅ MySQL seeded with live VOO data.")
 
@@ -97,19 +112,6 @@ def seed_database():
             ("INTC", "Intel Corporation"),
             ("T", "AT&T Inc."),
             ("BA", "Boeing Co."),
-            ("ADBE", "Adobe Inc."),
-            ("ORCL", "Oracle Corporation"),
-            ("NFLX", "Netflix Inc."),
-            ("NKE", "Nike Inc."),
-            ("CRM", "Salesforce Inc."),
-            ("ABT", "Abbott Laboratories"),
-            ("MRK", "Merck & Co."),
-            ("COST", "Costco Wholesale"),
-            ("AVGO", "Broadcom Inc."),
-            ("MCD", "McDonald’s Corp."),
-            ("QCOM", "Qualcomm Inc."),
-            ("TXN", "Texas Instruments"),
-            ("HON", "Honeywell International")
         ]
 
         # Random asset types
@@ -154,12 +156,15 @@ def seed_database():
 
                 quantity = random.randint(1, 50)
 
+                # Generate random date from 2024 for this transaction
+                random_buy_date = generate_random_date_2024()
+
                 holding = Holding(
                     portfolio_id=portfolio.id,
                     asset_id=asset.id,
                     quantity=quantity,
                     purchase_price=price,
-                    purchase_date=datetime.now(timezone.utc)
+                    purchase_date=random_buy_date
                 )
 
                 db.session.add(holding)
@@ -170,7 +175,7 @@ def seed_database():
                     holding_id=holding.id,
                     quantity=quantity,
                     price=price,
-                    created_at=datetime.now(timezone.utc),
+                    created_at=random_buy_date,
                     transaction_type="buy"
                 )
                 
@@ -178,6 +183,10 @@ def seed_database():
                 db.session.commit()
 
                 print(f"✅ Added {sym} (${price}) | Sector: {sector}, Type: {asset_type}")
+
+                # 40% chance of creating a sell transaction after each buy
+                if random.random() < 0.4:
+                    create_random_sell_transaction(portfolio.id)
 
             except Exception as e:
                 print(f"❌ Error adding {sym}: {e}")

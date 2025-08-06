@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { HoldingService, Holding } from '../services/holdingService';
+import { TransactionService } from '../services/transactionService';
 import { Asset } from '../types';
 
 export const useHoldings = (portfolioId: number) => {
@@ -165,7 +166,7 @@ export const useHoldings = (portfolioId: number) => {
     };
   }, [holdings]);
 
-  // Add holding function
+  // Add holding function - now uses TransactionService
   const addHolding = useCallback(async (selectedAsset: Asset, quantity: number) => {
     try {
       setLoading(true);
@@ -179,26 +180,8 @@ export const useHoldings = (portfolioId: number) => {
         throw new Error('Quantity must be greater than 0');
       }
       
-      // Use transaction API for buying
-      const response = await fetch('/api/transactions/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          portfolio_id: portfolioId,
-          asset_id: selectedAsset.id,
-          quantity: quantity,
-          transaction_type: 'buy'
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to buy holding');
-      }
-      
-      const transaction = await response.json();
+      // Use TransactionService for buying
+      const transaction = await TransactionService.buyAsset(portfolioId, selectedAsset, quantity);
       
       // Refresh holdings data
       await fetchHoldings(true);
@@ -212,8 +195,7 @@ export const useHoldings = (portfolioId: number) => {
     }
   }, [portfolioId, fetchHoldings]);
 
-  // Remove/sell holding function
-  // Remove/sell holding function - now uses transaction API
+  // Remove/sell holding function - now uses TransactionService
   const removeHolding = useCallback(async (holdingId: number, quantity: number) => {
     try {
       setLoading(true);
@@ -232,24 +214,8 @@ export const useHoldings = (portfolioId: number) => {
         throw new Error(`Cannot sell ${quantity} shares. You only own ${holding.quantity} shares.`);
       }
       
-      // Use transaction API instead of direct holding manipulation
-      const response = await fetch('/api/transactions/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          portfolio_id: portfolioId,
-          holding_id: holdingId,
-          quantity: quantity,
-          transaction_type: 'sell'
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to sell holding');
-      }
+      // Use TransactionService for selling
+      await TransactionService.sellHolding(portfolioId, holdingId, holding.asset_id, quantity);
       
       // Refresh holdings data
       await fetchHoldings(true);
