@@ -2,6 +2,7 @@ import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import { usePortfolioHistory } from '../hooks/usePortfolioHistory';
+import { usePortfolio } from '../hooks/usePortfolio';
 import { format, parseISO, subDays } from 'date-fns';
 
 interface NetworthChartProps {
@@ -11,6 +12,8 @@ interface NetworthChartProps {
 const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
   // Fetch portfolio history data from backend
   const { historyData, loading, error } = usePortfolioHistory(portfolioId);
+  // Fetch portfolio details for AUM and return
+  const { portfolio, loading: portfolioLoading } = usePortfolio();
   
   // Filter to show last 30 days only (like the original)
   const today = new Date();
@@ -36,12 +39,16 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
   const valueChange = currentValue - startValue;
   const percentageChange = ((valueChange / startValue) * 100);
 
+  // Format AUM and return values
+  const formattedAUM = portfolio?.aum ? `$${portfolio.aum.toLocaleString()}` : 'Loading...';
+  const formattedReturn = portfolio?.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...';
+
   // Show loading state
-  if (loading) {
+  if (loading || portfolioLoading) {
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography variant="h6" color="primary" mb={2}>Portfolio Value</Typography>
+          <Typography variant="h6" color="primary" mb={2}>Portfolio Overview</Typography>
           <Typography variant="body1" color="text.secondary">Loading portfolio data...</Typography>
         </CardContent>
       </Card>
@@ -63,20 +70,48 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box mb={2}>
-          <Typography variant="h6" color="primary">
-            Portfolio Value
-          </Typography>
-          <Typography variant="h4" fontWeight="bold">
-            ${currentValue.toLocaleString()}
-          </Typography>
-          <Typography 
-            variant="body2" 
-            color={valueChange >= 0 ? '#4caf50' : '#f44336'}
-            fontWeight="medium"
-          >
-            {valueChange >= 0 ? '+' : ''}${valueChange.toLocaleString()} ({percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%) this month
-          </Typography>
+        <Box mb={2} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="h6" color="primary">
+              Portfolio Overview
+            </Typography>
+            
+            {/* Main Portfolio Value */}
+            <Typography variant="h4" fontWeight="bold">
+              ${currentValue.toLocaleString()}
+            </Typography>
+            <Typography 
+              variant="body2" 
+              color={valueChange >= 0 ? '#4caf50' : '#f44336'}
+              fontWeight="medium"
+            >
+              {valueChange >= 0 ? '+' : ''}${valueChange.toLocaleString()} ({percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%) this month
+            </Typography>
+          </Box>
+
+          {/* AUM and Return Metrics - Top Right */}
+          <Box sx={{ textAlign: 'right' }}>
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Assets Under Management
+              </Typography>
+              <Typography variant="body1" fontWeight="bold">
+                {formattedAUM}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Total Return
+              </Typography>
+              <Typography 
+                variant="body1" 
+                fontWeight="bold"
+                color={portfolio?.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
+              >
+                {formattedReturn}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
 
         <Box sx={{ flex: 1, minHeight: 200 }}>

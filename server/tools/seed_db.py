@@ -152,7 +152,7 @@ def seed_database():
                 db.session.add(asset)
                 db.session.commit()
 
-                quantity = random.randint(1, 100)
+                quantity = random.randint(1, 50)
 
                 holding = Holding(
                     portfolio_id=portfolio.id,

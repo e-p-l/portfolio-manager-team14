@@ -12,6 +12,8 @@ import { ShowChart } from '@mui/icons-material';
 import { format, subDays, subMonths, subYears, parseISO } from 'date-fns';
 import { usePortfolioHistory, PortfolioValue } from '../hooks/usePortfolioHistory';
 import { useAssetHistory, AssetValue } from '../hooks/useAssetHistory';
+import { PortfolioService } from '../services/portfolioService';
+import { Portfolio } from '../types';
 
 // Types
 type HistoryData = PortfolioValue | AssetValue; // Both have same structure: { date: string, value: number }
@@ -119,10 +121,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "Value Chart" }) => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<string>('3M');
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   
   // Use appropriate hook based on what's provided
   const portfolioHistory = usePortfolioHistory(portfolioId || 0);
   const assetHistory = useAssetHistory(assetId || null);
+  
+  // Fetch portfolio details if this is a portfolio chart
+  React.useEffect(() => {
+    if (portfolioId) {
+      PortfolioService.getPortfolio(portfolioId)
+        .then(setPortfolio)
+        .catch(console.error);
+    }
+  }, [portfolioId]);
   
   // Determine which data to use
   const isPortfolio = !!portfolioId;
@@ -206,30 +218,56 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box display="flex" alignItems="center" mb={2}>
-          <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
-          <Typography variant="h6">
-            {title}
-          </Typography>
-        </Box>
-        
-        <Box display="flex" flexDirection="column" mb={2}>
-          <Typography variant="h4" fontWeight="bold">
-            {formattedValue}
-          </Typography>
-          
-          <Box display="flex" alignItems="center" mt={0.5}>
-            <Typography 
-              variant="subtitle1"
-              color={percentChange >= 0 ? 'success.main' : 'error.main'}
-              fontWeight="medium"
-            >
-              {formattedChange} ({formattedPercentage})
+        <Box mb={2} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="h6" color="primary">
+              {title}
             </Typography>
-            <Typography variant="body2" color="text.secondary" ml={1}>
-              {timeRange === 'ALL' ? 'all time' : timeRange === 'YTD' ? 'year to date' : `past ${timeRange}`}
+            
+            {/* Main Portfolio Value */}
+            <Typography variant="h4" fontWeight="bold">
+              {formattedValue}
             </Typography>
+            
+            <Box display="flex" alignItems="center" mt={0.5}>
+              <Typography 
+                variant="subtitle1"
+                color={percentChange >= 0 ? 'success.main' : 'error.main'}
+                fontWeight="medium"
+              >
+                {formattedChange} ({formattedPercentage})
+              </Typography>
+              <Typography variant="body2" color="text.secondary" ml={1}>
+                {timeRange === 'ALL' ? 'all time' : timeRange === 'YTD' ? 'year to date' : `past ${timeRange}`}
+              </Typography>
+            </Box>
           </Box>
+
+          {/* Portfolio Metrics - Top Right (only for portfolio charts) */}
+          {isPortfolio && portfolio && (
+            <Box sx={{ textAlign: 'right' }}>
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Assets Under Management
+                </Typography>
+                <Typography variant="body1" fontWeight="bold">
+                  {portfolio.aum ? `$${portfolio.aum.toLocaleString()}` : 'Loading...'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Total Return
+                </Typography>
+                <Typography 
+                  variant="body1" 
+                  fontWeight="bold"
+                  color={portfolio.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
+                >
+                  {portfolio.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...'}
+                </Typography>
+              </Box>
+            </Box>
+          )}
         </Box>
         
         <Box sx={{ flex: 1, minHeight: 200 }}>

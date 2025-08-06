@@ -15,6 +15,22 @@ def generate_portfolio_history(portfolio_id, years=3):
     """Generate realistic portfolio value history over time."""
     print(f"🔄 Generating {years} years of portfolio history...")
 
+    # Calculate REAL current portfolio value from actual holdings
+    from app.services.asset_service import fetch_latest_price
+    
+    holdings = Holding.query.filter_by(portfolio_id=portfolio_id).filter(Holding.quantity > 0).all()
+    real_portfolio_value = 0.0
+    for holding in holdings:
+        if holding.purchase_price:
+            real_portfolio_value += holding.quantity * holding.purchase_price
+    
+    # If no holdings, use default base value
+    if real_portfolio_value == 0:
+        real_portfolio_value = 100000
+    
+    print(f"🎯 Real portfolio value (sum of holdings): ${real_portfolio_value:,.2f}")
+
+    # Generate your beautiful random history (UNCHANGED!)
     base_value = 100000
     today = datetime.now().date()
     start_date = today - timedelta(days=years * 365)
@@ -27,7 +43,7 @@ def generate_portfolio_history(portfolio_id, years=3):
     while current_date <= today:
         days_since_start = (current_date - start_date).days
 
-        # Phase-based settings
+        # Phase-based settings (UNCHANGED - keeping your beautiful spikiness!)
         if days_since_start <= 180:  # Flat start
             daily_growth = 0.0001
             volatility = 0.002
@@ -44,12 +60,12 @@ def generate_portfolio_history(portfolio_id, years=3):
             daily_growth = 0.001
             volatility = 0.005
 
-        # Base movement
+        # Base movement (UNCHANGED - keeping randomness!)
         random_factor = 1 + (random.random() * 2 - 1) * volatility
         growth_factor = 1 + daily_growth
         current_value *= random_factor * growth_factor
 
-        # Controlled spikiness
+        # Controlled spikiness (UNCHANGED - keeping your spikes!)
         spike_roll = random.random()
         if spike_roll > 0.995:
             current_value *= 1.04 + random.random() * 0.04  # Big up spike
@@ -60,17 +76,17 @@ def generate_portfolio_history(portfolio_id, years=3):
         elif spike_roll < 0.015:
             current_value *= 0.985 - random.random() * 0.01  # Mini dip
 
-        # Forced crash during CRASH phase
+        # Forced crash during CRASH phase (UNCHANGED)
         if 366 <= days_since_start <= 400 and random.random() < 0.25:
             crash_drop = 0.85 - random.random() * 0.1  # 10–25% drop
             current_value *= crash_drop
 
-        # Recovery surges after crash
+        # Recovery surges after crash (UNCHANGED)
         if 401 <= days_since_start <= 600 and random.random() < 0.15:
             recovery_spike = 1.05 + random.random() * 0.08
             current_value *= recovery_spike
 
-        # Quarterly earnings (occasional, light)
+        # Quarterly earnings (UNCHANGED)
         month = current_date.month
         day_of_month = current_date.day
         if day_of_month in range(25, 32) and month in [1, 4, 7, 10]:
@@ -78,22 +94,21 @@ def generate_portfolio_history(portfolio_id, years=3):
                 earnings_spike = (1.04 + random.random() * 0.06) if random.random() > 0.5 else (0.92 - random.random() * 0.06)
                 current_value *= earnings_spike
 
-        # Seasonal mild adjustment
+        # Seasonal mild adjustment (UNCHANGED)
         if month in [11, 12]:  # Holiday rally
             current_value *= 1.0005
         elif month in [1, 2]:  # Early year volatility
             current_value *= 0.9995
 
-        # Cap extremes
+        # Cap extremes (UNCHANGED)
         if current_value < base_value * 0.7:
             current_value = base_value * (0.7 + random.random() * 0.2)
         if current_value > base_value * 2.5:
             current_value *= 0.95 - random.random() * 0.05
 
-        # Round and compute balance
-        current_value = round(current_value, 2)
+        # Store the RAW generated value (before scaling)
+        raw_value = round(current_value, 2)
         cash_percentage = 0.08 + random.random() * 0.04
-        current_balance = round(current_value * cash_percentage, 2)
 
         # Avoid duplicate entries
         existing = PortfolioHistory.query.filter_by(
@@ -104,13 +119,28 @@ def generate_portfolio_history(portfolio_id, years=3):
         if not existing:
             history_record = PortfolioHistory(
                 portfolio_id=portfolio_id,
-                value=current_value,
-                balance=current_balance,
+                value=raw_value,  # Store raw value temporarily
+                balance=round(raw_value * cash_percentage, 2),
                 date=current_date
             )
             history_records.append(history_record)
 
         current_date += timedelta(days=1)
+
+    # Calculate scaling ratio: real_portfolio_value / generated_final_value
+    if history_records:
+        generated_final_value = history_records[-1].value  # Last day's generated value
+        scaling_ratio = real_portfolio_value / generated_final_value
+        
+        print(f"📊 Generated final value: ${generated_final_value:,.2f}")
+        print(f"🔄 Scaling ratio: {scaling_ratio:.6f}")
+        
+        # Scale ALL history values by the ratio
+        for record in history_records:
+            record.value = round(record.value * scaling_ratio, 2)
+            record.balance = round(record.balance * scaling_ratio, 2)
+        
+        print(f"✅ Scaled to match real portfolio value: ${history_records[-1].value:,.2f}")
 
     # Save to DB
     if history_records:
