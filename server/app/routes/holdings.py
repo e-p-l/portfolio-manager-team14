@@ -1,6 +1,7 @@
 from .. import db
 from ..models.holding import Holding
 from ..services.asset_service import fetch_latest_price
+from ..services.holding_service import get_asset_return, get_portfolio_aum, get_portfolio_return
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
@@ -95,7 +96,7 @@ class HoldingsByPortfolioResource(Resource):
                         'asset_sector': h.asset.sector,
                         'asset_dayChangeP': price_data.get(symbol, {}).get('day_changeP') if symbol in price_data else None,
                         'purchase_price': h.purchase_price,
-                        'return': 'TODO'
+                        'asset_return': get_asset_return(portfolio_id, h.asset.id) if h.asset else None,
                     }
                 else:
                     merged_holdings[symbol]['quantity'] += h.quantity

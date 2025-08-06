@@ -1,3 +1,5 @@
+from app.services.cache import cache
+
 from ..models.asset import Asset
 from ..services.asset_service import fetch_asset_metadata, fetch_latest_prices, search_assets, get_asset_info
 from .. import db
@@ -21,6 +23,7 @@ asset_input_models = {
         'sector': fields.String(required=False),
     })
 }
+
 
 @api_ns.route('/')
 class AssetListResource(Resource):
@@ -177,6 +180,23 @@ class AssetSearchResource(Resource):
             
         except Exception as e:
             return {"error": str(e)}, 500
+
+@api_ns.route('/<int:asset_id>/history')
+class AssetHistoryResource(Resource):
+    def get(self, asset_id):
+        """Returns the price history for a specific asset."""
+        try:
+            from ..models.asset_history import AssetHistory
+            
+            asset = Asset.query.get(asset_id)
+            if not asset:
+                return {"error": "Asset not found"}, 404
+            
+            history = AssetHistory.query.filter_by(asset_id=asset_id).order_by(AssetHistory.date.asc()).all()
+            return [entry.serialize() for entry in history], 200
+            
+        except SQLAlchemyError as e:
+            return {"error": str(e)}, 500
         
 
 #market movers list (static)
@@ -215,3 +235,10 @@ class MarketMoversResource(Resource):
 
         except Exception as e:
             return {"error": str(e)}, 500
+
+@api_ns.route('/cache')
+class AssetCacheResource(Resource):
+    def get(self):
+        """Returns the current contents of the asset price cache."""
+        # Convert cache to a regular dict for JSON serialization
+        return {k: dict(v) if hasattr(v, 'items') else v for k, v in cache.items()}, 200

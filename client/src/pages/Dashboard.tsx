@@ -73,7 +73,7 @@ const Dashboard: React.FC = () => {
           {/* Cash Flow - Takes 2/5 of the left section */}
           <Box flex={2} sx={{ height: '100%' }}>
             <Box sx={{ height: '100%' }}>
-              <CashFlowChart />
+              <CashFlowChart portfolioId={DEFAULT_PORTFOLIO_ID} />
             </Box>
           </Box>
           

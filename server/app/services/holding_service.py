@@ -5,13 +5,7 @@ from app.models.transaction import Transaction
 
 from datetime import datetime, timezone
 
-def compute_pnl_from_sell(holding, quantity, sell_price):
-    """
-    Computes PnL for the sold quantity.
-    """
-    pnl = (sell_price - holding.purchase_price) * quantity
-    
-    return pnl
+from app.services.asset_service import fetch_latest_price
 
 def update_portfolio_balance(portfolio, pnl):
     """
@@ -21,50 +15,6 @@ def update_portfolio_balance(portfolio, pnl):
     portfolio.balance += pnl
     db.session.commit()
     print(f"New balance: {portfolio.balance}")
-
-def sell_holding(holding_id, quantity, sell_price):
-    """
-    Sells a quantity from a holding and updates portfolio balance with sale proceeds.
-    """
-    holding = Holding.query.get(holding_id)
-    if not holding:
-        raise ValueError("Holding not found.")
-
-    if quantity > holding.quantity:
-        raise ValueError("Cannot sell more than holding quantity.")
-
-    # Store values before modifying
-    portfolio_id = holding.portfolio_id
-    original_quantity = holding.quantity
-    
-    # Calculate sale proceeds (what you get back)
-    sale_proceeds = sell_price * quantity
-    
-    # Calculate PnL for record keeping (optional)
-    pnl = (sell_price - holding.purchase_price) * quantity
-    print(f"Sale proceeds: {sell_price} * {quantity} = {sale_proceeds}")
-    print(f"PnL: ({sell_price} - {holding.purchase_price}) * {quantity} = {pnl}")
-    
-    # Update holding quantity
-    holding.quantity -= quantity
-    remaining_quantity = holding.quantity
-    
-    print(f"Holding quantity: {original_quantity} -> {remaining_quantity}")
-    
-    # Commit the quantity change
-    db.session.commit()
-
-    # Add sale proceeds to portfolio balance (this is your money back!)
-    portfolio = Portfolio.query.get(portfolio_id)
-    if portfolio:
-        print(f"Updating balance: Current={portfolio.balance}, Adding proceeds={sale_proceeds}")
-        portfolio.balance += sale_proceeds  # Add the full sale amount
-        db.session.commit()
-        print(f"New balance: {portfolio.balance}")
-    else:
-        raise ValueError("Portfolio not found.")
-
-    return sale_proceeds, remaining_quantity
 
 def buy_asset(portfolio_id, asset_id, quantity, latest_price):
     """
@@ -161,3 +111,55 @@ def sell_asset(portfolio_id, asset_id, quantity, latest_price):
     print(f"Portfolio new balance: {portfolio.balance}")
     
     return transactions
+
+def get_asset_return(portfolio_id, asset_id):
+    """
+    asset_return = (current_value - total_cost) / total_cost
+    """
+    holdings = Holding.query.filter_by(portfolio_id=portfolio_id, asset_id=asset_id).filter(Holding.quantity > 0).all()
+
+    total_quantity = 0
+    total_cost = 0.0
+    for h in holdings:
+        total_quantity += h.quantity
+        total_cost += h.quantity * h.purchase_price
+    
+    if total_cost == 0:
+        return 0.0
+
+    current_value = total_quantity * fetch_latest_price(asset_id)
+
+    return (current_value - total_cost) / total_cost
+
+def get_portfolio_aum(portfolio_id):
+    """
+    AUM = sum of (quantity of each holding × current price of each asset) + portfolio cash balance
+    """
+    holdings = Holding.query.filter_by(portfolio_id=portfolio_id).filter(Holding.quantity > 0).all()
+
+    aum = 0.0
+
+    for h in holdings:
+        aum += h.quantity * fetch_latest_price(h.asset_id)
+    
+    # TODO: Commented out since deposite/withdrawal from balance is not implemented
+    # return aum + Portfolio.query.get(portfolio_id).balance
+    return aum
+
+def get_portfolio_return(portfolio_id):
+    """
+    portfolio_return = (current_value - total_invested) / total_invested
+    """
+    portfolio = Portfolio.query.get(portfolio_id)
+
+    total_invested = 0.0
+    for t in portfolio.transactions:
+        if t.transaction_type == 'buy':
+            total_invested += t.quantity * t.price
+    
+    if total_invested == 0:
+        return 0.0
+
+    current_value = get_portfolio_aum(portfolio_id)
+
+    return (current_value - total_invested) / total_invested

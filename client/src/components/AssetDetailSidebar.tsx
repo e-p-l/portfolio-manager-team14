@@ -6,31 +6,23 @@ import {
   Box,
   Chip,
   Divider,
-  Avatar,
-  Paper
+  Avatar
 } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
-import { WatchlistAsset } from './WatchlistTable';
+import { WatchlistItem } from '../types';
 
 interface AssetDetailSidebarProps {
-  asset: WatchlistAsset;
+  asset: WatchlistItem;
 }
 
-// Mock additional asset info (would come from yfinance in real implementation)
-const getAssetDetails = (asset: WatchlistAsset) => {
+// Get asset details from backend data
+const getAssetDetails = (asset: WatchlistItem) => {
   return {
     ...asset,
-    // Additional mock data
-    marketCap: asset.marketCap,
-    peRatio: Math.round((Math.random() * 25 + 10) * 100) / 100,
-    dividendYield: Math.round((Math.random() * 5) * 100) / 100,
-    eps: Math.round((Math.random() * 10 + 1) * 100) / 100,
-    beta: Math.round((Math.random() * 2 + 0.5) * 100) / 100,
-    dayHigh: asset.price * (1 + Math.random() * 0.05),
-    dayLow: asset.price * (1 - Math.random() * 0.05),
-    yearHigh: asset.price * (1 + Math.random() * 0.3 + 0.1),
-    yearLow: asset.price * (1 - Math.random() * 0.4),
-    avgVolume: asset.volume,
+    // Use actual backend data
+    price: asset.current_price || 0,
+    change: asset.day_change || 0,
+    changePercent: asset.day_changeP || 0,
   };
 };
 
@@ -65,11 +57,6 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({ asset }) => {
     }).format(percent / 100);
   };
 
-  const formatLargeNumber = (num: string) => {
-    // Convert string like "1.2B" to formatted display
-    return num;
-  };
-
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
@@ -77,20 +64,19 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({ asset }) => {
         <Box display="flex" alignItems="center" gap={1.5} mb={2}>
           <Avatar 
             sx={{ width: 40, height: 40, fontSize: '1rem' }}
-            src={asset.logo}
           >
-            {asset.symbol.charAt(0)}
+            {asset.asset_symbol?.charAt(0) || 'N/A'}
           </Avatar>
           <Box flex={1}>
             <Typography variant="h6" fontWeight="bold">
-              {asset.symbol}
+              {asset.asset_symbol || 'Unknown'}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>
-              {asset.name}
+              {asset.asset_name || 'Unknown Asset'}
             </Typography>
           </Box>
           <Chip 
-            label={asset.sector} 
+            label={asset.asset_sector || 'Other'} 
             size="small"
             color="primary" 
             variant="outlined"
@@ -100,93 +86,55 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({ asset }) => {
         {/* Price Information */}
         <Box mb={2}>
           <Typography variant="h5" fontWeight="bold">
-            {formatPrice(asset.price)}
+            {formatPrice(details.price)}
           </Typography>
           <Box display="flex" alignItems="center" gap={0.5}>
-            {asset.changePercent >= 0 ? (
+            {details.changePercent >= 0 ? (
               <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
             ) : (
               <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />
             )}
             <Typography 
               variant="body2" 
-              color={asset.changePercent >= 0 ? 'success.main' : 'error.main'}
+              color={details.changePercent >= 0 ? 'success.main' : 'error.main'}
               fontWeight="medium"
             >
-              {formatChange(asset.change)} ({formatPercent(asset.changePercent)})
+              {formatChange(details.change)} ({formatPercent(details.changePercent)})
             </Typography>
           </Box>
         </Box>
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* Quick Stats */}
-        <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1.5} mb={2}>
-          <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-            <Typography variant="caption" color="text.secondary">
-              52W High
-            </Typography>
-            <Typography variant="body2" fontWeight="bold" fontSize="0.8rem">
-              {formatPrice(details.yearHigh)}
-            </Typography>
-          </Paper>
-          <Paper variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-            <Typography variant="caption" color="text.secondary">
-              52W Low
-            </Typography>
-            <Typography variant="body2" fontWeight="bold" fontSize="0.8rem">
-              {formatPrice(details.yearLow)}
-            </Typography>
-          </Paper>
-        </Box>
-
-        <Divider sx={{ mb: 2 }} />
-
-        {/* Key Metrics */}
+        {/* Asset Information */}
         <Box sx={{ flex: 1 }}>
           <Typography variant="subtitle2" fontWeight="bold" mb={1}>
-            Key Statistics
+            Asset Information
           </Typography>
           
           <Box display="flex" flexDirection="column" gap={1}>
             <Box display="flex" justifyContent="space-between">
               <Typography variant="caption" color="text.secondary">
-                Market Cap
+                Asset Type
               </Typography>
               <Typography variant="caption" fontWeight="bold">
-                {formatLargeNumber(details.marketCap)}
+                {asset.asset_type || 'Unknown'}
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between">
               <Typography variant="caption" color="text.secondary">
-                P/E Ratio
+                Sector
               </Typography>
               <Typography variant="caption" fontWeight="bold">
-                {details.peRatio}
+                {asset.asset_sector || 'Other'}
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between">
               <Typography variant="caption" color="text.secondary">
-                Dividend Yield
+                Added to Watchlist
               </Typography>
               <Typography variant="caption" fontWeight="bold">
-                {details.dividendYield}%
-              </Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between">
-              <Typography variant="caption" color="text.secondary">
-                Beta
-              </Typography>
-              <Typography variant="caption" fontWeight="bold">
-                {details.beta}
-              </Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between">
-              <Typography variant="caption" color="text.secondary">
-                Volume
-              </Typography>
-              <Typography variant="caption" fontWeight="bold">
-                {details.volume}
+                {new Date(asset.added_date).toLocaleDateString()}
               </Typography>
             </Box>
           </Box>

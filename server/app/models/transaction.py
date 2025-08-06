@@ -40,6 +40,16 @@ class Transaction(db.Model):
         self.transaction_type = transaction_type
 
     def serialize(self):
+        from app.models.holding import Holding
+        from app.models.asset import Asset
+        
+        # Get asset symbol through holding relationship
+        asset_symbol = None
+        if self.holding_id:
+            holding = Holding.query.get(self.holding_id)
+            if holding and holding.asset:
+                asset_symbol = holding.asset.symbol
+        
         return {
             'id': self.id,
             'portfolio_id': self.portfolio_id,
@@ -48,4 +58,5 @@ class Transaction(db.Model):
             'price': self.price,
             'created_at': self.created_at.isoformat(),
             'transaction_type': self.transaction_type,
+            'asset_symbol': asset_symbol,
         }

@@ -76,3 +76,26 @@ export interface ApiError {
   message?: string;
   status?: number;
 }
+
+// Watchlist related types
+export interface WatchlistItem {
+  id: number;
+  portfolio_id: number;
+  asset_id: number;
+  added_date: string;
+  asset_symbol?: string;
+  asset_name?: string;
+  asset_type?: string;
+  asset_sector?: string;
+  current_price?: number;
+  day_change?: number;
+  day_changeP?: number;
+}
+
+export interface CreateWatchlistRequest {
+  asset_id: number;
+}
+
+export interface UpdateWatchlistRequest {
+  // No updateable fields in current backend model
+}

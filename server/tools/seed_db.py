@@ -13,6 +13,9 @@ from app.routes.assets import get_asset_info
 from app.models.holding import Holding
 from app.models.transaction import Transaction
 from app.models.portfolio_history import PortfolioHistory
+from app.models.asset_history import AssetHistory
+from app.models.watchlist import Watchlist
+from app.utils.seeding_functions import generate_portfolio_history, generate_asset_history, generate_asset_history_for_new_watchlist_item
 
 def seed_database():
     app = create_app()
@@ -35,7 +38,7 @@ def seed_database():
 
         # === Insert live-data-backed objects ===
         info = get_asset_info(symbol)
-        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="ETF", day_changeP=info['day_changeP'])
+        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="sector", day_changeP=info['day_changeP'])
         db.session.add(asset)
         db.session.commit()
 
@@ -179,117 +182,66 @@ def seed_database():
             except Exception as e:
                 print(f"❌ Error adding {sym}: {e}")
 
-def generate_portfolio_history(portfolio_id, years=3):
-    from datetime import datetime, timedelta
-    import random
-
-    print(f"🔄 Generating {years} years of portfolio history...")
-
-    base_value = 100000
-    today = datetime.now().date()
-    start_date = today - timedelta(days=years * 365)
-
-    current_date = start_date
-    current_value = base_value
-
-    history_records = []
-
-    while current_date <= today:
-        days_since_start = (current_date - start_date).days
-
-        # Phase-based settings
-        if days_since_start <= 180:  # Flat start
-            daily_growth = 0.0001
-            volatility = 0.002
-        elif days_since_start <= 365:  # Growth phase
-            daily_growth = 0.0005
-            volatility = 0.006
-        elif days_since_start <= 400:  # CRASH!
-            daily_growth = -0.002
-            volatility = 0.04
-        elif days_since_start <= 600:  # Recovery
-            daily_growth = 0.0015
-            volatility = 0.01
-        else:  # Rally & Calm
-            daily_growth = 0.001
-            volatility = 0.005
-
-        # Base movement
-        random_factor = 1 + (random.random() * 2 - 1) * volatility
-        growth_factor = 1 + daily_growth
-        current_value *= random_factor * growth_factor
-
-        # Controlled spikiness
-        spike_roll = random.random()
-        if spike_roll > 0.995:
-            current_value *= 1.04 + random.random() * 0.04  # Big up spike
-        elif spike_roll < 0.003:
-            current_value *= 0.92 - random.random() * 0.05  # Big down
-        elif spike_roll > 0.985:
-            current_value *= 1.01 + random.random() * 0.015  # Mini rally
-        elif spike_roll < 0.015:
-            current_value *= 0.985 - random.random() * 0.01  # Mini dip
-
-        # Forced crash during CRASH phase
-        if 366 <= days_since_start <= 400 and random.random() < 0.25:
-            crash_drop = 0.85 - random.random() * 0.1  # 10–25% drop
-            current_value *= crash_drop
-
-        # Recovery surges after crash
-        if 401 <= days_since_start <= 600 and random.random() < 0.15:
-            recovery_spike = 1.05 + random.random() * 0.08
-            current_value *= recovery_spike
-
-        # Quarterly earnings (occasional, light)
-        month = current_date.month
-        day_of_month = current_date.day
-        if day_of_month in range(25, 32) and month in [1, 4, 7, 10]:
-            if random.random() > 0.94:
-                earnings_spike = (1.04 + random.random() * 0.06) if random.random() > 0.5 else (0.92 - random.random() * 0.06)
-                current_value *= earnings_spike
-
-        # Seasonal mild adjustment
-        if month in [11, 12]:  # Holiday rally
-            current_value *= 1.0005
-        elif month in [1, 2]:  # Early year volatility
-            current_value *= 0.9995
-
-        # Cap extremes
-        if current_value < base_value * 0.7:
-            current_value = base_value * (0.7 + random.random() * 0.2)
-        if current_value > base_value * 2.5:
-            current_value *= 0.95 - random.random() * 0.05
-
-        # Round and compute balance
-        current_value = round(current_value, 2)
-        cash_percentage = 0.08 + random.random() * 0.04
-        current_balance = round(current_value * cash_percentage, 2)
-
-        # Avoid duplicate entries
-        existing = PortfolioHistory.query.filter_by(
-            portfolio_id=portfolio_id,
-            date=current_date
-        ).first()
-
-        if not existing:
-            history_record = PortfolioHistory(
-                portfolio_id=portfolio_id,
-                value=current_value,
-                balance=current_balance,
-                date=current_date
-            )
-            history_records.append(history_record)
-
-        current_date += timedelta(days=1)
-
-    # Save to DB
-    if history_records:
-        db.session.bulk_save_objects(history_records)
-        db.session.commit()
-        print(f"✅ Generated {len(history_records)} records")
-        print(f"📈 Portfolio range: ${min([r.value for r in history_records]):,.2f} - ${max([r.value for r in history_records]):,.2f}")
-    else:
-        print("ℹ️ No new records to generate (already exists)")
+        # === WATCHLIST SEEDING ===
+        print("🔄 Adding watchlist items to Portfolio 1...")
+        
+        # Get some assets that weren't added as holdings for the watchlist
+        watchlist_symbols = [
+            ("GOOGL", "Alphabet Inc."),
+            ("AMZN", "Amazon.com Inc."),
+            ("TSLA", "Tesla Inc."),
+            ("NVDA", "NVIDIA Corporation"),
+            ("META", "Meta Platforms Inc."),
+            ("CRM", "Salesforce Inc."),
+            ("NFLX", "Netflix Inc."),
+            ("AMD", "Advanced Micro Devices")
+        ]
+        
+        for sym, name in watchlist_symbols:
+            try:
+                # Check if asset already exists
+                existing_asset = Asset.query.filter_by(symbol=sym).first()
+                
+                if not existing_asset:
+                    # Create the asset if it doesn't exist
+                    ticker = yf.Ticker(sym)
+                    data = ticker.history(period="1d")
+                    
+                    if data.empty:
+                        print(f"❌ No data for watchlist asset {sym}")
+                        continue
+                    
+                    yf_info = ticker.info
+                    custom_info = get_asset_info(sym)
+                    
+                    sector = yf_info.get("sector", "Unknown").split()[0] if "sector" in yf_info else "Unknown"
+                    day_changeP = custom_info['day_changeP']
+                    
+                    existing_asset = Asset(
+                        symbol=sym,
+                        name=name,
+                        asset_type="equity",
+                        sector=sector,
+                        day_changeP=day_changeP
+                    )
+                    db.session.add(existing_asset)
+                    db.session.commit()
+                
+                # Add to watchlist
+                watchlist_item = Watchlist(
+                    portfolio_id=portfolio.id,
+                    asset_id=existing_asset.id,
+                    notes=f"Watching {sym} for potential investment opportunities"
+                )
+                db.session.add(watchlist_item)
+                db.session.commit()
+                
+                print(f"✅ Added {sym} to watchlist")
+                
+            except Exception as e:
+                print(f"❌ Error adding {sym} to watchlist: {e}")
+        
+        print("✅ Watchlist seeding completed!")
 
 
 if __name__ == "__main__":
@@ -303,7 +255,25 @@ if __name__ == "__main__":
             portfolios = Portfolio.query.all()
             for portfolio in portfolios:
                 generate_portfolio_history(portfolio.id, years=3)
+            
+            # Generate asset history for ALL assets (not just watchlist)
+            print("\n🔄 Generating asset history for all assets...")
+            all_assets = Asset.query.all()
+            
+            for asset in all_assets:
+                # Check if history already exists
+                existing_history = AssetHistory.query.filter_by(asset_id=asset.id).first()
+                if existing_history:
+                    print(f"ℹ️ Asset {asset.symbol} already has history, skipping...")
+                    continue
+                
+                # Get current price from latest transaction or use a reasonable default
+                latest_holding = Holding.query.filter_by(asset_id=asset.id).first()
+                current_price = latest_holding.purchase_price if latest_holding else 100.0 + random.random() * 200  # Random price between $100-$300
+                
+                # Use the asset's day_changeP for realistic recent movement
+                generate_asset_history(asset.id, current_price, asset.day_changeP, years=3)
         
-        print("🎉 Database seeding completed with portfolio history!")
+        print("🎉 Database seeding completed with portfolio and asset history!")
     else:
         print("Cancelled.")
