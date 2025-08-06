@@ -5,9 +5,9 @@ from flask_restx import Namespace, Resource
 api_ns = Namespace('insights', description='Market insights and news')
 
 @api_ns.route('/news/finhub/')
-class NewsResouruce(Resource):
+class FinhubNewsResource(Resource):
     def get(self):
-        """Fetches and returns the latest market news."""
+        """Fetches and returns the latest market news from Finnhub."""
         try:
             news = fetch_latest_news_from_finhub()
             return {"news": news}, 200
@@ -15,9 +15,9 @@ class NewsResouruce(Resource):
             return {"error": str(e)}, 500
 
 @api_ns.route('/news/alphavantage/')
-class NewsResouruce(Resource):
+class AlphaVantageNewsResource(Resource):
     def get(self):
-        """Fetches and returns the latest market news."""
+        """Fetches and returns the latest market news from Alpha Vantage."""
         try:
             news = fetch_latest_news_from_alphavantage()
             return {"news": news}, 200
