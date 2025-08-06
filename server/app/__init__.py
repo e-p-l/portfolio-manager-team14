@@ -35,4 +35,7 @@ def create_app():
     from .routes.watchlist import api_ns as watchlist_api_ns
     api.add_namespace(watchlist_api_ns, path='/watchlist')
 
+    from .routes.insights import api_ns as watchlist_api_ns
+    api.add_namespace(watchlist_api_ns, path='/insigths')
+
     return app
