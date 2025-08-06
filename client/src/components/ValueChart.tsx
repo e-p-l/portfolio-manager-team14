@@ -12,6 +12,8 @@ import { ShowChart } from '@mui/icons-material';
 import { format, subDays, subMonths, subYears, parseISO } from 'date-fns';
 import { usePortfolioHistory, PortfolioValue } from '../hooks/usePortfolioHistory';
 import { useAssetHistory, AssetValue } from '../hooks/useAssetHistory';
+import { PortfolioService } from '../services/portfolioService';
+import { Portfolio } from '../types';
 
 // Types
 type HistoryData = PortfolioValue | AssetValue; // Both have same structure: { date: string, value: number }
@@ -119,10 +121,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "Value Chart" }) => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<string>('3M');
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   
   // Use appropriate hook based on what's provided
   const portfolioHistory = usePortfolioHistory(portfolioId || 0);
   const assetHistory = useAssetHistory(assetId || null);
+  
+  // Fetch portfolio details if this is a portfolio chart
+  React.useEffect(() => {
+    if (portfolioId) {
+      PortfolioService.getPortfolio(portfolioId)
+        .then(setPortfolio)
+        .catch(console.error);
+    }
+  }, [portfolioId]);
   
   // Determine which data to use
   const isPortfolio = !!portfolioId;
@@ -131,6 +143,15 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
   // Filter data based on selected time range
   const performanceData = filterData(historyData, timeRange);
   const { data, percentChange, valueChange, endValue } = performanceData;
+  
+  // Replace the last value with portfolio.aum if this is a portfolio chart
+  const chartData = [...data];
+  if (isPortfolio && portfolio?.aum && chartData.length > 0) {
+    chartData[chartData.length - 1] = {
+      ...chartData[chartData.length - 1],
+      value: portfolio.aum
+    };
+  }
   
   // Format change value
   const formattedChange = new Intl.NumberFormat('en-US', {
@@ -147,11 +168,12 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
     signDisplay: 'always'
   }).format(percentChange / 100);
   
-  // Current value formatted
+  // Current value formatted - use portfolio.aum if available, otherwise endValue
+  const displayValue = isPortfolio && portfolio?.aum ? portfolio.aum : endValue;
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD'
-  }).format(endValue);
+  }).format(displayValue);
   
   // Change time range handler
   const handleTimeRangeChange = useCallback((_: React.MouseEvent<HTMLElement>, newRange: string) => {
@@ -206,36 +228,54 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box display="flex" alignItems="center" mb={2}>
-          <ShowChart sx={{ mr: 1, color: theme.palette.primary.main }} />
-          <Typography variant="h6">
-            {title}
-          </Typography>
-        </Box>
-        
-        <Box display="flex" flexDirection="column" mb={2}>
-          <Typography variant="h4" fontWeight="bold">
-            {formattedValue}
-          </Typography>
-          
-          <Box display="flex" alignItems="center" mt={0.5}>
-            <Typography 
-              variant="subtitle1"
-              color={percentChange >= 0 ? 'success.main' : 'error.main'}
-              fontWeight="medium"
-            >
-              {formattedChange} ({formattedPercentage})
+        <Box mb={2} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="h6" color="primary">
+              {title}
             </Typography>
-            <Typography variant="body2" color="text.secondary" ml={1}>
-              {timeRange === 'ALL' ? 'all time' : timeRange === 'YTD' ? 'year to date' : `past ${timeRange}`}
+            
+            {/* Main Portfolio Value */}
+            <Typography variant="h4" fontWeight="bold">
+              {formattedValue}
             </Typography>
+            
+            <Box display="flex" alignItems="center" mt={0.5}>
+              <Typography 
+                variant="subtitle1"
+                color={percentChange >= 0 ? 'success.main' : 'error.main'}
+                fontWeight="medium"
+              >
+                {formattedChange} ({formattedPercentage})
+              </Typography>
+              <Typography variant="body2" color="text.secondary" ml={1}>
+                {timeRange === 'ALL' ? 'all time' : timeRange === 'YTD' ? 'year to date' : `past ${timeRange}`}
+              </Typography>
+            </Box>
+
+            {/* Total Return - Under other info on left side */}
+            {isPortfolio && portfolio && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Total Return: 
+                  <Typography 
+                    component="span"
+                    variant="body2"
+                    fontWeight="bold"
+                    color={portfolio.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
+                    sx={{ ml: 0.5 }}
+                  >
+                    {portfolio.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...'}
+                  </Typography>
+                </Typography>
+              </Box>
+            )}
           </Box>
         </Box>
         
         <Box sx={{ flex: 1, minHeight: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={data}
+              data={chartData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
               <defs>

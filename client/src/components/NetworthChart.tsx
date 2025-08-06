@@ -2,6 +2,7 @@ import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import { usePortfolioHistory } from '../hooks/usePortfolioHistory';
+import { usePortfolio } from '../hooks/usePortfolio';
 import { format, parseISO, subDays } from 'date-fns';
 
 interface NetworthChartProps {
@@ -11,6 +12,8 @@ interface NetworthChartProps {
 const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
   // Fetch portfolio history data from backend
   const { historyData, loading, error } = usePortfolioHistory(portfolioId);
+  // Fetch portfolio details for AUM and return
+  const { portfolio, loading: portfolioLoading } = usePortfolio();
   
   // Filter to show last 30 days only (like the original)
   const today = new Date();
@@ -31,17 +34,25 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
       };
     });
 
-  const currentValue = filteredData[filteredData.length - 1]?.value || 0;
+  // Replace the last value with portfolio.aum if available
+  if (filteredData.length > 0 && portfolio?.aum) {
+    filteredData[filteredData.length - 1].value = Math.round(portfolio.aum);
+  }
+
+  const currentValue = portfolio?.aum || filteredData[filteredData.length - 1]?.value || 0;
   const startValue = filteredData[0]?.value || 0;
   const valueChange = currentValue - startValue;
-  const percentageChange = ((valueChange / startValue) * 100);
+  const percentageChange = startValue > 0 ? ((valueChange / startValue) * 100) : 0;
+
+  // Format return value
+  const formattedReturn = portfolio?.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...';
 
   // Show loading state
-  if (loading) {
+  if (loading || portfolioLoading) {
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <Typography variant="h6" color="primary" mb={2}>Portfolio Value</Typography>
+          <Typography variant="h6" color="primary" mb={2}>Portfolio Overview</Typography>
           <Typography variant="body1" color="text.secondary">Loading portfolio data...</Typography>
         </CardContent>
       </Card>
@@ -65,8 +76,10 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Box mb={2}>
           <Typography variant="h6" color="primary">
-            Portfolio Value
+            Portfolio Overview
           </Typography>
+          
+          {/* Main Portfolio Value */}
           <Typography variant="h4" fontWeight="bold">
             ${currentValue.toLocaleString()}
           </Typography>
@@ -77,6 +90,22 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
           >
             {valueChange >= 0 ? '+' : ''}${valueChange.toLocaleString()} ({percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%) this month
           </Typography>
+
+          {/* Total Return - Under other info on left side */}
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Total Return: 
+              <Typography 
+                component="span"
+                variant="body2"
+                fontWeight="bold"
+                color={portfolio?.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
+                sx={{ ml: 0.5 }}
+              >
+                {formattedReturn}
+              </Typography>
+            </Typography>
+          </Box>
         </Box>
 
         <Box sx={{ flex: 1, minHeight: 200 }}>

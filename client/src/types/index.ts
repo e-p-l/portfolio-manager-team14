@@ -15,6 +15,8 @@ export interface Portfolio {
   created_at: string;
   updated_at: string;
   description?: string; 
+  aum?: number;
+  return?: number;
 }
 
 export interface CreatePortfolioRequest {

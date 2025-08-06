@@ -21,6 +21,7 @@ export interface Holding {
   quantity: number;
   purchase_price: number;
   current_price?: number;
+  asset_return?: number;
 }
 
 export class HoldingService {

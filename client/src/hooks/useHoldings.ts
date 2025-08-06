@@ -25,7 +25,8 @@ export const useHoldings = (portfolioId: number) => {
         asset_sector: holding.asset_sector,
         quantity: holding.quantity,
         purchase_price: holding.purchase_price || holding.current_price,
-        current_price: holding.current_price
+        current_price: holding.current_price,
+        asset_return: holding.asset_return
       }));
 
       setHoldings(holdingsArray);
@@ -150,15 +151,10 @@ export const useHoldings = (portfolioId: number) => {
       color: assetTypeColors[type] || assetTypeColors.other
     })).sort((a, b) => b.value - a.value);
 
-    // Calculate top performers
+    // Calculate top performers based on asset_return
     const topPerformers = holdings
-      .map(holding => ({
-        ...holding,
-        gainLossPercent: holding.current_price 
-          ? ((holding.current_price - holding.purchase_price) / holding.purchase_price) * 100
-          : 0
-      }))
-      .sort((a, b) => b.gainLossPercent - a.gainLossPercent)
+      .filter(holding => holding.asset_return !== null && holding.asset_return !== undefined)
+      .sort((a, b) => (b.asset_return || 0) - (a.asset_return || 0))
       .slice(0, 5);
 
     return {

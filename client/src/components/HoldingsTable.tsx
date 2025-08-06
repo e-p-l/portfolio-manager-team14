@@ -19,7 +19,7 @@ import {
   CircularProgress,
   Autocomplete
 } from '@mui/material';
-import { Add, Remove } from '@mui/icons-material';
+import { Add, Remove, TrendingUp, TrendingDown } from '@mui/icons-material';
 import { Holding } from '../services/holdingService';
 import { AssetService } from '../services/assetService';
 import { TransactionService } from '../services/transactionService';
@@ -175,6 +175,12 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
       : holding.quantity * holding.purchase_price;
   };
 
+  const formatAssetReturn = (assetReturn: number | undefined | null) => {
+    if (assetReturn === null || assetReturn === undefined) return 'N/A';
+    const percentage = assetReturn * 100; // Convert to percentage
+    return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`;
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100%">
@@ -225,7 +231,7 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
                 <TableCell align="right">Quantity</TableCell>
                 <TableCell align="right">Price</TableCell>
                 <TableCell align="right">Total Value</TableCell>
-                {/* <TableCell align="right">Gain/Loss</TableCell> */}
+                <TableCell align="right">Return</TableCell>
                 {!hideActions && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
@@ -241,6 +247,22 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
                   <TableCell align="right">{holding.quantity}</TableCell>
                   <TableCell align="right">${holding.purchase_price.toFixed(2)}</TableCell>
                   <TableCell align="right">${calculateTotalValue(holding).toFixed(2)}</TableCell>
+                  <TableCell align="right">
+                    <Box display="flex" alignItems="center" justifyContent="flex-end" gap={0.5}>
+                      {(holding.asset_return || 0) >= 0 ? (
+                        <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
+                      ) : (
+                        <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />
+                      )}
+                      <Typography 
+                        variant="body2" 
+                        color={(holding.asset_return || 0) >= 0 ? 'success.main' : 'error.main'}
+                        fontWeight="medium"
+                      >
+                        {formatAssetReturn(holding.asset_return)}
+                      </Typography>
+                    </Box>
+                  </TableCell>
                   {/* <TableCell align="right" sx={{
                     color: calculateGainLoss(holding) >= 0 ? 'success.main' : 'error.main'
                   }}>
