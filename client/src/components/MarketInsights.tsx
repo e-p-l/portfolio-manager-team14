@@ -4,61 +4,100 @@ import {
   Card, 
   CardContent, 
   Typography, 
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider
+  CircularProgress,
+  Alert,
+  Link,
+  Divider,
+  Badge
 } from '@mui/material';
 import { 
-  Lightbulb, 
-  ArrowUpward, 
-  ArrowDownward,
-  TimerOutlined
+  Feed, 
+  FiberManualRecord,
+  Error as ErrorIcon,
+  Launch
 } from '@mui/icons-material';
+import { useMarketInsights } from '../hooks/useMarketInsights';
 
 const MarketInsights: React.FC = () => {
+  const { marketInsights, loading, error } = useMarketInsights();
+  const MARKET_FEED_COUNT = 4;
+
   return (
-    <Card sx={{ background: 'linear-gradient(to bottom, #f5f7fa, #ffffff)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box display="flex" alignItems="center" mb={2}>
-          <Lightbulb sx={{ mr: 1, color: '#f57c00' }} />
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Market Insights
-          </Typography>
-        </Box>
-        
-        <Divider sx={{ my: 1.5 }} />
-        
+    <Card sx={{ 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      border: '2px solid #e0e0e0'
+    }}>
+      <Box sx={{ 
+        backgroundColor: '#1976d2', 
+        color: 'white', 
+        p: 2,
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <Feed sx={{ mr: 1 }} />
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Market Feed
+        </Typography>
+        <Badge badgeContent={MARKET_FEED_COUNT} color="error" sx={{ ml: 'auto' }} />
+      </Box>
+      
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 0 }}>
         <Box sx={{ flex: 1 }}>
-          <List dense disablePadding>
-          <ListItem>
-            <ListItemIcon>
-              <ArrowUpward fontSize="small" sx={{ color: '#4caf50' }} />
-            </ListItemIcon>
-            <ListItemText 
-              primary="Technology sector showing strong growth" 
-              sx={{ color: '#424242' }}
-            />
-          </ListItem>
-          
-          <ListItem>
-            <ListItemIcon>
-              <ArrowDownward fontSize="small" sx={{ color: '#f44336' }} />
-            </ListItemIcon>
-            <ListItemText 
-              primary="Energy stocks down by 2.3% this week"
-              sx={{ color: '#424242' }}
-            />
-          </ListItem>
-          
-          <ListItem>
-            <ListItemIcon>
-              <TimerOutlined fontSize="small" sx={{ color: '#ff9800' }} />
-            </ListItemIcon>
-            <ListItemText primary="AAPL reached your target price" sx={{ color: '#424242' }} />
-          </ListItem>
-        </List>
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+              <CircularProgress size={40} />
+            </Box>
+          ) : error ? (
+            <Box p={2}>
+              <Alert severity="error" icon={<ErrorIcon />}>
+                {error}
+              </Alert>
+            </Box>
+          ) : (
+            <Box>
+              {marketInsights.slice(0, MARKET_FEED_COUNT).map((insight, index) => (
+                <Box key={index}>
+                  <Box sx={{ p: 1.7, '&:hover': { backgroundColor: '#f5f5f5' } }}>
+                    <Box display="flex" alignItems="flex-start">
+                      <FiberManualRecord sx={{ 
+                        color: '#4caf50', 
+                        fontSize: 6, 
+                        mt: 0.8, 
+                        mr: 1 
+                      }} />
+                      <Box flex={1}>
+                        <Link 
+                          href={insight.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          sx={{ textDecoration: 'none' }}
+                        >
+                          <Typography variant="body2" sx={{ 
+                            fontWeight: 500,
+                            mb: 0.5,
+                            fontSize: '0.85rem',
+                            lineHeight: 1.3,
+                            '&:hover': { color: '#1976d2' }
+                          }}>
+                            {insight.headline}
+                          </Typography>
+                        </Link>
+                        <Box display="flex" alignItems="center" justifyContent="space-between">
+                          <Typography variant="caption" color="primary" sx={{ fontSize: '0.7rem' }}>
+                            {insight.source}
+                          </Typography>
+                          <Launch fontSize="small" sx={{ color: '#9e9e9e', fontSize: '0.9rem' }} />
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+                  {index < marketInsights.length - 1 && <Divider />}
+                </Box>
+              ))}
+            </Box>
+          )}
         </Box>
       </CardContent>
     </Card>

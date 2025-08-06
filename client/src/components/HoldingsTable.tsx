@@ -245,7 +245,11 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
                   </TableCell>
                   <TableCell>{holding.asset_name}</TableCell>
                   <TableCell align="right">{holding.quantity}</TableCell>
-                  <TableCell align="right">${holding.purchase_price.toFixed(2)}</TableCell>
+                  <TableCell align="right">
+                    ${holding.current_price !== undefined && holding.current_price !== null
+                      ? holding.current_price.toFixed(2)
+                      : holding.purchase_price.toFixed(2)}
+                  </TableCell>
                   <TableCell align="right">${calculateTotalValue(holding).toFixed(2)}</TableCell>
                   <TableCell align="right">
                     <Box display="flex" alignItems="center" justifyContent="flex-end" gap={0.5}>

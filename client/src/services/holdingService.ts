@@ -37,6 +37,7 @@ export class HoldingService {
 
   static async getHoldingsByPortfolio(portfolioId: number): Promise<Holding[]> {
     const response = await apiClient.get<Holding[]>(`/holdings/portfolio/${portfolioId}`);
+    console.log('Fetched holdings for portfolio:', portfolioId, response);
     return response;
   }
 

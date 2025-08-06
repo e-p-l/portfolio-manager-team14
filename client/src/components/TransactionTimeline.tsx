@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -9,7 +9,10 @@ import {
   ListItem,
   Avatar,
   Divider,
-  CircularProgress
+  CircularProgress,
+  Select,
+  MenuItem,
+  FormControl
 } from '@mui/material';
 import { 
   TrendingUp, 
@@ -22,15 +25,73 @@ import { useTransactions } from '../hooks/useTransactions';
 interface TransactionTimelineProps {
   portfolioId?: number;
   title?: string;
+  selectedPeriod?: string;
+  onPeriodChange?: (period: string) => void;
 }
 
 const DEFAULT_PORTFOLIO_ID = 1;
 
 const TransactionTimeline: React.FC<TransactionTimelineProps> = ({ 
   portfolioId = DEFAULT_PORTFOLIO_ID,
-  title = "Transaction History"
+  title = "Transaction History",
+  selectedPeriod: externalPeriod,
+  onPeriodChange
 }) => {
-  const { transactions, loading, error } = useTransactions(portfolioId);
+  const [selectedPeriod, setSelectedPeriod] = useState(externalPeriod || '30d');
+  const { transactions: allTransactions, loading, error } = useTransactions(portfolioId);
+
+  // Update internal state when external prop changes
+  useEffect(() => {
+    if (externalPeriod) {
+      setSelectedPeriod(externalPeriod);
+    }
+  }, [externalPeriod]);
+
+  // Handle period change - update both local state and notify parent
+  const handlePeriodChange = (newPeriod: string) => {
+    setSelectedPeriod(newPeriod);
+    if (onPeriodChange) {
+      onPeriodChange(newPeriod);
+    }
+  };
+
+  // Filter transactions based on selected period
+  const transactions = useMemo(() => {
+    const getDaysBack = (period: string) => {
+      switch (period) {
+        case '30d': return 30;
+        case '1y': return 365;
+        case 'all': return 1095; // 3 years
+        default: return 30;
+      }
+    };
+
+    if (!allTransactions.length) {
+      return [];
+    }
+
+    if (selectedPeriod === 'all') {
+      return allTransactions;
+    }
+
+    const daysBack = getDaysBack(selectedPeriod);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysBack);
+
+    return allTransactions.filter(transaction => {
+      const transactionDate = new Date(transaction.created_at);
+      return transactionDate >= cutoffDate;
+    });
+  }, [allTransactions, selectedPeriod]);
+
+  const getPeriodLabel = (period: string) => {
+    switch (period) {
+      case '30d': return 'Last 30 Days';
+      case '1y': return 'Last Year';
+      case 'all': return 'All Time';
+      default: return 'Last 30 Days';
+    }
+  };
   const getIcon = (transactionType: string) => {
     switch (transactionType.toLowerCase()) {
       case 'buy': return <TrendingDown sx={{ fontSize: 16 }} />;
@@ -88,9 +149,31 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
   return (
     <Card sx={{ height: '100%' }}>
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          {title}
-        </Typography>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6">
+            {title}
+          </Typography>
+          
+          {/* Period Filter */}
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <Select
+              value={selectedPeriod}
+              onChange={(e) => handlePeriodChange(e.target.value)}
+              displayEmpty
+            >
+              <MenuItem value="30d">Last 30 Days</MenuItem>
+              <MenuItem value="1y">Last Year</MenuItem>
+              <MenuItem value="all">All Time</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        {/* Filter Info */}
+        <Box mb={2}>
+          <Typography variant="body2" color="textSecondary">
+            Showing {transactions.length} transactions ({getPeriodLabel(selectedPeriod)})
+          </Typography>
+        </Box>
 
         {/* Timeline List */}
         <List sx={{ p: 0 }}>

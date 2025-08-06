@@ -62,3 +62,13 @@ class TransactionListResource(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 500
+
+@api_ns.route('/portfolio/<int:portfolio_id>')
+class PortfolioTransactionsResource(Resource):
+    def get(self, portfolio_id):
+        """Returns a list of all transactions for a specific portfolio."""
+        try:
+            transactions = Transaction.query.filter_by(portfolio_id=portfolio_id).order_by(Transaction.created_at.desc()).all()
+            return [t.serialize() for t in transactions], 200
+        except SQLAlchemyError as e:
+            return {"error": str(e)}, 500
