@@ -159,11 +159,12 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
     signDisplay: 'always'
   }).format(percentChange / 100);
   
-  // Current value formatted
+  // Current value formatted - use portfolio.aum if available, otherwise endValue
+  const displayValue = isPortfolio && portfolio?.aum ? portfolio.aum : endValue;
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD'
-  }).format(endValue);
+  }).format(displayValue);
   
   // Change time range handler
   const handleTimeRangeChange = useCallback((_: React.MouseEvent<HTMLElement>, newRange: string) => {
@@ -241,33 +242,25 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
                 {timeRange === 'ALL' ? 'all time' : timeRange === 'YTD' ? 'year to date' : `past ${timeRange}`}
               </Typography>
             </Box>
-          </Box>
 
-          {/* Portfolio Metrics - Top Right (only for portfolio charts) */}
-          {isPortfolio && portfolio && (
-            <Box sx={{ textAlign: 'right' }}>
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Assets Under Management
-                </Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {portfolio.aum ? `$${portfolio.aum.toLocaleString()}` : 'Loading...'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Total Return
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  fontWeight="bold"
-                  color={portfolio.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
-                >
-                  {portfolio.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...'}
+            {/* Total Return - Under other info on left side */}
+            {isPortfolio && portfolio && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Total Return: 
+                  <Typography 
+                    component="span"
+                    variant="body2"
+                    fontWeight="bold"
+                    color={portfolio.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
+                    sx={{ ml: 0.5 }}
+                  >
+                    {portfolio.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...'}
+                  </Typography>
                 </Typography>
               </Box>
-            </Box>
-          )}
+            )}
+          </Box>
         </Box>
         
         <Box sx={{ flex: 1, minHeight: 200 }}>

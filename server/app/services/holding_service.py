@@ -142,9 +142,7 @@ def get_portfolio_aum(portfolio_id):
     for h in holdings:
         aum += h.quantity * fetch_latest_price(h.asset_id)
     
-    # TODO: Commented out since deposite/withdrawal from balance is not implemented
-    return aum + Portfolio.query.get(portfolio_id).balance
-    # return aum
+    return aum
 
 def get_portfolio_return(portfolio_id):
     """

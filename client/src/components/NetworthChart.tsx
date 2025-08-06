@@ -34,13 +34,12 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
       };
     });
 
-  const currentValue = filteredData[filteredData.length - 1]?.value || 0;
+  const currentValue = portfolio?.aum || filteredData[filteredData.length - 1]?.value || 0;
   const startValue = filteredData[0]?.value || 0;
   const valueChange = currentValue - startValue;
-  const percentageChange = ((valueChange / startValue) * 100);
+  const percentageChange = startValue > 0 ? ((valueChange / startValue) * 100) : 0;
 
-  // Format AUM and return values
-  const formattedAUM = portfolio?.aum ? `$${portfolio.aum.toLocaleString()}` : 'Loading...';
+  // Format return value
   const formattedReturn = portfolio?.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...';
 
   // Show loading state
@@ -70,47 +69,37 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box mb={2} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography variant="h6" color="primary">
-              Portfolio Overview
-            </Typography>
-            
-            {/* Main Portfolio Value */}
-            <Typography variant="h4" fontWeight="bold">
-              ${currentValue.toLocaleString()}
-            </Typography>
-            <Typography 
-              variant="body2" 
-              color={valueChange >= 0 ? '#4caf50' : '#f44336'}
-              fontWeight="medium"
-            >
-              {valueChange >= 0 ? '+' : ''}${valueChange.toLocaleString()} ({percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%) this month
-            </Typography>
-          </Box>
+        <Box mb={2}>
+          <Typography variant="h6" color="primary">
+            Portfolio Overview
+          </Typography>
+          
+          {/* Main Portfolio Value */}
+          <Typography variant="h4" fontWeight="bold">
+            ${currentValue.toLocaleString()}
+          </Typography>
+          <Typography 
+            variant="body2" 
+            color={valueChange >= 0 ? '#4caf50' : '#f44336'}
+            fontWeight="medium"
+          >
+            {valueChange >= 0 ? '+' : ''}${valueChange.toLocaleString()} ({percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%) this month
+          </Typography>
 
-          {/* AUM and Return Metrics - Top Right */}
-          <Box sx={{ textAlign: 'right' }}>
-            <Box sx={{ mb: 1 }}>
-              <Typography variant="caption" color="text.secondary">
-                Assets Under Management
-              </Typography>
-              <Typography variant="body1" fontWeight="bold">
-                {formattedAUM}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Total Return
-              </Typography>
+          {/* Total Return - Under other info on left side */}
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Total Return: 
               <Typography 
-                variant="body1" 
+                component="span"
+                variant="body2"
                 fontWeight="bold"
                 color={portfolio?.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
+                sx={{ ml: 0.5 }}
               >
                 {formattedReturn}
               </Typography>
-            </Box>
+            </Typography>
           </Box>
         </Box>
 
