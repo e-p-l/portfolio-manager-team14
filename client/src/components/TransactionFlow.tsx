@@ -1,36 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, Typography, Box, Select, MenuItem, FormControl, CircularProgress } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
 import { useTransactions } from '../hooks/useTransactions';
 
 interface TransactionFlowProps {
   portfolioId?: number;
+  selectedPeriod?: string;
+  onPeriodChange?: (period: string) => void;
 }
 
 const DEFAULT_PORTFOLIO_ID = 1;
 
-const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT_PORTFOLIO_ID }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState('30d');
+const TransactionFlow: React.FC<TransactionFlowProps> = ({ 
+  portfolioId = DEFAULT_PORTFOLIO_ID,
+  selectedPeriod: externalPeriod,
+  onPeriodChange
+}) => {
+  const [selectedPeriod, setSelectedPeriod] = useState(externalPeriod || '30d');
   
-  // Get the number of days based on selected period
-  const getDaysBack = (period: string) => {
-    switch (period) {
-      case '30d': return 30;
-      case '1y': return 365;
-      case 'all': return 1095; // 3 years
-      default: return 30;
+  const { transactions, loading: loadingTransactions } = useTransactions(portfolioId);
+
+  // Update internal state when external prop changes
+  useEffect(() => {
+    if (externalPeriod) {
+      setSelectedPeriod(externalPeriod);
+    }
+  }, [externalPeriod]);
+
+  // Handle period change - update both local state and notify parent
+  const handlePeriodChange = (newPeriod: string) => {
+    setSelectedPeriod(newPeriod);
+    if (onPeriodChange) {
+      onPeriodChange(newPeriod);
     }
   };
 
-  const daysBack = getDaysBack(selectedPeriod);
-  const { transactions, loading: loadingTransactions } = useTransactions(portfolioId);
+  // Calculate transaction flow with useMemo for reactivity
+  const { totalInflow, totalOutflow, netFlow, totalVolume } = useMemo(() => {
+    const getDaysBack = (period: string) => {
+      switch (period) {
+        case '30d': return 30;
+        case '1y': return 365;
+        case 'all': return 1095; // 3 years
+        default: return 30;
+      }
+    };
 
-  // Calculate transaction flow from real transaction data
-  const calculateTransactionFlow = () => {
     if (!transactions.length) {
-      return { totalInflow: 0, totalOutflow: 0 };
+      return { totalInflow: 0, totalOutflow: 0, netFlow: 0, totalVolume: 0 };
     }
 
+    const daysBack = getDaysBack(selectedPeriod);
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysBack);
 
@@ -40,7 +60,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
     transactions.forEach(transaction => {
       const transactionDate = new Date(transaction.created_at);
       
-      if (transactionDate >= cutoffDate) {
+      if (selectedPeriod === 'all' || transactionDate >= cutoffDate) {
         const amount = Math.round((transaction.quantity * transaction.price) * 100) / 100;
         
         if (transaction.transaction_type === 'buy') {
@@ -51,12 +71,11 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
       }
     });
 
-    return { totalInflow, totalOutflow };
-  };
+    const netFlow = totalInflow - totalOutflow;
+    const totalVolume = totalInflow + totalOutflow;
 
-  const { totalInflow, totalOutflow } = calculateTransactionFlow();
-  const netFlow = totalInflow - totalOutflow; // Net trading activity (sales - purchases)
-  const totalVolume = totalInflow + totalOutflow;
+    return { totalInflow, totalOutflow, netFlow, totalVolume };
+  }, [transactions, selectedPeriod]); // Dependencies: recalculate when these change
 
   const getPeriodLabel = (period: string) => {
     switch (period) {
@@ -81,7 +100,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select
               value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
+              onChange={(e) => handlePeriodChange(e.target.value)}
               displayEmpty
             >
               <MenuItem value="30d">Last 30 Days</MenuItem>
@@ -127,7 +146,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
                 left: 0,
                 top: 0,
                 bottom: 0,
-                width: `${(totalInflow / totalVolume) * 100}%`,
+                width: `${totalVolume > 0 ? (totalInflow / totalVolume) * 100 : 0}%`,
                 backgroundColor: 'rgba(76, 175, 80, 0.2)',
                 borderRadius: '12px'
               }}
@@ -142,7 +161,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
               </Typography>
             </Box>
             <Typography variant="body2" color="#4caf50" sx={{ zIndex: 1 }}>
-              {((totalInflow / totalVolume) * 100).toFixed(1)}%
+              {totalVolume > 0 ? ((totalInflow / totalVolume) * 100).toFixed(1) : '0.0'}%
             </Typography>
           </Box>
 
@@ -164,7 +183,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
                 left: 0,
                 top: 0,
                 bottom: 0,
-                width: `${(totalOutflow / totalVolume) * 100}%`,
+                width: `${totalVolume > 0 ? (totalOutflow / totalVolume) * 100 : 0}%`,
                 backgroundColor: 'rgba(244, 67, 54, 0.2)',
                 borderRadius: '12px'
               }}
@@ -179,7 +198,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({ portfolioId = DEFAULT
               </Typography>
             </Box>
             <Typography variant="body2" color="#f44336" sx={{ zIndex: 1 }}>
-              {((totalOutflow / totalVolume) * 100).toFixed(1)}%
+              {totalVolume > 0 ? ((totalOutflow / totalVolume) * 100).toFixed(1) : '0.0'}%
             </Typography>
           </Box>
         </Box>

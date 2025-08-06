@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Typography, Box } from '@mui/material';
 import TransactionTimeline from '../components/TransactionTimeline';
 import TransactionFlow from '../components/TransactionFlow';
@@ -6,6 +6,8 @@ import TransactionFlow from '../components/TransactionFlow';
 const DEFAULT_PORTFOLIO_ID = 1;
 
 const Transactions: React.FC = () => {
+  const [selectedPeriod, setSelectedPeriod] = useState('30d');
+
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom sx={{ 
@@ -21,11 +23,19 @@ const Transactions: React.FC = () => {
       {/* Transaction page layout */}
       <Box display="flex" flexDirection="column" gap={3}>
         <Box>
-          <TransactionFlow portfolioId={DEFAULT_PORTFOLIO_ID} />
+          <TransactionFlow 
+            portfolioId={DEFAULT_PORTFOLIO_ID} 
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+          />
         </Box>
         
         <Box>
-          <TransactionTimeline portfolioId={DEFAULT_PORTFOLIO_ID} />
+          <TransactionTimeline 
+            portfolioId={DEFAULT_PORTFOLIO_ID}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+          />
         </Box>
       </Box>
     </Box>
