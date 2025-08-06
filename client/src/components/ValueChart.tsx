@@ -144,6 +144,15 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
   const performanceData = filterData(historyData, timeRange);
   const { data, percentChange, valueChange, endValue } = performanceData;
   
+  // Replace the last value with portfolio.aum if this is a portfolio chart
+  const chartData = [...data];
+  if (isPortfolio && portfolio?.aum && chartData.length > 0) {
+    chartData[chartData.length - 1] = {
+      ...chartData[chartData.length - 1],
+      value: portfolio.aum
+    };
+  }
+  
   // Format change value
   const formattedChange = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -266,7 +275,7 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
         <Box sx={{ flex: 1, minHeight: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={data}
+              data={chartData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
               <defs>

@@ -34,6 +34,11 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
       };
     });
 
+  // Replace the last value with portfolio.aum if available
+  if (filteredData.length > 0 && portfolio?.aum) {
+    filteredData[filteredData.length - 1].value = Math.round(portfolio.aum);
+  }
+
   const currentValue = portfolio?.aum || filteredData[filteredData.length - 1]?.value || 0;
   const startValue = filteredData[0]?.value || 0;
   const valueChange = currentValue - startValue;
