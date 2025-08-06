@@ -29,7 +29,7 @@ interface HoldingsTableProps {
   holdings: Holding[];
   portfolioId: number;
   loading: boolean;
-  onHoldingsChange?: () => void;
+  onHoldingsChange?: (transactionValue?: number) => void;
   hideActions?: boolean;
 }
 
@@ -119,12 +119,17 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
         throw new Error('Selected asset is not properly initialized. Please search and select the asset again.');
       }
       
+      // Calculate transaction value (negative for buy)
+      const transactionValue = selectedAsset.current_price 
+        ? -(selectedAsset.current_price * quantity) 
+        : 0;
+      
       // Create BUY transaction using TransactionService
       await TransactionService.buyAsset(portfolioId, selectedAsset, quantity);
       
       console.log(`Successfully bought ${quantity} shares of ${selectedAsset.symbol}`);
       handleClose();
-      if (onHoldingsChange) onHoldingsChange();
+      if (onHoldingsChange) onHoldingsChange(transactionValue);
     } catch (error) {
       console.error('Error buying asset:', error);
       alert(error instanceof Error ? error.message : 'Failed to buy asset. Please try again.');
@@ -139,6 +144,11 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
     try {
       setActionLoading(true);
       
+      // Calculate transaction value (positive for sell)
+      const transactionValue = selectedHolding.current_price 
+        ? (selectedHolding.current_price * quantity)
+        : (selectedHolding.purchase_price * quantity);
+      
       // Create SELL transaction using TransactionService
       // Backend requires asset_id even for sell transactions (backend design issue)
       await TransactionService.sellHolding(
@@ -150,7 +160,7 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
       
       console.log(`Successfully sold ${quantity} shares of ${selectedHolding.asset_symbol}`);
       handleClose();
-      if (onHoldingsChange) onHoldingsChange();
+      if (onHoldingsChange) onHoldingsChange(transactionValue);
     } catch (error) {
       console.error('Error selling asset:', error);
       alert(error instanceof Error ? error.message : 'Failed to sell asset. Please try again.');
