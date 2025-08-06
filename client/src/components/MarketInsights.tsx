@@ -20,6 +20,7 @@ import { useMarketInsights } from '../hooks/useMarketInsights';
 
 const MarketInsights: React.FC = () => {
   const { marketInsights, loading, error } = useMarketInsights();
+  const MARKET_FEED_COUNT = 4;
 
   return (
     <Card sx={{ 
@@ -39,7 +40,7 @@ const MarketInsights: React.FC = () => {
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           Market Feed
         </Typography>
-        <Badge badgeContent={marketInsights.length} color="error" sx={{ ml: 'auto' }} />
+        <Badge badgeContent={MARKET_FEED_COUNT} color="error" sx={{ ml: 'auto' }} />
       </Box>
       
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 0 }}>
@@ -56,15 +57,15 @@ const MarketInsights: React.FC = () => {
             </Box>
           ) : (
             <Box>
-              {marketInsights.slice(0, 4).map((insight, index) => (
+              {marketInsights.slice(0, MARKET_FEED_COUNT).map((insight, index) => (
                 <Box key={index}>
-                  <Box sx={{ p: 2, '&:hover': { backgroundColor: '#f5f5f5' } }}>
+                  <Box sx={{ p: 1.7, '&:hover': { backgroundColor: '#f5f5f5' } }}>
                     <Box display="flex" alignItems="flex-start">
                       <FiberManualRecord sx={{ 
                         color: '#4caf50', 
-                        fontSize: 8, 
-                        mt: 1, 
-                        mr: 1.5 
+                        fontSize: 6, 
+                        mt: 0.8, 
+                        mr: 1 
                       }} />
                       <Box flex={1}>
                         <Link 
@@ -75,17 +76,19 @@ const MarketInsights: React.FC = () => {
                         >
                           <Typography variant="body2" sx={{ 
                             fontWeight: 500,
-                            mb: 1,
+                            mb: 0.5,
+                            fontSize: '0.85rem',
+                            lineHeight: 1.3,
                             '&:hover': { color: '#1976d2' }
                           }}>
                             {insight.headline}
                           </Typography>
                         </Link>
                         <Box display="flex" alignItems="center" justifyContent="space-between">
-                          <Typography variant="caption" color="primary">
+                          <Typography variant="caption" color="primary" sx={{ fontSize: '0.7rem' }}>
                             {insight.source}
                           </Typography>
-                          <Launch fontSize="small" sx={{ color: '#9e9e9e' }} />
+                          <Launch fontSize="small" sx={{ color: '#9e9e9e', fontSize: '0.9rem' }} />
                         </Box>
                       </Box>
                     </Box>
