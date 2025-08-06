@@ -4,19 +4,17 @@ import {
   Card, 
   CardContent, 
   Typography, 
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
   CircularProgress,
   Alert,
-  Link
+  Link,
+  Divider,
+  Badge
 } from '@mui/material';
 import { 
-  Lightbulb, 
-  Article,
-  Error as ErrorIcon
+  Feed, 
+  FiberManualRecord,
+  Error as ErrorIcon,
+  Launch
 } from '@mui/icons-material';
 import { useMarketInsights } from '../hooks/useMarketInsights';
 
@@ -24,60 +22,78 @@ const MarketInsights: React.FC = () => {
   const { marketInsights, loading, error } = useMarketInsights();
 
   return (
-    <Card sx={{ background: 'linear-gradient(to bottom, #f5f7fa, #ffffff)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box display="flex" alignItems="center" mb={2}>
-          <Lightbulb sx={{ mr: 1, color: '#f57c00' }} />
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Market Insights
-          </Typography>
-        </Box>
-        
-        <Divider sx={{ my: 1.5 }} />
-        
+    <Card sx={{ 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      border: '2px solid #e0e0e0'
+    }}>
+      <Box sx={{ 
+        backgroundColor: '#1976d2', 
+        color: 'white', 
+        p: 2,
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <Feed sx={{ mr: 1 }} />
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Market Feed
+        </Typography>
+        <Badge badgeContent={marketInsights.length} color="error" sx={{ ml: 'auto' }} />
+      </Box>
+      
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 0 }}>
         <Box sx={{ flex: 1 }}>
           {loading ? (
             <Box display="flex" justifyContent="center" alignItems="center" height="100%">
               <CircularProgress size={40} />
             </Box>
           ) : error ? (
-            <Alert severity="error" icon={<ErrorIcon />}>
-              {error}
-            </Alert>
+            <Box p={2}>
+              <Alert severity="error" icon={<ErrorIcon />}>
+                {error}
+              </Alert>
+            </Box>
           ) : (
-            <List dense disablePadding>
-              {marketInsights.slice(0, 3).map((insight, index) => (
-                <ListItem key={index} sx={{ py: 0.5 }}>
-                  <ListItemIcon>
-                    <Article fontSize="small" sx={{ color: '#1976d2' }} />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary={
-                      <Link 
-                        href={insight.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        sx={{ 
-                          textDecoration: 'none',
-                          '&:hover': {
-                            textDecoration: 'underline'
-                          }
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ color: '#424242', fontWeight: 500 }}>
-                          {insight.headline}
-                        </Typography>
-                      </Link>
-                    }
-                    secondary={
-                      <Typography variant="caption" color="textSecondary">
-                        {insight.source}
-                      </Typography>
-                    }
-                  />
-                </ListItem>
+            <Box>
+              {marketInsights.slice(0, 4).map((insight, index) => (
+                <Box key={index}>
+                  <Box sx={{ p: 2, '&:hover': { backgroundColor: '#f5f5f5' } }}>
+                    <Box display="flex" alignItems="flex-start">
+                      <FiberManualRecord sx={{ 
+                        color: '#4caf50', 
+                        fontSize: 8, 
+                        mt: 1, 
+                        mr: 1.5 
+                      }} />
+                      <Box flex={1}>
+                        <Link 
+                          href={insight.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          sx={{ textDecoration: 'none' }}
+                        >
+                          <Typography variant="body2" sx={{ 
+                            fontWeight: 500,
+                            mb: 1,
+                            '&:hover': { color: '#1976d2' }
+                          }}>
+                            {insight.headline}
+                          </Typography>
+                        </Link>
+                        <Box display="flex" alignItems="center" justifyContent="space-between">
+                          <Typography variant="caption" color="primary">
+                            {insight.source}
+                          </Typography>
+                          <Launch fontSize="small" sx={{ color: '#9e9e9e' }} />
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+                  {index < marketInsights.length - 1 && <Divider />}
+                </Box>
               ))}
-            </List>
+            </Box>
           )}
         </Box>
       </CardContent>
