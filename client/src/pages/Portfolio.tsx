@@ -101,7 +101,7 @@ const Portfolio: React.FC = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <ViewList sx={{ mr: 1, color: '#0277bd' }} />
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6">
                   Holdings
                 </Typography>
               </Box>
