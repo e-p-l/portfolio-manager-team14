@@ -33,78 +33,31 @@ def seed_database():
         db.drop_all()
         db.create_all()
 
-        # === Fetch live data for one real stock ===
-        symbol = "VOO"
-        ticker = yf.Ticker(symbol)
-        data = ticker.history(period="1d")
-
-        if data.empty:
-            print("❌ No data returned from yfinance for", symbol)
-            return
-
-        price = round(data["Close"].iloc[-1], 2)
-        print(f"✅ Live price for {symbol} is ${price}")
-
-        # === Insert live-data-backed objects ===
-        info = get_asset_info(symbol)
-        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="Consumer", day_changeP=info['day_changeP'])
-        db.session.add(asset)
-        db.session.commit()
-
+        # Create portfolio first
         portfolio = Portfolio(name="Retirement Portfolio")
         db.session.add(portfolio)
         db.session.commit()
 
-        # Generate random date from 2024
-        random_buy_date = generate_random_date_2024()
-        
-        holding = Holding(
-            portfolio_id=portfolio.id,
-            asset_id=asset.id,
-            quantity=5,
-            purchase_price=price,
-            purchase_date=random_buy_date
-        )
-        db.session.add(holding)
-        db.session.commit()
-
-        txn = Transaction(
-            portfolio_id=portfolio.id,
-            holding_id=holding.id,
-            quantity=5,
-            price=price,
-            created_at=random_buy_date,
-            transaction_type="buy"
-        )
-        db.session.add(txn)
-        db.session.commit()
-
-        # 40% chance of sell transaction after initial buy
-        if random.random() < 0.4:
-            create_random_sell_transaction(portfolio.id)
-
-        print("✅ MySQL seeded with live VOO data.")
-
-        # === ADDITIONAL HOLDINGS ===
-        extra_holdings = [
-            ("AAPL", "Apple Inc."),
-            ("GOOGL", "Alphabet Inc."),
-            ("AMZN", "Amazon.com Inc."),
-            ("TSLA", "Tesla Inc."),
-            ("NVDA", "NVIDIA Corporation"),
-            ("JNJ", "Johnson & Johnson"),
-            ("BAC", "Bank of America"),
-            ("V", "Visa Inc."),
-            ("PG", "Procter & Gamble"),
-            ("DIS", "The Walt Disney Company"),
-            ("BA", "The Boeing Company"),
-            ("ADBE", "Adobe Inc."),
-            ("WDAY", "Workday Inc.")
-
+        # === HOLDINGS WITH SPECIFIED QUANTITIES ===
+        # Format: (symbol, name, quantity)
+        holdings_data = [
+            ("AAPL", "Apple Inc.", 25),
+            ("GOOGL", "Alphabet Inc.", 8),
+            ("AMZN", "Amazon.com Inc.", 12),
+            ("TSLA", "Tesla Inc.", 10),
+            ("NVDA", "NVIDIA Corporation", 10),
+            ("JNJ", "Johnson & Johnson", 12),
+            ("BAC", "Bank of America", 15),
+            ("V", "Visa Inc.", 13),
+            ("PG", "Procter & Gamble", 12),
+            ("DIS", "The Walt Disney Company", 14),
+            ("BA", "The Boeing Company", 10),
+            ("ADBE", "Adobe Inc.", 7),
+            ("WDAY", "Workday Inc.", 4)
         ]
 
-        # Random asset types
-        asset_types = (
+        # Random asset types for holdings
+        asset_types_holdings = (
             ["equity"] * 20 +
             ["etf"] * 5 +
             ["mutualfund"] * 2 +
@@ -112,11 +65,12 @@ def seed_database():
             ["currency"] * 3 +
             ["cryptocurrency"] * 6 +
             ["commodity"] * 2
-
         )
-        random.shuffle(asset_types)
+        random.shuffle(asset_types_holdings)
 
-        for (sym, name), asset_type in zip(extra_holdings, asset_types):
+        print("🔄 Creating holdings with specified quantities...")
+        
+        for i, (sym, name, quantity) in enumerate(holdings_data):
             try:
                 ticker = yf.Ticker(sym)
                 data = ticker.history(period="1d")
@@ -127,13 +81,17 @@ def seed_database():
 
                 price = round(data["Close"].iloc[-1], 2)
 
-                # Separate: fetch full info and custom info
+                # Fetch asset info
                 yf_info = ticker.info
                 custom_info = get_asset_info(sym)
 
                 sector = yf_info.get("sector", "Unknown").split()[0] if "sector" in yf_info else "Unknown"
                 day_changeP = custom_info['day_changeP']
+                
+                # Get random asset type
+                asset_type = asset_types_holdings[i % len(asset_types_holdings)]
 
+                # Create asset
                 asset = Asset(
                     symbol=sym,
                     name=name,
@@ -144,11 +102,10 @@ def seed_database():
                 db.session.add(asset)
                 db.session.commit()
 
-                quantity = random.randint(1, 37)
-
                 # Generate random date from 2024 for this transaction
                 random_buy_date = generate_random_date_2024()
 
+                # Create holding with specified quantity
                 holding = Holding(
                     portfolio_id=portfolio.id,
                     asset_id=asset.id,
@@ -156,10 +113,10 @@ def seed_database():
                     purchase_price=price,
                     purchase_date=random_buy_date
                 )
-
                 db.session.add(holding)
                 db.session.commit()
 
+                # Create buy transaction
                 txn = Transaction(
                     portfolio_id=portfolio.id,
                     holding_id=holding.id,
@@ -168,11 +125,10 @@ def seed_database():
                     created_at=random_buy_date,
                     transaction_type="buy"
                 )
-                
                 db.session.add(txn)
                 db.session.commit()
 
-                print(f"✅ Added {sym} (${price}) | Sector: {sector}, Type: {asset_type}")
+                print(f"✅ Added {sym} - Qty: {quantity}, Price: ${price} | Sector: {sector}, Type: {asset_type}")
 
                 # 40% chance of creating a sell transaction after each buy
                 if random.random() < 0.4:
@@ -181,50 +137,89 @@ def seed_database():
             except Exception as e:
                 print(f"❌ Error adding {sym}: {e}")
 
-        # === WATCHLIST SEEDING ===
-        print("🔄 Adding watchlist items to Portfolio 1...")
-        
-        # Get some assets that weren't added as holdings for the watchlist
-        watchlist_symbols = [
-            ("GOOGL", "Alphabet Inc."),
-            ("AMZN", "Amazon.com Inc."),
-            ("TSLA", "Tesla Inc."),
-            ("NVDA", "NVIDIA Corporation"),
+        # === ASSETS WITHOUT HOLDINGS (for market data, watchlist, etc.) ===
+        assets_only = [
             ("META", "Meta Platforms Inc."),
             ("CRM", "Salesforce Inc."),
             ("NFLX", "Netflix Inc."),
-            ("AMD", "Advanced Micro Devices")
+            ("AMD", "Advanced Micro Devices"),
+            ("MSFT", "Microsoft Corporation"),
+            ("INTC", "Intel Corporation"),
+            ("ORCL", "Oracle Corporation"),
+            ("IBM", "International Business Machines"),
+            ("CSCO", "Cisco Systems Inc."),
+            ("QCOM", "Qualcomm Inc."),
+            ("SYM", "Symbotic Inc."),
+            ("TTEK", "Tetra Tech Inc."),
+            ("CAE", "CAE Inc."),
+            ("NPO", "EnPro Inc."),
+        ]
+
+        # Random asset types for assets-only
+        asset_types_assets = (
+            ["equity"] * 20 +
+            ["etf"] * 5 +
+            ["mutualfund"] * 2 +
+            ["index"] * 3 +            
+            ["currency"] * 3 +
+            ["cryptocurrency"] * 6 +
+            ["commodity"] * 2
+        )
+        random.shuffle(asset_types_assets)
+
+        print("🔄 Creating assets without holdings...")
+        
+        for i, (sym, name) in enumerate(assets_only):
+            try:
+                ticker = yf.Ticker(sym)
+                data = ticker.history(period="1d")
+
+                if data.empty:
+                    print(f"❌ No data for asset {sym}")
+                    continue
+
+                # Fetch asset info
+                yf_info = ticker.info
+                custom_info = get_asset_info(sym)
+
+                sector = yf_info.get("sector", "Unknown").split()[0] if "sector" in yf_info else "Unknown"
+                day_changeP = custom_info['day_changeP']
+                
+                # Get random asset type
+                asset_type = asset_types_assets[i % len(asset_types_assets)]
+
+                # Create asset only (no holdings)
+                asset = Asset(
+                    symbol=sym,
+                    name=name,
+                    asset_type=asset_type,
+                    sector=sector,
+                    day_changeP=day_changeP
+                )
+                db.session.add(asset)
+                db.session.commit()
+
+                print(f"✅ Added asset-only {sym} | Sector: {sector}, Type: {asset_type}")
+
+            except Exception as e:
+                print(f"❌ Error adding asset {sym}: {e}")
+
+        # === WATCHLIST SEEDING ===
+        print("🔄 Adding watchlist items to Portfolio 1...")
+        
+        # Use some assets from assets_only for the watchlist
+        watchlist_symbols = [
+            "META", "CRM", "NFLX", "AMD", "MSFT", "INTC"
         ]
         
-        for sym, name in watchlist_symbols:
+        for sym in watchlist_symbols:
             try:
-                # Check if asset already exists
+                # Find the asset that was already created
                 existing_asset = Asset.query.filter_by(symbol=sym).first()
                 
                 if not existing_asset:
-                    # Create the asset if it doesn't exist
-                    ticker = yf.Ticker(sym)
-                    data = ticker.history(period="1d")
-                    
-                    if data.empty:
-                        print(f"❌ No data for watchlist asset {sym}")
-                        continue
-                    
-                    yf_info = ticker.info
-                    custom_info = get_asset_info(sym)
-                    
-                    sector = yf_info.get("sector", "Unknown").split()[0] if "sector" in yf_info else "Unknown"
-                    day_changeP = custom_info['day_changeP']
-                    
-                    existing_asset = Asset(
-                        symbol=sym,
-                        name=name,
-                        asset_type="equity",
-                        sector=sector,
-                        day_changeP=day_changeP
-                    )
-                    db.session.add(existing_asset)
-                    db.session.commit()
+                    print(f"❌ Asset {sym} not found for watchlist")
+                    continue
                 
                 # Add to watchlist
                 watchlist_item = Watchlist(

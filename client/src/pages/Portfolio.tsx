@@ -47,7 +47,7 @@ const Portfolio: React.FC = () => {
           fontWeight: 500, 
           color: '#1976d2',
         }}>
-          Portfolio - {portfolio?.name || 'My Portfolio'}
+          {portfolio?.name || 'My Portfolio'}
         </Typography>
         
         <Box textAlign="right">
