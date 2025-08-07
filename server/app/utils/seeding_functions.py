@@ -17,7 +17,12 @@ def generate_random_date_2024():
     start_2024 = datetime(2024, 1, 1, tzinfo=timezone.utc)
     now = datetime.now(timezone.utc)
     time_diff = (now - start_2024).total_seconds()
-    random_seconds = random.uniform(0, time_diff)
+    
+    # Ensure time_diff is positive and within reasonable bounds
+    if time_diff <= 0:
+        return now
+    
+    random_seconds = random.uniform(0, min(time_diff, 365 * 24 * 3600))  # Cap at 1 year
     return start_2024 + timedelta(seconds=random_seconds)
 
 
@@ -33,11 +38,12 @@ def create_random_sell_transaction(portfolio_id):
         # Pick a random holding to sell from
         holding = random.choice(holdings)
         
-        if holding.quantity <= 0:
+        # Sell between 1 and all available quantity (ensure integers)
+        max_quantity = int(holding.quantity)
+        if max_quantity <= 0:
             return False
         
-        # Sell between 1 and all available quantity
-        sell_quantity = random.randint(1, holding.quantity)
+        sell_quantity = random.randint(1, max_quantity)
         
         # Get current asset price (we'll use purchase price as approximation)
         current_price = holding.purchase_price * random.uniform(0.8, 1.2)  # Simulate price movement
@@ -61,7 +67,9 @@ def create_random_sell_transaction(portfolio_id):
             now = datetime.now(timezone.utc)
             time_diff = (now - buy_date).total_seconds()
             if time_diff > 0:
-                random_seconds = random.uniform(0, time_diff)
+                # Ensure we don't exceed reasonable bounds
+                max_seconds = min(time_diff, 365 * 24 * 3600)  # Cap at 1 year
+                random_seconds = random.uniform(0, max_seconds)
                 sell_date = buy_date + timedelta(seconds=random_seconds)
             else:
                 sell_date = now
@@ -116,7 +124,7 @@ def generate_portfolio_history(portfolio_id, years=3):
     # Generate your beautiful random history (UNCHANGED!)
     base_value = 100000
     today = datetime.now().date()
-    start_date = today - timedelta(days=years * 365)
+    start_date = today - timedelta(days=int(years * 365))
 
     current_date = start_date
     current_value = base_value
@@ -244,7 +252,7 @@ def generate_asset_history(asset_id, current_price, day_changeP, years=3):
     print(f"🔄 Generating {years} years of price history for asset {asset_id}...")
 
     today = datetime.now().date()
-    start_date = today - timedelta(days=years * 365)
+    start_date = today - timedelta(days=int(years * 365))
     
     # Start with a base price at the beginning of the period
     base_price = current_price * (0.3 + random.random() * 0.4)  # 30-70% of current price as starting point
@@ -394,7 +402,8 @@ def generate_asset_history_for_new_watchlist_item(asset_id, asset_symbol=None):
                 current_price = 50 + random.random() * 150   # $50-200 for other stocks
         
         # Generate 3 years of history
-        generate_asset_history(asset_id, current_price, asset.day_changeP, years=3)
+        day_change = asset.day_changeP if asset.day_changeP is not None else 0.0
+        generate_asset_history(asset_id, current_price, day_change, years=3)
         
         print(f"✅ Successfully generated asset history for {asset.symbol} (ID: {asset_id})")
         
