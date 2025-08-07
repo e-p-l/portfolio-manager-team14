@@ -10,7 +10,6 @@ interface CashFlowChartProps {
 
 const DEFAULT_PORTFOLIO_ID = 1;
 
-// Custom tooltip to fix the mixing issue
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
@@ -40,11 +39,10 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const CashFlowChart: React.FC<CashFlowChartProps> = ({ 
   portfolioId = DEFAULT_PORTFOLIO_ID,
-  title = "Cash Flow Overview"
+  title = "Cash Flow"
 }) => {
   const { transactions, loading } = useTransactions(portfolioId);
 
-  // Calculate real cash flow data from transactions (last 30 days)
   const calculateCashFlowData = () => {
     if (!transactions.length) {
       return [
@@ -85,11 +83,28 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
   if (loading) {
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-          <CircularProgress />
-          <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
-            Loading cash flow data...
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            {title}
           </Typography>
+          <Box height={300} display="flex" alignItems="center" justifyContent="center">
+            <CircularProgress />
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data.length || total === 0) {
+    return (
+      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            {title}
+          </Typography>
+          <Box height={300} display="flex" alignItems="center" justifyContent="center">
+            <Typography color="textSecondary">No transaction data available</Typography>
+          </Box>
         </CardContent>
       </Card>
     );
@@ -97,76 +112,77 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <CardContent>
         <Typography variant="h6" gutterBottom>
           {title}
         </Typography>
 
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', minHeight: 300 }}>
-          {/* Chart Section */}
-          <Box sx={{ flex: 1, position: 'relative', height: '100%', zIndex: 1 }}>
-            <ResponsiveContainer width="100%" height="100%" style={{ zIndex: 10 }}>
-              <PieChart style={{ zIndex: 10 }}>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={120}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip content={<CustomTooltip />} wrapperStyle={{ zIndex: 9999 }} />
-              </PieChart>
-            </ResponsiveContainer>
+        <Box height={300} position="relative">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="40%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={100}
+                paddingAngle={2}
+                dataKey="value"
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
 
-            {/* Center value */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-                zIndex: 5,
-                pointerEvents: 'none', // This prevents the center text from interfering with tooltip
-              }}
-            >
-              <Typography variant="h6" fontWeight="bold">
-                ${total.toLocaleString()}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Total Volume
-              </Typography>
-            </Box>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '40%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              zIndex: 5,
+              pointerEvents: 'none',
+            }}
+          >
+            <Typography variant="body1" fontWeight="500">
+              ${total.toLocaleString()}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Total Volume
+            </Typography>
           </Box>
 
-          {/* Legend Section - Vertical on the right */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, ml: 4, minWidth: 180 }}>
+          {/* Legend positioned exactly like SectorAllocationChart */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              right: '10px',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+            }}
+          >
             {data.map((item) => (
               <Box key={item.name} display="flex" alignItems="center">
                 <Box
                   sx={{
-                    width: 16,
-                    height: 16,
+                    width: 12,
+                    height: 12,
                     borderRadius: '50%',
                     backgroundColor: item.color,
-                    mr: 2,
+                    mr: 1,
                     flexShrink: 0
                   }}
                 />
-                <Box>
-                  <Typography variant="body1" fontWeight="600">
-                    {item.name}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    ${item.value.toLocaleString()}
-                  </Typography>
-                </Box>
+                <Typography variant="body2" sx={{ fontSize: '14px', color: item.color }}>
+                  {item.name}
+                </Typography>
               </Box>
             ))}
           </Box>
