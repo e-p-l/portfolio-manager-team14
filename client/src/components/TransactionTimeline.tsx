@@ -53,7 +53,7 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
       switch (period) {
         case '30d': return 30;
         case '1y': return 365;
-        case 'all': return 1095; // 3 years
+        case 'all': return 1095;
         default: return 30;
       }
     };
