@@ -44,9 +44,6 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
   const valueChange = currentValue - startValue;
   const percentageChange = startValue > 0 ? ((valueChange / startValue) * 100) : 0;
 
-  // Format return value
-  const formattedReturn = portfolio?.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...';
-
   // Show loading state
   if (loading || portfolioLoading) {
     return (
@@ -90,22 +87,6 @@ const NetworthChart: React.FC<NetworthChartProps> = ({ portfolioId }) => {
           >
             {valueChange >= 0 ? '+' : ''}${valueChange.toLocaleString()} ({percentageChange >= 0 ? '+' : ''}{percentageChange.toFixed(2)}%) this month
           </Typography>
-
-          {/* Total Return - Under other info on left side */}
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Total Return: 
-              <Typography 
-                component="span"
-                variant="body2"
-                fontWeight="bold"
-                color={portfolio?.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
-                sx={{ ml: 0.5 }}
-              >
-                {formattedReturn}
-              </Typography>
-            </Typography>
-          </Box>
         </Box>
 
         <Box sx={{ flex: 1, minHeight: 200 }}>

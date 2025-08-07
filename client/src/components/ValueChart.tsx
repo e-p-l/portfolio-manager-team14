@@ -274,24 +274,6 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
                 {timeRange === 'ALL' ? 'all time' : timeRange === 'YTD' ? 'year to date' : `past ${timeRange}`}
               </Typography>
             </Box>
-
-            {/* Total Return - Under other info on left side */}
-            {isPortfolio && portfolio && (
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Total Return: 
-                  <Typography 
-                    component="span"
-                    variant="body2"
-                    fontWeight="bold"
-                    color={portfolio.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
-                    sx={{ ml: 0.5 }}
-                  >
-                    {portfolio.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'Loading...'}
-                  </Typography>
-                </Typography>
-              </Box>
-            )}
           </Box>
         </Box>
         

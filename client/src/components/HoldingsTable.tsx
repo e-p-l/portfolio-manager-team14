@@ -17,12 +17,15 @@ import {
   Typography,
   Box,
   CircularProgress,
-  Autocomplete
+  Autocomplete,
+  Card,
+  CardContent
 } from '@mui/material';
 import { Add, Remove, TrendingUp, TrendingDown } from '@mui/icons-material';
 import { Holding } from '../services/holdingService';
 import { AssetService } from '../services/assetService';
 import { TransactionService } from '../services/transactionService';
+import { PortfolioService } from '../services/portfolioService';
 import { Asset } from '../types';
 
 interface HoldingsTableProps {
@@ -49,6 +52,21 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   const [actionLoading, setActionLoading] = useState(false);
   const [assetOptions, setAssetOptions] = useState<Asset[]>([]);
   const [assetLoading, setAssetLoading] = useState(false);
+  const [portfolio, setPortfolio] = useState<any>(null);
+
+  // Fetch portfolio details for total return
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      try {
+        const portfolioData = await PortfolioService.getPortfolio(portfolioId);
+        setPortfolio(portfolioData);
+      } catch (error) {
+        console.error('Error fetching portfolio:', error);
+      }
+    };
+    
+    fetchPortfolio();
+  }, [portfolioId, holdings]); // Re-fetch when holdings change
 
   // Search for assets when user types
   const searchAssets = async (searchTerm: string) => {
@@ -202,6 +220,40 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
           >
             Buy Asset
           </Button>
+        </Box>
+      )}
+
+      {/* Portfolio Total Return Display */}
+      {portfolio && (
+        <Box 
+          sx={{ 
+            mb: 2, 
+            p: 2, 
+            bgcolor: 'grey.50', 
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'grey.200'
+          }}
+        >
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Typography variant="body1" color="text.secondary">
+              Portfolio Total Return
+            </Typography>
+            <Box display="flex" alignItems="center" gap={0.5}>
+              {(portfolio.return || 0) >= 0 ? (
+                <TrendingUp sx={{ fontSize: 20, color: 'success.main' }} />
+              ) : (
+                <TrendingDown sx={{ fontSize: 20, color: 'error.main' }} />
+              )}
+              <Typography 
+                variant="h6"
+                fontWeight="bold"
+                color={portfolio.return && portfolio.return >= 0 ? 'success.main' : 'error.main'}
+              >
+                {portfolio.return ? `${portfolio.return >= 0 ? '+' : ''}${portfolio.return.toFixed(2)}%` : 'N/A'}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       )}
       

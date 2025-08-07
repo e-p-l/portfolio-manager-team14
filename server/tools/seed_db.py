@@ -41,19 +41,19 @@ def seed_database():
         # === HOLDINGS WITH SPECIFIED QUANTITIES ===
         # Format: (symbol, name, quantity)
         holdings_data = [
-            ("AAPL", "Apple Inc.", 25),
-            ("GOOGL", "Alphabet Inc.", 8),
+            ("AAPL", "Apple Inc.", 20),
+            ("GOOGL", "Alphabet Inc.", 20),
             ("AMZN", "Amazon.com Inc.", 12),
             ("TSLA", "Tesla Inc.", 10),
             ("NVDA", "NVIDIA Corporation", 10),
-            ("JNJ", "Johnson & Johnson", 12),
+            ("JNJ", "Johnson & Johnson", 25),
             ("BAC", "Bank of America", 15),
             ("V", "Visa Inc.", 13),
-            ("PG", "Procter & Gamble", 12),
+            ("PG", "Procter & Gamble", 20),
             ("DIS", "The Walt Disney Company", 14),
             ("BA", "The Boeing Company", 10),
-            ("ADBE", "Adobe Inc.", 7),
-            ("WDAY", "Workday Inc.", 4)
+            ("ADBE", "Adobe Inc.", 20),
+            ("WDAY", "Workday Inc.", 12)
         ]
 
         # Random asset types for holdings
@@ -136,6 +136,47 @@ def seed_database():
 
             except Exception as e:
                 print(f"❌ Error adding {sym}: {e}")
+
+        # === HARDCODED SELL TRANSACTION IN LAST 30 DAYS ===
+        print("🔄 Creating hardcoded sell transaction in last 30 days...")
+        
+        # Find a holding with sufficient quantity to sell
+        holdings_with_quantity = Holding.query.filter_by(portfolio_id=portfolio.id).filter(Holding.quantity >= 5).all()
+        
+        if holdings_with_quantity:
+            # Pick the first suitable holding (or you can specify a particular one)
+            sell_holding = holdings_with_quantity[0]  # This will be AAPL with 25 shares
+            sell_quantity = 5  # Sell 5 shares
+            
+            # Create sell date within last 30 days
+            now = datetime.now(timezone.utc)
+            thirty_days_ago = now - timedelta(days=30)
+            # Random date between 5-25 days ago
+            days_back = random.randint(5, 25)
+            sell_date = now - timedelta(days=days_back)
+            
+            # Get current price with some variation for the sell
+            current_price = sell_holding.purchase_price * random.uniform(0.95, 1.15)  # ±15% variation
+            
+            # Create sell transaction
+            sell_txn = Transaction(
+                portfolio_id=portfolio.id,
+                holding_id=sell_holding.id,
+                quantity=sell_quantity,
+                price=round(current_price, 2),
+                created_at=sell_date,
+                transaction_type="sell"
+            )
+            
+            # Update holding quantity
+            sell_holding.quantity -= sell_quantity
+            
+            db.session.add(sell_txn)
+            db.session.commit()
+            
+            print(f"✅ HARDCODED SELL: {sell_quantity} shares of {sell_holding.asset.symbol} at ${current_price:.2f} on {sell_date.strftime('%Y-%m-%d')}")
+        else:
+            print("❌ No holdings with sufficient quantity for hardcoded sell")
 
         # === ASSETS WITHOUT HOLDINGS (for market data, watchlist, etc.) ===
         assets_only = [
