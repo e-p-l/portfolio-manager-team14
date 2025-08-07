@@ -181,6 +181,7 @@ const Watchlist: React.FC = () => {
             <ValueChart 
               assetId={selectedItem.asset_id} 
               title={`${selectedItem.asset_symbol} Price Chart`}
+              currentPrice={selectedItem.current_price}
             />
           )}
         </Box>

@@ -32,6 +32,7 @@ interface ValueChartProps {
   portfolioId?: number;
   assetId?: number;
   title?: string;
+  currentPrice?: number; // Add currentPrice prop for asset charts
 }
 
 // Filter data based on time range
@@ -118,7 +119,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // Value chart component (can be used for portfolio or individual assets)
-const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "Value Chart" }) => {
+const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "Value Chart", currentPrice }) => {
   const theme = useTheme();
   const [timeRange, setTimeRange] = useState<string>('3M');
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
@@ -160,6 +161,20 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
     endValue = currentValue;
   }
   
+  // Replace the last value with currentPrice if this is an asset chart and currentPrice is provided
+  if (!isPortfolio && currentPrice && chartData.length > 0) {
+    chartData[chartData.length - 1] = {
+      ...chartData[chartData.length - 1],
+      value: currentPrice
+    };
+    
+    // Recalculate value change and percentage with the updated current price
+    const startValue = data[0]?.value || 0;
+    valueChange = currentPrice - startValue;
+    percentChange = startValue ? (valueChange / startValue) * 100 : 0;
+    endValue = currentPrice;
+  }
+  
   // Format change value
   const formattedChange = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -175,8 +190,9 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
     signDisplay: 'always'
   }).format(percentChange / 100);
   
-  // Current value formatted - use portfolio.aum if available, otherwise endValue
-  const displayValue = isPortfolio && portfolio?.aum ? portfolio.aum : endValue;
+  // Current value formatted - use portfolio.aum if available for portfolio, currentPrice for assets, otherwise endValue
+  const displayValue = isPortfolio && portfolio?.aum ? portfolio.aum : 
+                       !isPortfolio && currentPrice ? currentPrice : endValue;
   const formattedValue = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD'

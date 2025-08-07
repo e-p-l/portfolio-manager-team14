@@ -15,6 +15,7 @@ from app.models.transaction import Transaction
 from app.models.portfolio_history import PortfolioHistory
 from app.models.asset_history import AssetHistory
 from app.models.watchlist import Watchlist
+from app.services.asset_service import fetch_latest_price
 from app.utils.seeding_functions import create_random_sell_transaction, generate_portfolio_history, generate_asset_history, generate_asset_history_for_new_watchlist_item
 
 def generate_random_date_2024():
@@ -46,11 +47,11 @@ def seed_database():
 
         # === Insert live-data-backed objects ===
         info = get_asset_info(symbol)
-        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="sector", day_changeP=info['day_changeP'])
+        asset = Asset(symbol=symbol, name="Vanguard S&P 500", asset_type="stock", sector="Consumer", day_changeP=info['day_changeP'])
         db.session.add(asset)
         db.session.commit()
 
-        portfolio = Portfolio(name="Real Market Portfolio")
+        portfolio = Portfolio(name="Retirement Portfolio")
         db.session.add(portfolio)
         db.session.commit()
 
@@ -93,25 +94,12 @@ def seed_database():
             ("TSLA", "Tesla Inc."),
             ("NVDA", "NVIDIA Corporation"),
             ("META", "Meta Platforms Inc."),
-            ("JPM", "JPMorgan Chase & Co."),
             ("JNJ", "Johnson & Johnson"),
+            ("BAC", "Bank of America"),
             ("V", "Visa Inc."),
             ("UNH", "UnitedHealth Group"),
             ("PG", "Procter & Gamble"),
-            ("MA", "Mastercard Inc."),
-            ("HD", "Home Depot"),
-            ("BAC", "Bank of America"),
-            ("PFE", "Pfizer Inc."),
-            ("DIS", "Walt Disney Co."),
-            ("KO", "Coca-Cola Co."),
-            ("PEP", "PepsiCo Inc."),
-            ("CSCO", "Cisco Systems"),
-            ("XOM", "ExxonMobil"),
-            ("CVX", "Chevron Corporation"),
-            ("WMT", "Walmart Inc."),
-            ("INTC", "Intel Corporation"),
-            ("T", "AT&T Inc."),
-            ("BA", "Boeing Co."),
+            ("DIS", "The Walt Disney Company"),
         ]
 
         # Random asset types
@@ -278,8 +266,13 @@ if __name__ == "__main__":
                 
                 # Get current price from latest transaction or use a reasonable default
                 latest_holding = Holding.query.filter_by(asset_id=asset.id).first()
-                current_price = latest_holding.purchase_price if latest_holding else 100.0 + random.random() * 200  # Random price between $100-$300
-                
+                real_price = fetch_latest_price(asset.id)
+                if real_price:
+                    print(f"ℹ️ Fetched real price ${real_price:.2f} for asset {asset.symbol}")
+                    current_price = real_price
+                else:
+                    current_price = latest_holding.purchase_price if latest_holding else 100.0 + random.random() * 200  # Random price between $100-$300
+
                 # Use the asset's day_changeP for realistic recent movement
                 generate_asset_history(asset.id, current_price, asset.day_changeP, years=3)
         

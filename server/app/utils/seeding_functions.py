@@ -10,6 +10,7 @@ from app.models.portfolio_history import PortfolioHistory
 from app.models.asset_history import AssetHistory
 from app.models.holding import Holding
 from app.models.transaction import Transaction
+from app.services.asset_service import fetch_latest_price
 
 
 def generate_random_date_2024():
@@ -128,7 +129,6 @@ def generate_portfolio_history(portfolio_id, years=3):
     while current_date <= today:
         days_since_start = (current_date - start_date).days
 
-        # Phase-based settings (UNCHANGED - keeping your beautiful spikiness!)
         if days_since_start <= 180:  # Flat start
             daily_growth = 0.0001
             volatility = 0.002
@@ -145,12 +145,10 @@ def generate_portfolio_history(portfolio_id, years=3):
             daily_growth = 0.001
             volatility = 0.005
 
-        # Base movement (UNCHANGED - keeping randomness!)
         random_factor = 1 + (random.random() * 2 - 1) * volatility
         growth_factor = 1 + daily_growth
         current_value *= random_factor * growth_factor
 
-        # Controlled spikiness (UNCHANGED - keeping your spikes!)
         spike_roll = random.random()
         if spike_roll > 0.995:
             current_value *= 1.04 + random.random() * 0.04  # Big up spike
@@ -161,17 +159,14 @@ def generate_portfolio_history(portfolio_id, years=3):
         elif spike_roll < 0.015:
             current_value *= 0.985 - random.random() * 0.01  # Mini dip
 
-        # Forced crash during CRASH phase (UNCHANGED)
         if 366 <= days_since_start <= 400 and random.random() < 0.25:
             crash_drop = 0.85 - random.random() * 0.1  # 10–25% drop
             current_value *= crash_drop
 
-        # Recovery surges after crash (UNCHANGED)
         if 401 <= days_since_start <= 600 and random.random() < 0.15:
             recovery_spike = 1.05 + random.random() * 0.08
             current_value *= recovery_spike
 
-        # Quarterly earnings (UNCHANGED)
         month = current_date.month
         day_of_month = current_date.day
         if day_of_month in range(25, 32) and month in [1, 4, 7, 10]:
@@ -179,13 +174,11 @@ def generate_portfolio_history(portfolio_id, years=3):
                 earnings_spike = (1.04 + random.random() * 0.06) if random.random() > 0.5 else (0.92 - random.random() * 0.06)
                 current_value *= earnings_spike
 
-        # Seasonal mild adjustment (UNCHANGED)
         if month in [11, 12]:  # Holiday rally
             current_value *= 1.0005
         elif month in [1, 2]:  # Early year volatility
             current_value *= 0.9995
 
-        # Cap extremes (UNCHANGED)
         if current_value < base_value * 0.7:
             current_value = base_value * (0.7 + random.random() * 0.2)
         if current_value > base_value * 2.5:
@@ -383,10 +376,12 @@ def generate_asset_history_for_new_watchlist_item(asset_id, asset_symbol=None):
             return
         
         # Get current price from holdings or use a reasonable default
-        latest_holding = Holding.query.filter_by(asset_id=asset_id).first()
-        if latest_holding:
-            current_price = latest_holding.purchase_price
+        real_price = fetch_latest_price(asset_id)
+        if real_price:
+            print(f"ℹ️ Fetched real price ${real_price:.2f} for asset {asset.symbol}")
+            current_price = real_price
         else:
+            print(f"ℹ️ No current price found for asset {asset.symbol}, generating default price")
             # Generate a reasonable price based on asset type and symbol
             if asset.symbol in ['NVDA', 'TSLA']:
                 current_price = 200 + random.random() * 600  # $200-800 for high-value stocks

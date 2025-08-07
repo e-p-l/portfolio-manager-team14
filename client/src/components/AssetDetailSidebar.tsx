@@ -88,20 +88,6 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({ asset }) => {
           <Typography variant="h5" fontWeight="bold">
             {formatPrice(details.price)}
           </Typography>
-          <Box display="flex" alignItems="center" gap={0.5}>
-            {details.changePercent >= 0 ? (
-              <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
-            ) : (
-              <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />
-            )}
-            <Typography 
-              variant="body2" 
-              color={details.changePercent >= 0 ? 'success.main' : 'error.main'}
-              fontWeight="medium"
-            >
-              {formatChange(details.change)} ({formatPercent(details.changePercent)})
-            </Typography>
-          </Box>
         </Box>
 
         <Divider sx={{ mb: 2 }} />
