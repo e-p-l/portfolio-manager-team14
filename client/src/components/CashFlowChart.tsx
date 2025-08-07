@@ -10,7 +10,6 @@ interface CashFlowChartProps {
 
 const DEFAULT_PORTFOLIO_ID = 1;
 
-// Custom tooltip to fix the mixing issue
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
@@ -40,11 +39,10 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const CashFlowChart: React.FC<CashFlowChartProps> = ({ 
   portfolioId = DEFAULT_PORTFOLIO_ID,
-  title = "Cash Flow Overview"
+  title = "Cash Flow"
 }) => {
   const { transactions, loading } = useTransactions(portfolioId);
 
-  // Calculate real cash flow data from transactions (last 30 days)
   const calculateCashFlowData = () => {
     if (!transactions.length) {
       return [
@@ -139,7 +137,6 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
             </PieChart>
           </ResponsiveContainer>
 
-          {/* Center value - positioned absolutely over the chart */}
           <Box
             sx={{
               position: 'absolute',
