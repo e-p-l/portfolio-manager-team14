@@ -16,7 +16,7 @@ def fetch_latest_news_from_finhub():
                     "source": r.get("source"),
                     "url": r.get("url"),
                 })
-            if len(news) == 5:
+            if len(news) == 4:
                 break
 
     return news
@@ -29,7 +29,7 @@ def fetch_latest_news_from_alphavantage():
     news = []
 
     if 'feed' in response:
-        for article in response['feed'][:5]:
+        for article in response['feed'][:4]:
             news.append({
                 "headline": article.get("title"),
                 "source": article.get("source"),
@@ -37,4 +37,23 @@ def fetch_latest_news_from_alphavantage():
             })
     
     return news
+
+def fetch_latest_news_combined():
+    """
+    Try Alpha Vantage first, fallback to Finnhub if Alpha Vantage returns empty array
+    """
+    try:
+        # Try Alpha Vantage first
+        av_news = fetch_latest_news_from_alphavantage()
+        
+        # If Alpha Vantage returns empty array, try Finnhub
+        if not av_news:
+            print("Alpha Vantage returned empty array, trying Finnhub...")
+            return fetch_latest_news_from_finhub()
+        
+        return av_news
+    except Exception as e:
+        print(f"Error with Alpha Vantage, trying Finnhub: {e}")
+        # If Alpha Vantage fails, try Finnhub
+        return fetch_latest_news_from_finhub()
 

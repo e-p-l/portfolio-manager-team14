@@ -11,7 +11,7 @@ export const useMarketInsights = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await InsightsService.getMarketInsights();
+        const data = await InsightsService.getMarketInsightsCombined();
         setMarketInsights(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch market insights');
@@ -28,7 +28,7 @@ export const useMarketInsights = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await InsightsService.getMarketInsights();
+      const data = await InsightsService.getMarketInsightsCombined();
       setMarketInsights(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch market insights');
