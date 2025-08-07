@@ -11,6 +11,8 @@ from datetime import date
 class Portfolio(db.Model):
     __tablename__   = "portfolios"
 
+    _INIT_BALANCE = 10000.0
+
     # primary key
     id              = db.Column(db.Integer, primary_key=True)
 
@@ -26,7 +28,7 @@ class Portfolio(db.Model):
     
     def __init__(self, name):
         self.name = name
-        self.balance = 10000.0
+        self.balance = self._INIT_BALANCE
         self.creation_date = date.today()
 
     def serialize(self):

@@ -1,7 +1,7 @@
 from .. import db
 from ..models.holding import Holding
 from ..services.asset_service import fetch_latest_price
-from ..services.holding_service import get_asset_return, get_portfolio_aum, get_portfolio_return
+from ..services.holding_service import get_asset_return
 
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError

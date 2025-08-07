@@ -131,9 +131,9 @@ def get_asset_return(portfolio_id, asset_id):
 
     return (current_value - total_cost) / total_cost
 
-def get_portfolio_aum(portfolio_id):
+def get_portfolio_value(portfolio_id):
     """
-    AUM = sum of (quantity of each holding × current price of each asset) + portfolio cash balance
+    AUM = sum of (quantity of each holding × current price of each asset) + realized gains
     """
     holdings = Holding.query.filter_by(portfolio_id=portfolio_id).filter(Holding.quantity > 0).all()
 
@@ -142,7 +142,7 @@ def get_portfolio_aum(portfolio_id):
     for h in holdings:
         aum += h.quantity * fetch_latest_price(h.asset_id)
     
-    return aum + Portfolio.query.get(portfolio_id).balance
+    return aum + Portfolio.query.get(portfolio_id).balance - Portfolio.query.get(portfolio_id)._INIT_BALANCE
 
 def get_portfolio_return(portfolio_id):
     """
@@ -158,6 +158,6 @@ def get_portfolio_return(portfolio_id):
     if total_invested == 0:
         return 0.0
 
-    current_value = get_portfolio_aum(portfolio_id)
+    current_value = get_portfolio_value(portfolio_id)
 
     return (current_value - total_invested) / total_invested
