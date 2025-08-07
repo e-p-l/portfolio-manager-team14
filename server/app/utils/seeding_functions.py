@@ -32,12 +32,14 @@ def create_random_sell_transaction(portfolio_id):
         
         # Pick a random holding to sell from
         holding = random.choice(holdings)
-        
+        # Convert quantity to int to avoid float issues with randint
+        holding_quantity = int(holding.quantity) if holding.quantity else 0
+
         if holding.quantity <= 0:
             return False
         
         # Sell between 1 and all available quantity
-        sell_quantity = random.randint(1, holding.quantity)
+        sell_quantity = random.randint(1, holding_quantity)
         
         # Get current asset price (we'll use purchase price as approximation)
         current_price = holding.purchase_price * random.uniform(0.8, 1.2)  # Simulate price movement
