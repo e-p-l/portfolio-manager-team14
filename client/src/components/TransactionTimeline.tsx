@@ -47,15 +47,7 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
     }
   }, [externalPeriod]);
 
-  // Handle period change - update both local state and notify parent
-  const handlePeriodChange = (newPeriod: string) => {
-    setSelectedPeriod(newPeriod);
-    if (onPeriodChange) {
-      onPeriodChange(newPeriod);
-    }
-  };
 
-  // Filter transactions based on selected period
   const transactions = useMemo(() => {
     const getDaysBack = (period: string) => {
       switch (period) {
@@ -154,18 +146,6 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
             {title}
           </Typography>
           
-          {/* Period Filter */}
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <Select
-              value={selectedPeriod}
-              onChange={(e) => handlePeriodChange(e.target.value)}
-              displayEmpty
-            >
-              <MenuItem value="30d">Last 30 Days</MenuItem>
-              <MenuItem value="1y">Last Year</MenuItem>
-              <MenuItem value="all">All Time</MenuItem>
-            </Select>
-          </FormControl>
         </Box>
 
         {/* Filter Info */}

@@ -142,7 +142,7 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
   
   // Filter data based on selected time range
   const performanceData = filterData(historyData, timeRange);
-  const { data, percentChange, valueChange, endValue } = performanceData;
+  let { data, percentChange, valueChange, endValue } = performanceData;
   
   // Replace the last value with portfolio.aum if this is a portfolio chart
   const chartData = [...data];
@@ -151,6 +151,13 @@ const ValueChart: React.FC<ValueChartProps> = ({ portfolioId, assetId, title = "
       ...chartData[chartData.length - 1],
       value: portfolio.aum
     };
+    
+    // Recalculate value change and percentage with the updated AUM value
+    const startValue = data[0]?.value || 0;
+    const currentValue = portfolio.aum;
+    valueChange = currentValue - startValue;
+    percentChange = startValue ? (valueChange / startValue) * 100 : 0;
+    endValue = currentValue;
   }
   
   // Format change value
