@@ -22,6 +22,12 @@ export class InsightsService {
     const response = await apiClient.get<MarketInsightsResponse>('/insights/news/finhub/');
     return response.news;
   }
+
+  // Get market insights with fallback logic (Alpha Vantage -> Finnhub)
+  static async getMarketInsightsCombined(): Promise<MarketInsight[]> {
+    const response = await apiClient.get<MarketInsightsResponse>('/insights/news/combined/');
+    return response.news;
+  }
 }
 
 export default InsightsService;

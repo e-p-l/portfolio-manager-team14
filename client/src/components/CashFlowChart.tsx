@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, Typography, Box, CircularProgress } from '@mui/material';
+import { PieChart as PieChartIcon } from '@mui/icons-material';
 import { useTransactions } from '../hooks/useTransactions';
 
 interface CashFlowChartProps {
@@ -84,9 +85,12 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {title}
-          </Typography>
+          <Box display="flex" alignItems="center" mb={2}>
+            <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
+            <Typography variant="h6">
+              {title}
+            </Typography>
+          </Box>
           <Box height={300} display="flex" alignItems="center" justifyContent="center">
             <CircularProgress />
           </Box>
@@ -99,9 +103,12 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {title}
-          </Typography>
+          <Box display="flex" alignItems="center" mb={2}>
+            <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
+            <Typography variant="h6">
+              {title}
+            </Typography>
+          </Box>
           <Box height={300} display="flex" alignItems="center" justifyContent="center">
             <Typography color="textSecondary">No transaction data available</Typography>
           </Box>
@@ -113,9 +120,12 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent>
-        <Typography variant="h6" gutterBottom>
-          {title}
-        </Typography>
+        <Box display="flex" alignItems="center" mb={2}>
+          <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
+          <Typography variant="h6">
+            {title}
+          </Typography>
+        </Box>
 
         <Box height={300} position="relative">
           <ResponsiveContainer width="100%" height="100%">

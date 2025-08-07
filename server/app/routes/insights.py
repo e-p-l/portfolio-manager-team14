@@ -1,4 +1,4 @@
-from ..services.insights_service import fetch_latest_news_from_alphavantage, fetch_latest_news_from_finhub
+from ..services.insights_service import fetch_latest_news_from_alphavantage, fetch_latest_news_from_finhub, fetch_latest_news_combined
 
 from flask_restx import Namespace, Resource
 
@@ -20,6 +20,16 @@ class AlphaVantageNewsResource(Resource):
         """Fetches and returns the latest market news from Alpha Vantage."""
         try:
             news = fetch_latest_news_from_alphavantage()
+            return {"news": news}, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+@api_ns.route('/news/combined/')
+class CombinedNewsResource(Resource):
+    def get(self):
+        """Fetches and returns the latest market news with fallback logic (Alpha Vantage -> Finnhub)."""
+        try:
+            news = fetch_latest_news_combined()
             return {"news": news}, 200
         except Exception as e:
             return {"error": str(e)}, 500

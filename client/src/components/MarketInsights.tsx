@@ -40,7 +40,7 @@ const MarketInsights: React.FC = () => {
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           Market Feed
         </Typography>
-        <Badge badgeContent={MARKET_FEED_COUNT} color="error" sx={{ ml: 'auto' }} />
+        <Badge badgeContent={marketInsights.length} color="error" sx={{ ml: 'auto' }} />
       </Box>
       
       <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 0 }}>
@@ -59,7 +59,7 @@ const MarketInsights: React.FC = () => {
             <Box>
               {marketInsights.slice(0, MARKET_FEED_COUNT).map((insight, index) => (
                 <Box key={index}>
-                  <Box sx={{ p: 1.7, '&:hover': { backgroundColor: '#f5f5f5' } }}>
+                  <Box sx={{ p: 1.6, '&:hover': { backgroundColor: '#f5f5f5' } }}>
                     <Box display="flex" alignItems="flex-start">
                       <FiberManualRecord sx={{ 
                         color: '#4caf50', 

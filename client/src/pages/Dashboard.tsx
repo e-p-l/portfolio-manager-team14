@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
               <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <Box display="flex" alignItems="center" mb={2}>
                   <Analytics sx={{ mr: 1, color: '#0277bd' }} />
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6">
                     Top Holdings
                   </Typography>
                 </Box>
