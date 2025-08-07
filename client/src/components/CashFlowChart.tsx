@@ -85,10 +85,15 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CardContent>
-          <Box display="flex" alignItems="center" mb={2}>
-            <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
-            <Typography variant="h6">
-              {title}
+          <Box mb={2}>
+            <Box display="flex" alignItems="center">
+              <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
+              <Typography variant="h6">
+                {title}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5, ml: 4 }}>
+              Last 30 days transaction activity
             </Typography>
           </Box>
           <Box height={300} display="flex" alignItems="center" justifyContent="center">
@@ -103,10 +108,15 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
     return (
       <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <CardContent>
-          <Box display="flex" alignItems="center" mb={2}>
-            <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
-            <Typography variant="h6">
-              {title}
+          <Box mb={2}>
+            <Box display="flex" alignItems="center">
+              <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
+              <Typography variant="h6">
+                {title}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5, ml: 4 }}>
+              Last 30 days transaction activity
             </Typography>
           </Box>
           <Box height={300} display="flex" alignItems="center" justifyContent="center">
@@ -120,10 +130,15 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent>
-        <Box display="flex" alignItems="center" mb={2}>
-          <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
-          <Typography variant="h6">
-            {title}
+        <Box mb={2}>
+          <Box display="flex" alignItems="center">
+            <PieChartIcon sx={{ mr: 1, color: '#ff9800' }} />
+            <Typography variant="h6">
+              {title}
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5, ml: 4 }}>
+            Last 30 days transaction activity
           </Typography>
         </Box>
 

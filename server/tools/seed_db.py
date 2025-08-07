@@ -88,18 +88,19 @@ def seed_database():
         # === ADDITIONAL HOLDINGS ===
         extra_holdings = [
             ("AAPL", "Apple Inc."),
-            ("MSFT", "Microsoft Corporation"),
             ("GOOGL", "Alphabet Inc."),
             ("AMZN", "Amazon.com Inc."),
             ("TSLA", "Tesla Inc."),
             ("NVDA", "NVIDIA Corporation"),
-            ("META", "Meta Platforms Inc."),
             ("JNJ", "Johnson & Johnson"),
             ("BAC", "Bank of America"),
             ("V", "Visa Inc."),
-            ("UNH", "UnitedHealth Group"),
             ("PG", "Procter & Gamble"),
             ("DIS", "The Walt Disney Company"),
+            ("BA", "The Boeing Company"),
+            ("ADBE", "Adobe Inc."),
+            ("WDAY", "Workday Inc.")
+
         ]
 
         # Random asset types
@@ -107,10 +108,11 @@ def seed_database():
             ["equity"] * 20 +
             ["etf"] * 5 +
             ["mutualfund"] * 2 +
-            ["index"] * 3 +
+            ["index"] * 3 +            
             ["currency"] * 3 +
             ["cryptocurrency"] * 6 +
-            ["etf"]  # 1 for commodity proxy
+            ["commodity"] * 2
+
         )
         random.shuffle(asset_types)
 
@@ -142,7 +144,7 @@ def seed_database():
                 db.session.add(asset)
                 db.session.commit()
 
-                quantity = random.randint(1, 50)
+                quantity = random.randint(1, 37)
 
                 # Generate random date from 2024 for this transaction
                 random_buy_date = generate_random_date_2024()

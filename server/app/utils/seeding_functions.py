@@ -98,127 +98,130 @@ def create_random_sell_transaction(portfolio_id):
         return False
 
 def generate_portfolio_history(portfolio_id, years=3):
-    """Generate realistic portfolio value history over time."""
+    """Generate realistic portfolio value history over time using asset-like patterns."""
     print(f"🔄 Generating {years} years of portfolio history...")
 
     # Calculate REAL current portfolio value from actual holdings
-    from app.services.asset_service import fetch_latest_price
-    
     holdings = Holding.query.filter_by(portfolio_id=portfolio_id).filter(Holding.quantity > 0).all()
     real_portfolio_value = 0.0
     for holding in holdings:
         if holding.purchase_price:
             real_portfolio_value += holding.quantity * holding.purchase_price
     
-    # If no holdings, use default base value
+    # If no holdings, use default value
     if real_portfolio_value == 0:
         real_portfolio_value = 100000
     
     print(f"🎯 Real portfolio value (sum of holdings): ${real_portfolio_value:,.2f}")
 
-    # Generate your beautiful random history (UNCHANGED!)
-    base_value = 100000
+    # Portfolio generation using asset-like logic (adapted from generate_asset_history)
+    base_value = 10000  # Always start at $10,000
     today = datetime.now().date()
     start_date = today - timedelta(days=years * 365)
-
+    
     current_date = start_date
     current_value = base_value
-
+    
     history_records = []
-
+    
     while current_date <= today:
         days_since_start = (current_date - start_date).days
-
-        if days_since_start <= 180:  # Flat start
-            daily_growth = 0.0001
-            volatility = 0.002
+        
+        # Phase-based portfolio movement (adapted from asset history patterns)
+        if days_since_start <= 180:  # Initial period
+            daily_growth = 0.0008 + random.random() * 0.0004  # 0.08-0.12% daily
+            volatility = 0.015
         elif days_since_start <= 365:  # Growth phase
-            daily_growth = 0.0005
-            volatility = 0.006
-        elif days_since_start <= 400:  # CRASH!
-            daily_growth = -0.002
-            volatility = 0.04
-        elif days_since_start <= 600:  # Recovery
-            daily_growth = 0.0015
-            volatility = 0.01
-        else:  # Rally & Calm
-            daily_growth = 0.001
-            volatility = 0.005
-
+            daily_growth = 0.0012 + random.random() * 0.0008  # 0.12-0.20% daily
+            volatility = 0.02
+        elif days_since_start <= 400:  # Market correction
+            daily_growth = -0.001 - random.random() * 0.0015  # -0.10 to -0.25% daily
+            volatility = 0.035
+        elif days_since_start <= 600:  # Recovery phase
+            daily_growth = 0.002 + random.random() * 0.001  # 0.20-0.30% daily
+            volatility = 0.025
+        else:  # Mature phase
+            daily_growth = 0.001 + random.random() * 0.0005  # 0.10-0.15% daily
+            volatility = 0.018
+        
+        # Apply daily movement
         random_factor = 1 + (random.random() * 2 - 1) * volatility
         growth_factor = 1 + daily_growth
         current_value *= random_factor * growth_factor
-
+        
+        # Add realistic portfolio spikes (market events, rebalancing, etc.)
         spike_roll = random.random()
-        if spike_roll > 0.995:
-            current_value *= 1.04 + random.random() * 0.04  # Big up spike
-        elif spike_roll < 0.003:
-            current_value *= 0.92 - random.random() * 0.05  # Big down
-        elif spike_roll > 0.985:
-            current_value *= 1.01 + random.random() * 0.015  # Mini rally
-        elif spike_roll < 0.015:
-            current_value *= 0.985 - random.random() * 0.01  # Mini dip
-
-        if 366 <= days_since_start <= 400 and random.random() < 0.25:
-            crash_drop = 0.85 - random.random() * 0.1  # 10–25% drop
-            current_value *= crash_drop
-
-        if 401 <= days_since_start <= 600 and random.random() < 0.15:
-            recovery_spike = 1.05 + random.random() * 0.08
-            current_value *= recovery_spike
-
+        if spike_roll > 0.996:  # 0.4% chance of big spike
+            current_value *= 1.06 + random.random() * 0.08  # 6-14% spike
+        elif spike_roll < 0.004:  # 0.4% chance of big drop
+            current_value *= 0.88 - random.random() * 0.08  # 8-12% drop
+        elif spike_roll > 0.99:  # 1% chance of medium move
+            current_value *= 1.02 + random.random() * 0.03 if random.random() > 0.5 else 0.96 - random.random() * 0.03
+        
+        # Portfolio-specific events (quarterly rebalancing, market events)
         month = current_date.month
         day_of_month = current_date.day
-        if day_of_month in range(25, 32) and month in [1, 4, 7, 10]:
-            if random.random() > 0.94:
-                earnings_spike = (1.04 + random.random() * 0.06) if random.random() > 0.5 else (0.92 - random.random() * 0.06)
-                current_value *= earnings_spike
-
-        if month in [11, 12]:  # Holiday rally
-            current_value *= 1.0005
-        elif month in [1, 2]:  # Early year volatility
-            current_value *= 0.9995
-
-        if current_value < base_value * 0.7:
-            current_value = base_value * (0.7 + random.random() * 0.2)
-        if current_value > base_value * 2.5:
-            current_value *= 0.95 - random.random() * 0.05
-
-        # Store the RAW generated value (before scaling)
-        raw_value = round(current_value, 2)
+        if day_of_month in range(20, 32) and month in [1, 4, 7, 10]:  # Quarterly events
+            if random.random() > 0.93:  # 7% chance during quarter-end
+                market_event = (1.03 + random.random() * 0.07) if random.random() > 0.25 else (0.93 - random.random() * 0.06)
+                current_value *= market_event
+        
+        # Ensure reasonable portfolio bounds
+        if current_value < base_value * 0.2:  # Don't go below 20% of base
+            current_value = base_value * (0.2 + random.random() * 0.1)
+        if current_value > base_value * 15.0:  # Don't go above 1500% of base (reasonable for 3 years)
+            current_value *= 0.95
+        
+        # Round to 2 decimal places
+        final_value = round(current_value, 2)
         cash_percentage = 0.08 + random.random() * 0.04
-
+        
         # Avoid duplicate entries
         existing = PortfolioHistory.query.filter_by(
             portfolio_id=portfolio_id,
             date=current_date
         ).first()
-
+        
         if not existing:
             history_record = PortfolioHistory(
                 portfolio_id=portfolio_id,
-                value=raw_value,  # Store raw value temporarily
-                balance=round(raw_value * cash_percentage, 2),
+                value=final_value,  # Store raw value temporarily
+                balance=round(final_value * cash_percentage, 2),
                 date=current_date
             )
             history_records.append(history_record)
-
+        
         current_date += timedelta(days=1)
-
-    # Calculate scaling ratio: real_portfolio_value / generated_final_value
+    
+    # Scale to match real portfolio value (similar to asset history final price adjustment)
     if history_records:
-        generated_final_value = history_records[-1].value  # Last day's generated value
+        # Update the last day to match real_portfolio_value exactly
+        history_records[-1].value = real_portfolio_value
+        history_records[-1].balance = round(real_portfolio_value * 0.1, 2)  # 10% cash
+        
+        # Calculate scaling ratio: real_portfolio_value / generated_final_value
+        generated_final_value = current_value  # The last generated value before scaling
         scaling_ratio = real_portfolio_value / generated_final_value
         
         print(f"📊 Generated final value: ${generated_final_value:,.2f}")
         print(f"🔄 Scaling ratio: {scaling_ratio:.6f}")
         
-        # Scale ALL history values by the ratio
-        for record in history_records:
+        # Scale all values except the last one (which is already set to real value)
+        for i in range(len(history_records) - 1):
+            record = history_records[i]
             record.value = round(record.value * scaling_ratio, 2)
             record.balance = round(record.balance * scaling_ratio, 2)
         
+        # Smooth transition from $10,000 start
+        if len(history_records) > 1:
+            # Set first value to exactly $10,000
+            history_records[0].value = 10000.00
+            history_records[0].balance = 1000.00  # 10% cash
+
         print(f"✅ Scaled to match real portfolio value: ${history_records[-1].value:,.2f}")
+        print(f"🎯 Smooth start from: ${history_records[0].value:,.2f}")
+        if len(history_records) > 1:
+            print(f"📈 Second day value: ${history_records[1].value:,.2f} (change: {((history_records[1].value / 10000) - 1) * 100:.2f}%)")
 
     # Save to DB
     if history_records:
@@ -226,6 +229,7 @@ def generate_portfolio_history(portfolio_id, years=3):
         db.session.commit()
         print(f"✅ Generated {len(history_records)} portfolio history records")
         print(f"📈 Portfolio range: ${min([r.value for r in history_records]):,.2f} - ${max([r.value for r in history_records]):,.2f}")
+        print(f"🎯 Base value: ${base_value:,.2f}, Final value: ${real_portfolio_value:,.2f}")
     else:
         print("ℹ️ No new portfolio records to generate (already exists)")
 
