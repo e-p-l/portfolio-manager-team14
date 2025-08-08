@@ -34,6 +34,7 @@ interface HoldingsTableProps {
   loading: boolean;
   onHoldingsChange?: (transactionValue?: number) => void;
   hideActions?: boolean;
+  hidePortfolioReturn?: boolean; // New prop to hide portfolio return
 }
 
 const HoldingsTable: React.FC<HoldingsTableProps> = ({ 
@@ -41,7 +42,8 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   portfolioId, 
   loading, 
   onHoldingsChange,
-  hideActions = false
+  hideActions = false,
+  hidePortfolioReturn = false // Default to false to show portfolio return
 }) => {
   const [openBuyDialog, setOpenBuyDialog] = useState(false);
   const [openSellDialog, setOpenSellDialog] = useState(false);
@@ -54,8 +56,10 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
   const [assetLoading, setAssetLoading] = useState(false);
   const [portfolio, setPortfolio] = useState<any>(null);
 
-  // Fetch portfolio details for total return
+  // Fetch portfolio details for total return - only if we need to show it
   useEffect(() => {
+    if (hidePortfolioReturn) return; // Don't fetch if we're not showing it
+    
     const fetchPortfolio = async () => {
       try {
         const portfolioData = await PortfolioService.getPortfolio(portfolioId);
@@ -66,7 +70,7 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
     };
     
     fetchPortfolio();
-  }, [portfolioId, holdings]); // Re-fetch when holdings change
+  }, [portfolioId, holdings, hidePortfolioReturn]); // Re-fetch when holdings change
 
   // Search for assets when user types
   const searchAssets = async (searchTerm: string) => {
@@ -223,8 +227,8 @@ const HoldingsTable: React.FC<HoldingsTableProps> = ({
         </Box>
       )}
 
-      {/* Portfolio Total Return Display */}
-      {portfolio && (
+      {/* Portfolio Total Return Display - only show if not hidden */}
+      {!hidePortfolioReturn && portfolio && (
         <Box 
           sx={{ 
             mb: 2, 

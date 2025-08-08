@@ -93,6 +93,7 @@ const Dashboard: React.FC = () => {
                     portfolioId={DEFAULT_PORTFOLIO_ID}
                     loading={loadingHoldings}
                     hideActions={true}
+                    hidePortfolioReturn={true} // Hide portfolio return in dashboard
                   />
                 </Box>
               </CardContent>
