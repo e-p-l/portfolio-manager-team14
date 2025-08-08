@@ -38,22 +38,64 @@ def seed_database():
         db.session.add(portfolio)
         db.session.commit()
 
+
+        # Manual asset type overrides for better classification
+        ASSET_TYPE_OVERRIDES = {
+            # REITs (even though yfinance calls them EQUITY)
+            "O": "REIT",
+            "PLD": "REIT", 
+            "CCI": "REIT",
+            "AMT": "REIT",
+            "VNQ": "REIT",
+            
+            # Commodities
+            "GLD": "COMMODITY",
+            "SLV": "COMMODITY", 
+            "USO": "COMMODITY",
+            "DBA": "COMMODITY",
+            
+            # Cryptocurrencies
+            "BITO": "CRYPTOCURRENCY",
+            "GBTC": "CRYPTOCURRENCY",
+            
+            # Bonds
+            "TLT": "BOND",
+            "AGG": "BOND",
+            "BND": "BOND",
+            "LQD": "BOND",
+            
+            # Currency
+            "UUP": "CURRENCY",
+            "FXE": "CURRENCY",
+            "FXY": "CURRENCY",
+        }
+
+
+
         # === HOLDINGS WITH SPECIFIED QUANTITIES ===
-        # Format: (symbol, name, quantity)
+        # Format: (symbol, name, quantity) - Diversified across asset classes
         holdings_data = [
+            # EQUITIES (5 holdings - 50%)
             ("AAPL", "Apple Inc.", 20),
             ("GOOGL", "Alphabet Inc.", 20),
-            ("AMZN", "Amazon.com Inc.", 12),
-            ("TSLA", "Tesla Inc.", 10),
             ("NVDA", "NVIDIA Corporation", 10),
             ("JNJ", "Johnson & Johnson", 25),
-            ("BAC", "Bank of America", 15),
             ("V", "Visa Inc.", 13),
-            ("PG", "Procter & Gamble", 20),
-            ("DIS", "The Walt Disney Company", 14),
-            ("BA", "The Boeing Company", 10),
-            ("ADBE", "Adobe Inc.", 20),
-            ("WDAY", "Workday Inc.", 12)
+            
+            # ETF (2) 
+            ("SPY", "SPDR S&P 500 ETF Trust", 25),
+            ("QQQ", "Invesco QQQ Trust", 15),
+            
+            # REIT (2)
+            ("O", "Realty Income Corporation", 35),
+            ("PLD", "Prologis Inc.", 20),
+            
+            # COMMODITY (1)
+            ("GLD", "SPDR Gold Shares", 12),
+        
+            
+            # CRYPTOCURRENCY (1)
+            ("BITO", "ProShares Bitcoin Strategy ETF", 30),
         ]
 
         print("🔄 Creating holdings with specified quantities...")
@@ -72,8 +114,12 @@ def seed_database():
                 # Fetch asset info using the proper function
                 custom_info = get_asset_info(sym)
 
-                # Use the proper asset_type and full sector from yfinance
-                asset_type = custom_info['asset_type']
+                if sym in ASSET_TYPE_OVERRIDES:
+                    asset_type = ASSET_TYPE_OVERRIDES[sym]
+                    print(f"🔄 Overriding {sym} asset type to: {asset_type}")
+                else:
+                    asset_type = custom_info['asset_type']
+
                 sector = custom_info['sector']  # Use full sector name
                 day_changeP = custom_info['day_changeP']
 
@@ -123,33 +169,32 @@ def seed_database():
             except Exception as e:
                 print(f"❌ Error adding {sym}: {e}")
 
-        # === HARDCODED SELL TRANSACTION IN LAST 30 DAYS ===
-        print("🔄 Creating hardcoded sell transaction in last 30 days...")
+        # === HARDCODED BUY AND SELL TRANSACTIONS IN LAST 30 DAYS ===
+        print("🔄 Creating hardcoded buy and sell transactions in last 30 days...")
         
+        # HARDCODED SELL TRANSACTION
         # Find a holding with sufficient quantity to sell
         holdings_with_quantity = Holding.query.filter_by(portfolio_id=portfolio.id).filter(Holding.quantity >= 5).all()
         
         if holdings_with_quantity:
             # Pick the first suitable holding (or you can specify a particular one)
-            sell_holding = holdings_with_quantity[0]  # This will be AAPL with 25 shares
+            sell_holding = holdings_with_quantity[0]  # This will be AAPL with 20 shares
             sell_quantity = 5  # Sell 5 shares
             
             # Create sell date within last 30 days
             now = datetime.now(timezone.utc)
-            thirty_days_ago = now - timedelta(days=30)
-            # Random date between 5-25 days ago
-            days_back = random.randint(5, 25)
-            sell_date = now - timedelta(days=days_back)
+            days_back_sell = random.randint(15, 25)
+            sell_date = now - timedelta(days=days_back_sell)
             
             # Get current price with some variation for the sell
-            current_price = sell_holding.purchase_price * random.uniform(0.95, 1.15)  # ±15% variation
+            sell_price = sell_holding.purchase_price * random.uniform(0.95, 1.15)  # ±15% variation
             
             # Create sell transaction
             sell_txn = Transaction(
                 portfolio_id=portfolio.id,
                 holding_id=sell_holding.id,
                 quantity=sell_quantity,
-                price=round(current_price, 2),
+                price=round(sell_price, 2),
                 created_at=sell_date,
                 transaction_type="sell"
             )
@@ -160,9 +205,45 @@ def seed_database():
             db.session.add(sell_txn)
             db.session.commit()
             
-            print(f"✅ HARDCODED SELL: {sell_quantity} shares of {sell_holding.asset.symbol} at ${current_price:.2f} on {sell_date.strftime('%Y-%m-%d')}")
+            print(f"✅ HARDCODED SELL: {sell_quantity} shares of {sell_holding.asset.symbol} at ${sell_price:.2f} on {sell_date.strftime('%Y-%m-%d')}")
         else:
             print("❌ No holdings with sufficient quantity for hardcoded sell")
+
+        # HARDCODED BUY TRANSACTION
+        # Find an existing holding to buy more of
+        existing_holdings = Holding.query.filter_by(portfolio_id=portfolio.id).all()
+        
+        if existing_holdings:
+            # Pick a random existing holding to buy more of
+            buy_holding = random.choice(existing_holdings)
+            buy_quantity = random.randint(3, 8)  # Buy 3-8 additional shares
+            
+            # Create buy date within last 30 days (5-15 days ago)
+            days_back_buy = random.randint(5, 15)
+            buy_date = now - timedelta(days=days_back_buy)
+            
+            # Get current price with some variation for the buy
+            buy_price = buy_holding.purchase_price * random.uniform(0.90, 1.20)  # ±20% variation
+            
+            # Create buy transaction
+            buy_txn = Transaction(
+                portfolio_id=portfolio.id,
+                holding_id=buy_holding.id,
+                quantity=buy_quantity,
+                price=round(buy_price, 2),
+                created_at=buy_date,
+                transaction_type="buy"
+            )
+            
+            # Update holding quantity
+            buy_holding.quantity += buy_quantity
+            
+            db.session.add(buy_txn)
+            db.session.commit()
+            
+            print(f"✅ HARDCODED BUY: {buy_quantity} shares of {buy_holding.asset.symbol} at ${buy_price:.2f} on {buy_date.strftime('%Y-%m-%d')}")
+        else:
+            print("❌ No existing holdings for hardcoded buy")
 
         # === ASSETS WITHOUT HOLDINGS (for market data, watchlist, etc.) ===
         assets_only = [
@@ -196,8 +277,13 @@ def seed_database():
                 # Fetch asset info using the proper function
                 custom_info = get_asset_info(sym)
 
-                # Use the proper asset_type and full sector from yfinance
-                asset_type = custom_info['asset_type']
+                if sym in ASSET_TYPE_OVERRIDES:
+                    asset_type = ASSET_TYPE_OVERRIDES[sym]
+                    print(f"🔄 Overriding {sym} asset type to: {asset_type}")
+                else:
+                    asset_type = custom_info['asset_type']
+
+
                 sector = custom_info['sector']  # Use full sector name
                 day_changeP = custom_info['day_changeP']
 

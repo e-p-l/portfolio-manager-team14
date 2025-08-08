@@ -1,11 +1,26 @@
 import yfinance as yf
 from datetime import datetime, timezone
+import random
 
 from app import db
 from app.models.asset import Asset
 from app.models.asset_history import AssetHistory
 
 from app.services.cache import cache
+
+# Top 10 most popular sectors for fallback when sector is N/A
+POPULAR_SECTORS = [
+    "Technology",
+    "Healthcare", 
+    "Financial Services",
+    "Consumer Cyclical",
+    "Consumer Defensive",
+    "Communication Services",
+    "Industrials",
+    "Energy",
+    "Real Estate",
+    "Basic Materials"
+]
 
 def fetch_latest_prices(symbols):
     uncached_symbols = [s for s in symbols if s not in cache]
@@ -73,7 +88,7 @@ def get_asset_info(symbol):
     """
     Helper function to fetch asset details from yfinance.
     Returns a dict with name, asset_type, sector, and day_changeP.
-    Calculates day_changeP
+    Calculates day_changeP and assigns random popular sector if N/A.
     """
     ticker = yf.Ticker(symbol)
     info = ticker.info
@@ -83,6 +98,10 @@ def get_asset_info(symbol):
     sector = info.get("sector", "N/A") or info.get("industry", "N/A")
     current_price = info.get("regularMarketPrice")
     previous_close = info.get("regularMarketPreviousClose")
+
+    # If sector is N/A, assign a random popular sector
+    if sector == "N/A" or sector is None or sector == "":
+        sector = random.choice(POPULAR_SECTORS)
 
     if current_price is not None and previous_close:
         try:

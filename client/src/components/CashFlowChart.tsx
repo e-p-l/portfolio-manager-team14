@@ -96,7 +96,7 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
               Last 30 days transaction activity
             </Typography>
           </Box>
-          <Box height={300} display="flex" alignItems="center" justifyContent="center">
+          <Box height={250} display="flex" alignItems="center" justifyContent="center">
             <CircularProgress />
           </Box>
         </CardContent>
@@ -119,7 +119,7 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
               Last 30 days transaction activity
             </Typography>
           </Box>
-          <Box height={300} display="flex" alignItems="center" justifyContent="center">
+          <Box height={250} display="flex" alignItems="center" justifyContent="center">
             <Typography color="textSecondary">No transaction data available</Typography>
           </Box>
         </CardContent>
@@ -142,7 +142,7 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
           </Typography>
         </Box>
 
-        <Box height={300} position="relative">
+        <Box height={250} position="relative">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

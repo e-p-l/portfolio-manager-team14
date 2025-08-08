@@ -14,6 +14,7 @@ export const ASSET_TYPE_LABELS: { [key: string]: string } = {
   'BOND': 'Bond',
   'COMMODITY': 'Commodity',
   'OPTION': 'Option',
+  'REIT': 'Real Estate',
   'FUTURE': 'Future',
   'OTHER': 'Other',
   
