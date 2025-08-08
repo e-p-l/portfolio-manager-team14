@@ -23,7 +23,7 @@ const CustomTooltip = ({ active, payload }: any) => {
           boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
           p: 1.5,
           zIndex: 9999,
-          position: 'relative',
+          pointerEvents: 'none',
         }}
       >
         <Typography variant="body2" fontWeight="bold" sx={{ color: data.payload.color }}>
@@ -158,10 +158,11 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip 
-              />}
-                offset={30} 
-               />
+              <Tooltip 
+                content={<CustomTooltip />}
+                offset={30}
+                wrapperStyle={{ zIndex: 999999 }}
+              />
             </PieChart>
           </ResponsiveContainer>
 
@@ -183,13 +184,11 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
               Total Volume
             </Typography>
           </Box>
-
-          {/* Legend positioned exactly like SectorAllocationChart */}
           <Box
             sx={{
               position: 'absolute',
               top: '50%',
-              right: '10px',
+              right: '40px',
               transform: 'translateY(-50%)',
               display: 'flex',
               flexDirection: 'column',
