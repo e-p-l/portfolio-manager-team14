@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
 import { WatchlistItem } from '../types';
+import { formatAssetType } from '../utils/assetTypeFormatter';
 
 interface AssetDetailSidebarProps {
   asset: WatchlistItem;
@@ -104,7 +105,7 @@ const AssetDetailSidebar: React.FC<AssetDetailSidebarProps> = ({ asset }) => {
                 Asset Type
               </Typography>
               <Typography variant="caption" fontWeight="bold">
-                {asset.asset_type || 'Unknown'}
+                {formatAssetType(asset.asset_type)}
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between">

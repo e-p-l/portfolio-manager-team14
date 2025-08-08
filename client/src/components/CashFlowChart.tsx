@@ -47,16 +47,16 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
   const calculateCashFlowData = () => {
     if (!transactions.length) {
       return [
-        { name: 'Sales', value: 0, color: '#4caf50' },
-        { name: 'Purchases', value: 0, color: '#f44336' },
+        { name: 'Sells', value: 0, color: '#4caf50' },
+        { name: 'Buys', value: 0, color: '#f44336' },
       ];
     }
 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 30); // Last 30 days
 
-    let totalSales = 0;
-    let totalPurchases = 0;
+    let totalSells = 0;
+    let totalBuys = 0;
 
     transactions.forEach(transaction => {
       const transactionDate = new Date(transaction.created_at);
@@ -65,16 +65,16 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
         const amount = Math.round((transaction.quantity * transaction.price) * 100) / 100;
         
         if (transaction.transaction_type === 'buy') {
-          totalPurchases += amount;
+          totalBuys += amount;
         } else if (transaction.transaction_type === 'sell') {
-          totalSales += amount;
+          totalSells += amount;
         }
       }
     });
 
     return [
-      { name: 'Sales', value: totalSales, color: '#4caf50' },
-      { name: 'Purchases', value: totalPurchases, color: '#f44336' },
+      { name: 'Sells', value: totalSells, color: '#4caf50' },
+      { name: 'Buys', value: totalBuys, color: '#f44336' },
     ];
   };
 
@@ -158,7 +158,10 @@ const CashFlowChart: React.FC<CashFlowChartProps> = ({
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip 
+              />}
+                offset={30} 
+               />
             </PieChart>
           </ResponsiveContainer>
 

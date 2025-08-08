@@ -19,7 +19,8 @@ import {
   CircularProgress,
   Autocomplete,
   Card,
-  CardContent
+  CardContent,
+  Chip
 } from '@mui/material';
 import { Add, Remove, TrendingUp, TrendingDown } from '@mui/icons-material';
 import { Holding } from '../services/holdingService';
@@ -27,6 +28,7 @@ import { AssetService } from '../services/assetService';
 import { TransactionService } from '../services/transactionService';
 import { PortfolioService } from '../services/portfolioService';
 import { Asset } from '../types';
+import { formatAssetType } from '../utils/assetTypeFormatter';
 
 interface HoldingsTableProps {
   holdings: Holding[];

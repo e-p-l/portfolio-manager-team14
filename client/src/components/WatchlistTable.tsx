@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { TrendingUp, TrendingDown, Delete } from '@mui/icons-material';
 import { WatchlistItem } from '../types';
+import { formatAssetType } from '../utils/assetTypeFormatter';
 
 interface WatchlistTableProps {
   watchlistItems: WatchlistItem[];
@@ -211,12 +212,12 @@ const WatchlistTable: React.FC<WatchlistTableProps> = ({
                     
                     <TableCell align="center">
                       <Chip 
-                        label={item.asset_type || 'Unknown'} 
+                        label={formatAssetType(item.asset_type)} 
                         size="small" 
                         variant="outlined"
                         sx={{ 
                           fontSize: '0.75rem',
-                          textTransform: 'capitalize'
+                          textTransform: 'none'
                         }}
                       />
                     </TableCell>

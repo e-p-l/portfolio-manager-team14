@@ -154,7 +154,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({
             <TrendingUp sx={{ mr: 2, color: '#4caf50', zIndex: 1 }} />
             <Box sx={{ zIndex: 1, flex: 1 }}>
               <Typography variant="body1" fontWeight="bold">
-                Sales
+                Sells
               </Typography>
               <Typography variant="h6" color="#4caf50">
                 +${totalInflow.toLocaleString()}
@@ -191,7 +191,7 @@ const TransactionFlow: React.FC<TransactionFlowProps> = ({
             <TrendingDown sx={{ mr: 2, color: '#f44336', zIndex: 1 }} />
             <Box sx={{ zIndex: 1, flex: 1 }}>
               <Typography variant="body1" fontWeight="bold">
-                Purchases
+                Buys
               </Typography>
               <Typography variant="h6" color="#f44336">
                 -${totalOutflow.toLocaleString()}

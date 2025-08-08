@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { HoldingService, Holding } from '../services/holdingService';
 import { TransactionService } from '../services/transactionService';
 import { Asset } from '../types';
+import { formatAssetType } from '../utils/assetTypeFormatter';
 
 export const useHoldings = (portfolioId: number) => {
   const [holdings, setHoldings] = useState<Holding[]>([]);
@@ -102,30 +103,118 @@ export const useHoldings = (portfolioId: number) => {
       const currentPrice = holding.current_price || holding.purchase_price;
       const value = holding.quantity * currentPrice;
       const sector = holding.asset_sector || 'Other';
-      const assetType = holding.asset_type || 'other';
+      const rawAssetType = holding.asset_type || 'OTHER';
+      
+      // Normalize asset type to avoid duplicates (e.g., 'EQUITY' and 'equity' should be the same)
+      const normalizedAssetType = rawAssetType.toUpperCase();
       
       totalValue += value;
       sectorMap[sector] = (sectorMap[sector] || 0) + value;
-      assetTypeMap[assetType] = (assetTypeMap[assetType] || 0) + value;
+      assetTypeMap[normalizedAssetType] = (assetTypeMap[normalizedAssetType] || 0) + value;
     });
 
-    // Color mappings
+    // Color mappings - Comprehensive yfinance sector coverage
     const sectorColors: { [key: string]: string } = {
-      Technology: '#8b5cf6',
-      Healthcare: '#06b6d4',
-      Financial: '#10b981',
-      Consumer: '#f59e0b',
-      Energy: '#ef4444',
-      ETF: '#6366f1',
-      Communication: '#ec4899',
-      Industrials: '#84cc16',
-      Materials: '#f97316',
-      Utilities: '#14b8a6',
+      // Technology Sectors
+      'Technology': '#8b5cf6',
+      'Communication Services': '#ec4899',
+      
+      // Healthcare Sectors
+      'Healthcare': '#06b6d4',
+      
+      // Financial Sectors
+      'Financial Services': '#10b981',
+      'Financial': '#10b981',
+      
+      // Consumer Sectors
+      'Consumer Cyclical': '#f59e0b',
+      'Consumer Defensive': '#fbbf24',
+      'Consumer Discretionary': '#f59e0b',
+      'Consumer Staples': '#fbbf24',
+      'Consumer': '#f59e0b', // fallback for generic consumer
+      
+      // Energy & Utilities
+      'Energy': '#ef4444',
+      'Utilities': '#14b8a6',
+      
+      // Industrial & Materials
+      'Industrials': '#84cc16',
+      'Basic Materials': '#f97316',
+      'Materials': '#f97316',
+      
+      // Real Estate
       'Real Estate': '#a855f7',
-      Other: '#6b7280'
+      
+      // ETF & Fund Categories
+      'ETF': '#6366f1',
+      'N/A': '#9ca3af', // For ETFs or funds without specific sector
+      
+      // Additional Sectors
+      'Aerospace & Defense': '#7c3aed',
+      'Airlines': '#3b82f6',
+      'Auto Manufacturers': '#ef4444',
+      'Banks': '#059669',
+      'Biotechnology': '#0ea5e9',
+      'Broadcasting': '#db2777',
+      'Building Materials': '#ea580c',
+      'Capital Markets': '#16a34a',
+      'Chemicals': '#fb923c',
+      'Commercial Services': '#8b5cf6',
+      'Conglomerates': '#6b7280',
+      'Construction': '#a3a3a3',
+      'Credit Services': '#22c55e',
+      'Drug Manufacturers': '#06b6d4',
+      'Education': '#8b5cf6',
+      'Electronic Gaming & Multimedia': '#7c3aed',
+      'Electronics & Computer Distribution': '#6366f1',
+      'Engineering & Construction': '#84cc16',
+      'Entertainment': '#ec4899',
+      'Farm Products': '#65a30d',
+      'Food Distribution': '#f59e0b',
+      'Grocery Stores': '#fbbf24',
+      'Insurance': '#0891b2',
+      'Internet Content & Information': '#8b5cf6',
+      'Internet Retail': '#f59e0b',
+      'Investment Managers': '#10b981',
+      'Medical Care Facilities': '#06b6d4',
+      'Medical Devices': '#0ea5e9',
+      'Medical Instruments & Supplies': '#0891b2',
+      'Metal Fabrication': '#f97316',
+      'Mining': '#ea580c',
+      'Oil & Gas Drilling': '#dc2626',
+      'Oil & Gas E&P': '#ef4444',
+      'Oil & Gas Equipment & Services': '#f87171',
+      'Oil & Gas Integrated': '#dc2626',
+      'Oil & Gas Midstream': '#ef4444',
+      'Oil & Gas Refining & Marketing': '#f87171',
+      'Packaged Foods': '#fbbf24',
+      'Personal Services': '#8b5cf6',
+      'Pharmaceuticals': '#06b6d4',
+      'Professional Services': '#7c3aed',
+      'REIT': '#a855f7',
+      'Railroads': '#84cc16',
+      'Recreational Vehicles': '#f59e0b',
+      'Restaurants': '#fbbf24',
+      'Retail': '#f59e0b',
+      'Semiconductors': '#8b5cf6',
+      'Software': '#7c3aed',
+      'Specialty Chemicals': '#fb923c',
+      'Specialty Retail': '#f59e0b',
+      'Steel': '#6b7280',
+      'Telecom Services': '#ec4899',
+      'Tobacco': '#991b1b',
+      'Transportation': '#84cc16',
+      'Travel Services': '#3b82f6',
+      'Trucking': '#65a30d',
+      'Waste Management': '#22c55e',
+      
+      // Fallbacks
+      'Other': '#6b7280',
+      'Unknown': '#9ca3af'
     };
 
     const assetTypeColors: { [key: string]: string } = {
+      // Lowercase keys for consistency
       equity: '#4a90e2',
       etf: '#50e3c2',
       stock: '#2f5b8dff',
@@ -135,7 +224,19 @@ export const useHoldings = (portfolioId: number) => {
       cryptocurrency: '#ff9f43',
       bond: '#6c5ce7',
       cash: '#a0a0a0',
-      other: '#636e72'
+      other: '#636e72',
+      // Uppercase versions for yfinance data
+      'EQUITY': '#4a90e2',
+      'ETF': '#50e3c2',
+      'MUTUALFUND': '#bd10e0',
+      'CURRENCY': '#ff6b6b',
+      'CRYPTOCURRENCY': '#ff9f43',
+      'INDEX': '#f5a623',
+      'BOND': '#6c5ce7',
+      'COMMODITY': '#8b5cf6',
+      'OPTION': '#06b6d4',
+      'FUTURE': '#10b981',
+      'OTHER': '#636e72'
     };
 
     // Calculate sector allocation
@@ -146,10 +247,10 @@ export const useHoldings = (portfolioId: number) => {
     })).sort((a, b) => b.value - a.value);
 
     // Calculate asset class allocation
-    const assetClassAllocation = Object.entries(assetTypeMap).map(([type, value]) => ({
-      name: type.charAt(0).toUpperCase() + type.slice(1),
+    const assetClassAllocation = Object.entries(assetTypeMap).map(([normalizedType, value]) => ({
+      name: formatAssetType(normalizedType),
       value: Math.round((value / totalValue) * 100),
-      color: assetTypeColors[type] || assetTypeColors.other
+      color: assetTypeColors[normalizedType] || assetTypeColors[normalizedType.toLowerCase()] || assetTypeColors.other
     })).sort((a, b) => b.value - a.value);
 
     // Calculate top performers based on asset_return

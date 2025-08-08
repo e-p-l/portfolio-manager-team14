@@ -56,21 +56,9 @@ def seed_database():
             ("WDAY", "Workday Inc.", 12)
         ]
 
-        # Random asset types for holdings
-        asset_types_holdings = (
-            ["equity"] * 20 +
-            ["etf"] * 5 +
-            ["mutualfund"] * 2 +
-            ["index"] * 3 +            
-            ["currency"] * 3 +
-            ["cryptocurrency"] * 6 +
-            ["commodity"] * 2
-        )
-        random.shuffle(asset_types_holdings)
-
         print("🔄 Creating holdings with specified quantities...")
         
-        for i, (sym, name, quantity) in enumerate(holdings_data):
+        for sym, name, quantity in holdings_data:
             try:
                 ticker = yf.Ticker(sym)
                 data = ticker.history(period="1d")
@@ -81,15 +69,13 @@ def seed_database():
 
                 price = round(data["Close"].iloc[-1], 2)
 
-                # Fetch asset info
-                yf_info = ticker.info
+                # Fetch asset info using the proper function
                 custom_info = get_asset_info(sym)
 
-                sector = yf_info.get("sector", "Unknown").split()[0] if "sector" in yf_info else "Unknown"
+                # Use the proper asset_type and full sector from yfinance
+                asset_type = custom_info['asset_type']
+                sector = custom_info['sector']  # Use full sector name
                 day_changeP = custom_info['day_changeP']
-                
-                # Get random asset type
-                asset_type = asset_types_holdings[i % len(asset_types_holdings)]
 
                 # Create asset
                 asset = Asset(
@@ -196,21 +182,9 @@ def seed_database():
             ("NPO", "EnPro Inc."),
         ]
 
-        # Random asset types for assets-only
-        asset_types_assets = (
-            ["equity"] * 20 +
-            ["etf"] * 5 +
-            ["mutualfund"] * 2 +
-            ["index"] * 3 +            
-            ["currency"] * 3 +
-            ["cryptocurrency"] * 6 +
-            ["commodity"] * 2
-        )
-        random.shuffle(asset_types_assets)
-
         print("🔄 Creating assets without holdings...")
         
-        for i, (sym, name) in enumerate(assets_only):
+        for sym, name in assets_only:
             try:
                 ticker = yf.Ticker(sym)
                 data = ticker.history(period="1d")
@@ -219,15 +193,13 @@ def seed_database():
                     print(f"❌ No data for asset {sym}")
                     continue
 
-                # Fetch asset info
-                yf_info = ticker.info
+                # Fetch asset info using the proper function
                 custom_info = get_asset_info(sym)
 
-                sector = yf_info.get("sector", "Unknown").split()[0] if "sector" in yf_info else "Unknown"
+                # Use the proper asset_type and full sector from yfinance
+                asset_type = custom_info['asset_type']
+                sector = custom_info['sector']  # Use full sector name
                 day_changeP = custom_info['day_changeP']
-                
-                # Get random asset type
-                asset_type = asset_types_assets[i % len(asset_types_assets)]
 
                 # Create asset only (no holdings)
                 asset = Asset(
